@@ -1,25 +1,26 @@
 import { ThemeToggle } from '@/components/theme-toggle';
+import { UserMenu } from '@/components/user-menu';
 import { Compass, Construction } from 'lucide-react';
 
 export default function Home() {
   return (
     <main className="relative min-h-screen overflow-hidden">
-      {/* Background gradient suave */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-frente-doctum-soft blur-3xl" />
         <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-frente-tribo-soft blur-3xl" />
       </div>
 
-      {/* Topbar */}
       <header className="container flex items-center justify-between py-6">
         <div className="flex items-center gap-2 text-lg font-bold">
           <Compass className="h-6 w-6 text-primary" />
           <span>Bússola do Tempo</span>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <UserMenu />
+        </div>
       </header>
 
-      {/* Conteúdo */}
       <section className="container flex flex-col items-center justify-center gap-8 py-20 text-center">
         <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <Construction className="h-3.5 w-3.5" />
@@ -36,7 +37,6 @@ export default function Home() {
           semana realmente se distribuiu.
         </p>
 
-        {/* Pílulas das categorias */}
         <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
           <span className="rounded-full bg-triade-importante-soft px-4 py-2 text-sm font-bold text-triade-importante">
             🎯 Importante
@@ -49,15 +49,13 @@ export default function Home() {
           </span>
         </div>
 
-        {/* Cards de status */}
         <div className="grid w-full max-w-3xl grid-cols-1 gap-4 pt-8 md:grid-cols-3">
-          <StatusCard label="Etapa 1" title="Setup do projeto" status="✅ Concluída" />
-          <StatusCard label="Etapa 2" title="Banco de dados" status="⏳ Próxima" />
-          <StatusCard label="Etapa 15" title="Lançamento beta" status="🎯 10/08/2026" />
+          <StatusCard label="Etapa 2" title="Banco de dados" status="✅ Concluída" />
+          <StatusCard label="Etapa 3" title="Autenticação" status="✅ Concluída" />
+          <StatusCard label="Etapa 4" title="CRUD Frentes" status="⏳ Próxima" />
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="container border-t border-border py-8 text-center text-sm text-muted-foreground">
         Bússola do Tempo · em desenvolvimento por Lucas Silveira
       </footer>

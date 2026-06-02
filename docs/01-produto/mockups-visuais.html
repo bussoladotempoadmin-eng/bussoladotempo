@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bússola do Tempo — Mockups V2</title>
+<style>
+  :root {
+    /* PAGE (DARK padrão) */
+    --bg-page: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --text-page: #f1f5f9;
+    --text-page-soft: #94a3b8;
+    --badge-bg: rgba(59,130,246,0.15);
+    --badge-text: #60a5fa;
+    --label-bg: rgba(255,255,255,0.06);
+    --label-text: #cbd5e1;
+    --phone-frame: #1e293b;
+    --phone-border: rgba(255,255,255,0.08);
+    --footer-border: rgba(255,255,255,0.08);
+
+    /* SCREEN (app em DARK) */
+    --screen-bg: #0f172a;
+    --screen-card: #1e293b;
+    --screen-text: #f1f5f9;
+    --screen-text-soft: #94a3b8;
+    --screen-border: #334155;
+    --screen-header-bg: #1e293b;
+    --screen-body-bg: #0f172a;
+    --screen-input-bg: #1e293b;
+
+    /* ACCENT (não muda entre modos) */
+    --accent: #3b82f6;
+
+    /* FRENTES */
+    --doctum: #3b82f6;
+    --doctum-soft: rgba(59,130,246,0.15);
+    --tribo: #f97316;
+    --tribo-soft: rgba(249,115,22,0.15);
+    --bruna: #a855f7;
+    --bruna-soft: rgba(168,85,247,0.15);
+    --cuidaja: #22c55e;
+    --cuidaja-soft: rgba(34,197,94,0.15);
+
+    /* TRÍADE */
+    --imp: #10b981;
+    --imp-soft: rgba(16,185,129,0.15);
+    --urg: #ef4444;
+    --urg-soft: rgba(239,68,68,0.15);
+    --disp: #94a3b8;
+    --disp-soft: rgba(148,163,184,0.15);
+  }
+
+  [data-theme="light"] {
+    --bg-page: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    --text-page: #0f172a;
+    --text-page-soft: #475569;
+    --badge-bg: rgba(59,130,246,0.12);
+    --badge-text: #1d4ed8;
+    --label-bg: rgba(15,23,42,0.06);
+    --label-text: #475569;
+    --phone-frame: #e2e8f0;
+    --phone-border: rgba(15,23,42,0.1);
+    --footer-border: rgba(15,23,42,0.1);
+
+    --screen-bg: #f8fafc;
+    --screen-card: #ffffff;
+    --screen-text: #0f172a;
+    --screen-text-soft: #64748b;
+    --screen-border: #e2e8f0;
+    --screen-header-bg: #ffffff;
+    --screen-body-bg: #f8fafc;
+    --screen-input-bg: #ffffff;
+
+    --doctum-soft: #dbeafe;
+    --doctum: #1d4ed8;
+    --tribo-soft: #ffedd5;
+    --tribo: #c2410c;
+    --bruna-soft: #f3e8ff;
+    --bruna: #7e22ce;
+    --cuidaja-soft: #dcfce7;
+    --cuidaja: #15803d;
+
+    --imp-soft: #d1fae5;
+    --imp: #047857;
+    --urg-soft: #fee2e2;
+    --urg: #b91c1c;
+    --disp-soft: #f1f5f9;
+    --disp: #475569;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-page);
+    color: var(--text-page);
+    padding: 40px 20px;
+    line-height: 1.5;
+    min-height: 100vh;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+
+  /* THEME TOGGLE */
+  .theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--label-bg);
+    border: 1px solid var(--phone-border);
+    color: var(--text-page);
+    padding: 10px 16px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+  }
+  .theme-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -5px rgba(0,0,0,0.2);
+  }
+  .theme-icon {
+    font-size: 16px;
+  }
+
+  header { text-align: center; margin-bottom: 60px; padding-top: 20px; }
+  h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.5px; }
+  header p { font-size: 17px; color: var(--text-page-soft); max-width: 700px; margin: 0 auto; }
+  .badge {
+    display: inline-block;
+    background: var(--badge-bg);
+    color: var(--badge-text);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 40px;
+    margin-top: 30px;
+  }
+
+  .screen-wrapper { display: flex; flex-direction: column; align-items: center; }
+  .screen-label {
+    background: var(--label-bg);
+    color: var(--label-text);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .screen-when {
+    color: var(--text-page-soft);
+    font-size: 13px;
+    margin-top: 12px;
+    text-align: center;
+    max-width: 320px;
+  }
+
+  /* phone frame */
+  .phone {
+    background: var(--phone-frame);
+    border-radius: 36px;
+    padding: 12px;
+    width: 360px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    border: 1px solid var(--phone-border);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .phone-screen {
+    background: var(--screen-body-bg);
+    border-radius: 26px;
+    overflow: hidden;
+    height: 720px;
+    display: flex;
+    flex-direction: column;
+    color: var(--screen-text);
+    font-size: 14px;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .status-bar {
+    background: var(--screen-header-bg);
+    padding: 12px 20px 4px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--screen-text-soft);
+    font-weight: 600;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  .s-header {
+    padding: 14px 20px 16px;
+    border-bottom: 1px solid var(--screen-border);
+    background: var(--screen-header-bg);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .s-title { font-size: 17px; font-weight: 700; }
+  .s-subtitle { font-size: 13px; color: var(--screen-text-soft); margin-top: 4px; }
+
+  .s-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    background: var(--screen-body-bg);
+    transition: background 0.3s ease;
+  }
+
+  .s-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--screen-border);
+    background: var(--screen-header-bg);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn.outline {
+    background: var(--screen-card);
+    color: var(--screen-text);
+    border: 1px solid var(--screen-border);
+  }
+
+  /* frente chips */
+  .frente {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .frente.doctum { background: var(--doctum-soft); color: var(--doctum); }
+  .frente.tribo { background: var(--tribo-soft); color: var(--tribo); }
+  .frente.bruna { background: var(--bruna-soft); color: var(--bruna); }
+  .frente.cuidaja { background: var(--cuidaja-soft); color: var(--cuidaja); }
+
+  /* triade */
+  .triade {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .triade.imp { background: var(--imp-soft); color: var(--imp); }
+  .triade.urg { background: var(--urg-soft); color: var(--urg); }
+  .triade.disp { background: var(--disp-soft); color: var(--disp); }
+
+  .card-list { display: flex; flex-direction: column; gap: 10px; }
+  .card {
+    background: var(--screen-card);
+    border: 1px solid var(--screen-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .card-prio {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--screen-card);
+    border: 1px solid var(--screen-border);
+    border-radius: 12px;
+    padding: 12px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .prio-num {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: var(--screen-body-bg);
+    color: var(--screen-text);
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+  .prio-text { flex: 1; font-weight: 500; font-size: 13px; }
+
+  .block {
+    background: var(--screen-card);
+    border: 1px solid var(--screen-border);
+    border-radius: 12px;
+    padding: 12px;
+    border-left: 4px solid;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .block.doctum { border-left-color: var(--doctum); }
+  .block.tribo { border-left-color: var(--tribo); }
+  .block.bruna { border-left-color: var(--bruna); }
+  .block.cuidaja { border-left-color: var(--cuidaja); }
+  .block-time { font-size: 12px; color: var(--screen-text-soft); font-weight: 600; }
+  .block-name { font-size: 14px; font-weight: 600; margin: 4px 0 6px; }
+  .block-tags { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .block-prio { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 6px; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--screen-text-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 18px 0 10px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  .form-field {
+    background: var(--screen-card);
+    border: 1px solid var(--screen-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .field-label { font-size: 11px; color: var(--screen-text-soft); margin-bottom: 2px; }
+  .field-value { font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; }
+
+  .totalbar {
+    background: var(--accent);
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 12px;
+  }
+
+  .agenda-grid {
+    display: grid;
+    grid-template-columns: 30px repeat(6, 1fr);
+    gap: 2px;
+    font-size: 9px;
+    background: var(--screen-card);
+    padding: 6px;
+    border-radius: 10px;
+    border: 1px solid var(--screen-border);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .agenda-cell {
+    padding: 3px 2px;
+    text-align: center;
+    border-radius: 3px;
+    color: #fff;
+    font-weight: 600;
+  }
+  .agenda-hr { color: var(--screen-text-soft); background: transparent; font-weight: 700; }
+  .agenda-head { color: var(--screen-text-soft); background: transparent; font-weight: 700; font-size: 10px; }
+  .agenda-empty { background: var(--screen-body-bg); }
+  .cell-doctum { background: var(--doctum); }
+  .cell-tribo { background: var(--tribo); }
+  .cell-bruna { background: var(--bruna); }
+  .cell-cuidaja { background: var(--cuidaja); }
+
+  .swipe-options { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .swipe-btn {
+    background: var(--screen-card);
+    border: 1px solid var(--screen-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--screen-text);
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+  .swipe-btn.primary {
+    background: var(--imp-soft);
+    border-color: var(--imp);
+    color: var(--imp);
+  }
+
+  .matrix {
+    background: var(--screen-card);
+    border: 1px solid var(--screen-border);
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 11px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .matrix table { width: 100%; border-collapse: collapse; }
+  .matrix th, .matrix td {
+    padding: 8px 6px;
+    text-align: center;
+    border-bottom: 1px solid var(--screen-border);
+  }
+  .matrix th {
+    background: var(--screen-body-bg);
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--screen-text-soft);
+  }
+  .matrix td:first-child {
+    text-align: left;
+    font-weight: 600;
+    background: var(--screen-body-bg);
+  }
+  .matrix .row-imp td:first-child { color: var(--imp); }
+  .matrix .row-urg td:first-child { color: var(--urg); }
+  .matrix .row-disp td:first-child { color: var(--disp); }
+  .matrix .row-total td { background: var(--screen-body-bg); font-weight: 700; }
+  .alert { color: var(--urg); }
+
+  .insight {
+    background: var(--screen-card);
+    border-left: 4px solid;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid var(--screen-border);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .insight-good { border-left-color: var(--imp); }
+  .insight-warn { border-left-color: var(--urg); }
+  .insight-tip { border-left-color: var(--accent); }
+  .insight-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .insight-text { font-size: 12px; color: var(--screen-text-soft); line-height: 1.5; }
+
+  .desvio {
+    background: var(--screen-card);
+    border: 1px solid var(--screen-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .desvio-title { font-weight: 700; margin-bottom: 4px; }
+  .desvio-detail { color: var(--screen-text-soft); }
+
+  .summary-line {
+    background: var(--screen-card);
+    border: 1px solid var(--screen-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+
+  .alert-banner {
+    background: var(--urg-soft);
+    border-left: 4px solid var(--urg);
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+  .alert-banner-title {
+    font-weight: 700;
+    color: var(--urg);
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+
+  .suggestion {
+    background: var(--screen-card);
+    border: 1px solid var(--screen-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .suggestion:hover { border-color: var(--accent); }
+
+  footer {
+    text-align: center;
+    margin-top: 80px;
+    color: var(--text-page-soft);
+    font-size: 13px;
+    padding: 20px;
+    border-top: 1px solid var(--footer-border);
+  }
+  footer strong { color: var(--text-page); }
+
+  @media (max-width: 768px) {
+    .theme-toggle { top: 10px; right: 10px; padding: 8px 12px; font-size: 13px; }
+    h1 { font-size: 28px; }
+    body { padding: 20px 10px; }
+  }
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+  <span class="theme-icon" id="themeIcon">☀️</span>
+  <span id="themeLabel">Modo claro</span>
+</button>
+
+<div class="container">
+
+  <header>
+    <span class="badge">MOCKUPS V2 · SEM CÓDIGO</span>
+    <h1>🧭 Bússola do Tempo</h1>
+    <p>8 telas-chave em sequência de uso. Apenas visualização — não é app funcional. Material pra discutir produto, validar com mentorados e criar a planilha do piloto.</p>
+  </header>
+
+  <div class="grid">
+
+    <!-- TELA 1: Setup adicionar frentes -->
+    <div class="screen-wrapper">
+      <span class="screen-label">Tela 1 · Setup</span>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><span>● ● ● ●</span></div>
+          <div class="s-header">
+            <div class="s-title">⚙️ Suas frentes</div>
+            <div class="s-subtitle">Passo 1 de 3 · Quantas horas por semana em cada uma?</div>
+          </div>
+          <div class="s-body">
+            <div class="form-field">
+              <div class="field-label">FRENTE 1</div>
+              <div class="field-value"><span>🏢 Doctum</span><span>36 h/sem</span></div>
+            </div>
+            <div class="form-field">
+              <div class="field-label">FRENTE 2</div>
+              <div class="field-value"><span>🛒 Tribo</span><span>18 h/sem</span></div>
+            </div>
+            <div class="form-field">
+              <div class="field-label">FRENTE 3</div>
+              <div class="field-value"><span>🎓 Dra. Bruna</span><span>2,5 h/sem</span></div>
+            </div>
+            <div class="form-field">
+              <div class="field-label">FRENTE 4</div>
+              <div class="field-value"><span>🤝 CuidaJA</span><span>2,5 h/sem</span></div>
+            </div>
+            <button class="btn outline" style="margin-top:8px;">+ Adicionar frente</button>
+            <div class="totalbar">Total: 59h por semana</div>
+          </div>
+          <div class="s-footer">
+            <button class="btn">Próximo: compromissos →</button>
+          </div>
+        </div>
+      </div>
+      <div class="screen-when">Aparece apenas na 1ª vez. Lista as áreas que disputam tempo na sua semana.</div>
+    </div>
+
+    <!-- TELA 2: Agenda padrão gerada -->
+    <div class="screen-wrapper">
+      <span class="screen-label">Tela 2 · Agenda gerada</span>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:43</span><span>● ● ● ●</span></div>
+          <div class="s-header">
+            <div class="s-title">📅 Sua agenda padrão</div>
+            <div class="s-subtitle">Sugestão gerada · Toque pra ajustar bloco</div>
+          </div>
+          <div class="s-body" style="padding: 12px;">
+            <div class="agenda-grid">
+              <div class="agenda-cell agenda-head"></div>
+              <div class="agenda-cell agenda-head">S</div>
+              <div class="agenda-cell agenda-head">T</div>
+              <div class="agenda-cell agenda-head">Q</div>
+              <div class="agenda-cell agenda-head">Q</div>
+              <div class="agenda-cell agenda-head">S</div>
+              <div class="agenda-cell agenda-head">S</div>
+
+              <div class="agenda-cell agenda-hr">8h</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-tribo">Tri</div>
+
+              <div class="agenda-cell agenda-hr">10h</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-tribo">Tri</div>
+
+              <div class="agenda-cell agenda-hr">12h</div>
+              <div class="agenda-cell agenda-empty"></div>
+              <div class="agenda-cell agenda-empty"></div>
+              <div class="agenda-cell agenda-empty"></div>
+              <div class="agenda-cell agenda-empty"></div>
+              <div class="agenda-cell agenda-empty"></div>
+              <div class="agenda-cell cell-tribo">Tri</div>
+
+              <div class="agenda-cell agenda-hr">14h</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-bruna">Br</div>
+              <div class="agenda-cell cell-bruna">Br</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-bruna">Br</div>
+              <div class="agenda-cell agenda-empty"></div>
+
+              <div class="agenda-cell agenda-hr">15h</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-cuidaja">CJ</div>
+              <div class="agenda-cell cell-cuidaja">CJ</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-cuidaja">CJ</div>
+              <div class="agenda-cell agenda-empty"></div>
+
+              <div class="agenda-cell agenda-hr">16h</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-tribo">Tri</div>
+              <div class="agenda-cell cell-tribo">Tri</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell agenda-empty"></div>
+
+              <div class="agenda-cell agenda-hr">18h</div>
+              <div class="agenda-cell cell-tribo">Men</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell cell-tribo">Liv</div>
+              <div class="agenda-cell cell-doctum">Doc</div>
+              <div class="agenda-cell agenda-empty"></div>
+
+              <div class="agenda-cell agenda-hr">20h</div>
+              <div class="agenda-cell cell-tribo">Men</div>
+              <div class="agenda-cell agenda-empty"></div>
+              <div class="agenda-cell agenda-empty"></div>
+              <div class="agenda-cell cell-tribo">Liv</div>
+              <div class="agenda-cell agenda-empty"></div>
+              <div class="agenda-cell agenda-empty"></div>
+            </div>
+            <div style="margin-top:14px; font-size:11px; display:flex; gap:8px; flex-wrap:wrap;">
+              <span class="frente doctum">36h</span>
+              <span class="frente tribo">18h</span>
+              <span class="frente bruna">2,5h</span>
+              <span class="frente cuidaja">2,5h</span>
+            </div>
+          </div>
+          <div class="s-footer">
+            <button class="btn">Confirmar e usar →</button>
+          </div>
+        </div>
+      </div>
+      <div class="screen-when">Sistema gera. Você arrasta o que quiser ajustar. Vira sua base semanal.</div>
+    </div>
+
+    <!-- TELA 3: Painel da manhã -->
+    <div class="screen-wrapper">
+      <span class="screen-label">Tela 3 · Painel da manhã</span>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="status-bar"><span>6:12</span><span>● ● ● ●</span></div>
+          <div class="s-header">
+            <div class="s-title">☀️ Bom dia, Lucas</div>
+            <div class="s-subtitle">Segunda · 01 de junho</div>
+          </div>
+          <div class="s-body">
+            <div class="section-label">🎯 Prioridades da semana</div>
+            <div class="card-list">
+              <div class="card-prio">
+                <div class="prio-num">1</div>
+                <div class="prio-text">Revisar pipeline Doctum</div>
+                <span class="frente doctum">Doctum</span>
+              </div>
+              <div class="card-prio">
+                <div class="prio-num">2</div>
+                <div class="prio-text">Gravar aula 04 mentoria</div>
+                <span class="frente tribo">Tribo</span>
+              </div>
+              <div class="card-prio">
+                <div class="prio-num">3</div>
+                <div class="prio-text">Reunião CuidaJA</div>
+                <span class="frente cuidaja">CuidaJA</span>
+              </div>
+            </div>
+
+            <div class="section-label">📅 Seus blocos de hoje</div>
+            <div class="card-list">
+              <div class="block doctum">
+                <div class="block-time">08h00 — 12h00 · 4h</div>
+                <div class="block-name">Revisar pipeline + alinhar marketing</div>
+                <div class="block-tags">
+                  <span class="frente doctum">Doctum</span>
+                  <span class="triade imp">🎯 Importante</span>
+                </div>
+                <div class="block-prio">⭐ Prioridade 1 da semana</div>
+              </div>
+              <div class="block doctum">
+                <div class="block-time">13h30 — 18h00 · 4h30</div>
+                <div class="block-name">1:1 vendedor X + ajustes</div>
+                <div class="block-tags">
+                  <span class="frente doctum">Doctum</span>
+                  <span class="triade urg">🔥 Urgente</span>
+                </div>
+              </div>
+              <div class="block tribo">
+                <div class="block-time">18h30 — 21h30 · 3h</div>
+                <div class="block-name">🎤 Mentoria ao vivo · aula 04</div>
+                <div class="block-tags">
+                  <span class="frente tribo">Tribo</span>
+                  <span class="triade imp">🎯 Importante</span>
+                </div>
+                <div class="block-prio">⭐ Prioridade 2 da semana</div>
+              </div>
+            </div>
+          </div>
+          <div class="s-footer">
+            <button class="btn">Bora começar →</button>
+          </div>
+        </div>
+      </div>
+      <div class="screen-when">A tela que abre todo dia. 2 minutos pra entender o que importa hoje.</div>
+    </div>
+
+    <!-- TELA 4: Swipe entre blocos -->
+    <div class="screen-wrapper">
+      <span class="screen-label">Tela 4 · Swipe entre blocos</span>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="status-bar"><span>12:02</span><span>● ● ● ●</span></div>
+          <div class="s-header">
+            <div class="s-title">🔔 Bloco terminou</div>
+            <div class="s-subtitle">Segunda · 12h00</div>
+          </div>
+          <div class="s-body">
+            <div class="card" style="margin-bottom:16px;">
+              <div style="font-size:12px; color:var(--screen-text-soft); font-weight:600;">08h00 — 12h00</div>
+              <div style="font-size:15px; font-weight:700; margin:6px 0;">Revisar pipeline + alinhar marketing</div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
+                <span class="frente doctum">Doctum</span>
+                <span class="triade imp">🎯 Planejado: Importante</span>
+              </div>
+            </div>
+
+            <div style="font-size:14px; font-weight:600; text-align:center; margin: 8px 0 12px;">
+              Foi como planejado?
+            </div>
+
+            <div class="swipe-options">
+              <button class="swipe-btn primary">
+                ✅ Sim, foi Importante
+              </button>
+              <button class="swipe-btn">
+                🔥 Não, virou Urgente
+              </button>
+              <button class="swipe-btn">
+                💨 Não, virou Disperso
+              </button>
+              <button class="swipe-btn">
+                ⏰ Pergunta de novo às 14h
+              </button>
+            </div>
+
+            <div style="text-align:center; font-size:11px; color:var(--screen-text-soft); margin-top:16px;">
+              Em 60s sem resposta: assume "Sim"
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="screen-when">Aparece automaticamente ao fim de cada bloco. 2 segundos pra responder.</div>
+    </div>
+
+    <!-- TELA 5: Planejamento semanal -->
+    <div class="screen-wrapper">
+      <span class="screen-label">Tela 5 · Planejamento</span>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="status-bar"><span>18:04</span><span>● ● ● ●</span></div>
+          <div class="s-header">
+            <div class="s-title">🧭 Planejar 01-07/06</div>
+            <div class="s-subtitle">Passo 3 de 4 · Classificar blocos</div>
+          </div>
+          <div class="s-body">
+            <div style="font-size:12px; color:var(--screen-text-soft); margin-bottom:12px;">
+              💡 Sugestões pré-preenchidas baseadas no padrão. Toque pra ajustar.
+            </div>
+            <div class="card-list">
+              <div class="block doctum">
+                <div class="block-time">SEG · 08h-12h</div>
+                <div class="block-name">Revisar pipeline + marketing</div>
+                <div class="block-tags">
+                  <span class="frente doctum">Doctum</span>
+                  <span class="triade imp">🎯 Imp.</span>
+                </div>
+              </div>
+              <div class="block doctum">
+                <div class="block-time">SEG · 13h30-18h</div>
+                <div class="block-name">1:1 vendedor X</div>
+                <div class="block-tags">
+                  <span class="frente doctum">Doctum</span>
+                  <span class="triade urg">🔥 Urg.</span>
+                </div>
+              </div>
+              <div class="block tribo">
+                <div class="block-time">SEG · 18h30-21h30</div>
+                <div class="block-name">🎤 Mentoria aula 04</div>
+                <div class="block-tags">
+                  <span class="frente tribo">Tribo</span>
+                  <span class="triade imp">🎯 Imp.</span>
+                </div>
+              </div>
+              <div class="block bruna">
+                <div class="block-time">TER · 13h30-14h</div>
+                <div class="block-name">Status semanal + material</div>
+                <div class="block-tags">
+                  <span class="frente bruna">Bruna</span>
+                  <span class="triade disp">💨 Disp.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:14px;">
+              <div style="font-weight:700; margin-bottom:8px; font-size:13px;">Resumo planejado</div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
+                <span class="triade imp">🎯 Importante</span><strong>28h (47%)</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px; font-size:12px;">
+                <span class="triade urg">🔥 Urgente</span><strong>24h (41%)</strong>
+              </div>
+              <div style="display:flex; justify-content:space-between; font-size:12px;">
+                <span class="triade disp">💨 Disperso</span><strong>7h (12%)</strong>
+              </div>
+            </div>
+          </div>
+          <div class="s-footer">
+            <button class="btn">Próximo: 3 prioridades →</button>
+          </div>
+        </div>
+      </div>
+      <div class="screen-when">Domingo, 15-20 min. Aqui você decide como sua semana vai ser.</div>
+    </div>
+
+    <!-- TELA 6: O ESPELHO -->
+    <div class="screen-wrapper">
+      <span class="screen-label">Tela 6 · O Espelho ⭐</span>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="status-bar"><span>18:00</span><span>● ● ● ●</span></div>
+          <div class="s-header">
+            <div class="s-title">📊 Sua semana</div>
+            <div class="s-subtitle">25-31/05 · Bússola do Tempo</div>
+          </div>
+          <div class="s-body">
+            <div class="matrix">
+              <table>
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Doc</th>
+                    <th>Tri</th>
+                    <th>Br</th>
+                    <th>CJ</th>
+                    <th>Tot.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="row-imp">
+                    <td>🎯 Imp.</td>
+                    <td>8h</td>
+                    <td>10h</td>
+                    <td>1h</td>
+                    <td>0h</td>
+                    <td><strong>19h</strong></td>
+                  </tr>
+                  <tr class="row-urg">
+                    <td>🔥 Urg.</td>
+                    <td class="alert">22h</td>
+                    <td>5h</td>
+                    <td>1h</td>
+                    <td>2h</td>
+                    <td><strong>30h</strong></td>
+                  </tr>
+                  <tr class="row-disp">
+                    <td>💨 Disp.</td>
+                    <td>6h</td>
+                    <td>3h</td>
+                    <td>30m</td>
+                    <td>30m</td>
+                    <td><strong>10h</strong></td>
+                  </tr>
+                  <tr class="row-total">
+                    <td>Total</td>
+                    <td>36h</td>
+                    <td>18h</td>
+                    <td>2,5h</td>
+                    <td>2,5h</td>
+                    <td>59h</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="section-label">Planejado vs Realizado</div>
+            <div class="summary-line">
+              <strong>🎯 Importante:</strong> 47% → <strong style="color:var(--urg)">32% ⬇</strong>
+            </div>
+            <div class="summary-line">
+              <strong>🔥 Urgente:</strong> 41% → <strong style="color:var(--urg)">51% ⬆</strong>
+            </div>
+            <div class="summary-line">
+              <strong>💨 Disperso:</strong> 12% → <strong style="color:var(--urg)">17% ⬆</strong>
+            </div>
+
+            <div class="section-label">🔴 Top 3 desvios</div>
+            <div class="desvio">
+              <div class="desvio-title">Qui 13h30-15h · Tribo → Doctum</div>
+              <div class="desvio-detail">Reunião emergencial do CEO</div>
+            </div>
+            <div class="desvio">
+              <div class="desvio-title">Ter 16h-19h · CuidaJA Imp. → Disp.</div>
+              <div class="desvio-detail">Bloco virou troca de mensagens</div>
+            </div>
+            <div class="desvio">
+              <div class="desvio-title">Sex 13h30-19h · Imp. → Urg. + Disp.</div>
+              <div class="desvio-detail">Caiu pedido urgente de proposta</div>
+            </div>
+          </div>
+          <div class="s-footer">
+            <button class="btn">Ver insights do Coach →</button>
+          </div>
+        </div>
+      </div>
+      <div class="screen-when">A estrela do produto. O usuário VÊ onde o tempo foi de verdade.</div>
+    </div>
+
+    <!-- TELA 7: Coach gentil -->
+    <div class="screen-wrapper">
+      <span class="screen-label">Tela 7 · Coach gentil</span>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="status-bar"><span>18:08</span><span>● ● ● ●</span></div>
+          <div class="s-header">
+            <div class="s-title">💬 Insights da semana</div>
+            <div class="s-subtitle">O que seu tempo está te dizendo</div>
+          </div>
+          <div class="s-body">
+            <div class="insight insight-good">
+              <div class="insight-title">✅ Tribo manteve foco em Importante</div>
+              <div class="insight-text">56% Importante (planejado: 67%). Você está protegendo sua frente própria. Bom sinal.</div>
+            </div>
+            <div class="insight insight-warn">
+              <div class="insight-title">⚠️ Doctum virou bombeiro</div>
+              <div class="insight-text">61% Urgente pela 2ª semana seguida. Vale pensar em delegar ou redesenhar o pipeline de demanda.</div>
+            </div>
+            <div class="insight insight-warn">
+              <div class="insight-title">⚠️ Sexta 13h30-19h vira caos</div>
+              <div class="insight-text">3 semanas seguidas estourando como Urgente. Considere mover Doctum-pesado pra outra janela ou aceitar que é seu bloco "bombeiro".</div>
+            </div>
+            <div class="insight insight-tip">
+              <div class="insight-title">🎯 Prioridade #1 sub-protegida</div>
+              <div class="insight-text">"Revisar pipeline" recebeu 2h dos 4h planejados. Considere proteger esse bloco de reuniões na próxima semana.</div>
+            </div>
+          </div>
+          <div class="s-footer">
+            <button class="btn">Próximo: roteiro →</button>
+          </div>
+        </div>
+      </div>
+      <div class="screen-when">Onde o app "fala com você". Linguagem humana, não corporativa.</div>
+    </div>
+
+    <!-- TELA 8: Conflito detectado -->
+    <div class="screen-wrapper">
+      <span class="screen-label">Tela 8 · Adaptação</span>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="status-bar"><span>10:33</span><span>● ● ● ●</span></div>
+          <div class="s-header">
+            <div class="s-title">⚠️ Conflito detectado</div>
+            <div class="s-subtitle">Reunião nova chocou com bloco protegido</div>
+          </div>
+          <div class="s-body">
+            <div class="alert-banner">
+              <div class="alert-banner-title">Reunião pipeline Doctum</div>
+              <div style="font-size:12px; color:var(--urg);">Marcada pra Quinta 14h-15h</div>
+            </div>
+
+            <div class="block doctum" style="margin-bottom:16px;">
+              <div class="block-time">QUI · 13h30-17h30</div>
+              <div class="block-name">Revisar pipeline trimestral</div>
+              <div class="block-tags">
+                <span class="frente doctum">Doctum</span>
+                <span class="triade imp">🎯 Importante</span>
+              </div>
+              <div class="block-prio">⭐ Prioridade 1 da semana</div>
+            </div>
+
+            <div class="section-label">💡 Sugestões pra remarcar</div>
+            <div class="suggestion">
+              <strong>Sexta 15h00 - 18h30</strong><br>
+              <span style="color:var(--screen-text-soft); font-size:11px;">Espaço livre, mesma frente</span>
+            </div>
+            <div class="suggestion">
+              <strong>Quarta 17h00 - 19h00</strong><br>
+              <span style="color:var(--screen-text-soft); font-size:11px;">Cabe nos 2h restantes do orçamento</span>
+            </div>
+          </div>
+          <div class="s-footer">
+            <button class="btn">Remarcar pra sexta</button>
+            <button class="btn outline" style="margin-top:6px;">Manter (sobrepor)</button>
+          </div>
+        </div>
+      </div>
+      <div class="screen-when">Quando algo invade, o sistema sugere realocação ativa. Não pune — adapta.</div>
+    </div>
+
+  </div>
+
+  <footer>
+    <strong>Mockups V2 · Sem código</strong><br>
+    8 telas-chave dos 5 Momentos do produto · Lucas Silveira · 25/05/2026<br>
+    Material para discussão de produto, validação com mentorados e construção da planilha do piloto.
+  </footer>
+</div>
+
+<script>
+  // Toggle de tema com persistência via localStorage
+  function applyTheme(theme) {
+    if (theme === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.getElementById('themeIcon').textContent = '🌙';
+      document.getElementById('themeLabel').textContent = 'Modo escuro';
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      document.getElementById('themeIcon').textContent = '☀️';
+      document.getElementById('themeLabel').textContent = 'Modo claro';
+    }
+  }
+
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'light' ? 'dark' : 'light';
+    localStorage.setItem('mockup-theme', next);
+    applyTheme(next);
+  }
+
+  // Aplicar tema salvo ao carregar
+  const saved = localStorage.getItem('mockup-theme') || 'dark';
+  applyTheme(saved);
+</script>
+</body>
+</html>

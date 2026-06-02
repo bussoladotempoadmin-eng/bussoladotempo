@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bússola do Tempo — Planilha Piloto</title>
+<style>
+  :root {
+    --bg-page: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --text-page: #f1f5f9;
+    --text-soft: #94a3b8;
+    --card-bg: #1e293b;
+    --card-bg-2: #0f172a;
+    --border: #334155;
+    --input-bg: #0f172a;
+    --input-text: #f1f5f9;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+
+    --doctum: #3b82f6;
+    --doctum-soft: rgba(59,130,246,0.15);
+    --tribo: #f97316;
+    --tribo-soft: rgba(249,115,22,0.15);
+    --bruna: #a855f7;
+    --bruna-soft: rgba(168,85,247,0.15);
+    --cuidaja: #22c55e;
+    --cuidaja-soft: rgba(34,197,94,0.15);
+
+    --imp: #10b981;
+    --imp-soft: rgba(16,185,129,0.15);
+    --urg: #ef4444;
+    --urg-soft: rgba(239,68,68,0.15);
+    --disp: #94a3b8;
+    --disp-soft: rgba(148,163,184,0.15);
+  }
+  [data-theme="light"] {
+    --bg-page: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    --text-page: #0f172a;
+    --text-soft: #475569;
+    --card-bg: #ffffff;
+    --card-bg-2: #f8fafc;
+    --border: #e2e8f0;
+    --input-bg: #ffffff;
+    --input-text: #0f172a;
+
+    --doctum-soft: #dbeafe;
+    --doctum: #1d4ed8;
+    --tribo-soft: #ffedd5;
+    --tribo: #c2410c;
+    --bruna-soft: #f3e8ff;
+    --bruna: #7e22ce;
+    --cuidaja-soft: #dcfce7;
+    --cuidaja: #15803d;
+
+    --imp-soft: #d1fae5;
+    --imp: #047857;
+    --urg-soft: #fee2e2;
+    --urg: #b91c1c;
+    --disp-soft: #f1f5f9;
+    --disp: #475569;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-page);
+    color: var(--text-page);
+    line-height: 1.5;
+    min-height: 100vh;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px 80px; }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .topbar-left h1 { font-size: 24px; font-weight: 800; }
+  .topbar-left .sub { font-size: 13px; color: var(--text-soft); margin-top: 4px; }
+  .topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--text-page);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.primary:hover { background: var(--accent-hover); }
+  .btn.danger { color: var(--urg); }
+  .btn.sm { padding: 6px 10px; font-size: 12px; }
+
+  .section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .section-title { font-size: 20px; font-weight: 700; }
+  .section-subtitle { font-size: 13px; color: var(--text-soft); margin-top: 4px; }
+
+  .frentes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .frente-card {
+    background: var(--card-bg-2);
+    border: 1px solid var(--border);
+    border-left: 4px solid;
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .frente-card.doctum { border-left-color: var(--doctum); }
+  .frente-card.tribo { border-left-color: var(--tribo); }
+  .frente-card.bruna { border-left-color: var(--bruna); }
+  .frente-card.cuidaja { border-left-color: var(--cuidaja); }
+  .frente-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .frente-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-soft);
+  }
+  .frente-stats strong { color: var(--text-page); font-size: 14px; }
+  .frente-bar {
+    height: 6px;
+    background: var(--card-bg);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .frente-bar-fill {
+    height: 100%;
+    background: currentColor;
+    transition: width 0.3s;
+  }
+  .frente-card.doctum .frente-bar-fill { background: var(--doctum); }
+  .frente-card.tribo .frente-bar-fill { background: var(--tribo); }
+  .frente-card.bruna .frente-bar-fill { background: var(--bruna); }
+  .frente-card.cuidaja .frente-bar-fill { background: var(--cuidaja); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    padding: 10px 8px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-soft);
+    font-weight: 700;
+    background: var(--card-bg-2);
+  }
+  tbody tr:hover { background: var(--card-bg-2); }
+
+  input, select, textarea {
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    color: var(--input-text);
+    padding: 6px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    width: 100%;
+    transition: border-color 0.2s, background 0.3s ease, color 0.3s ease;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+
+  .col-day { width: 70px; }
+  .col-hour { width: 75px; }
+  .col-frente { width: 110px; }
+  .col-task { min-width: 200px; }
+  .col-triade { width: 130px; }
+  .col-actions { width: 50px; text-align: center; }
+
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .pill.imp { background: var(--imp-soft); color: var(--imp); }
+  .pill.urg { background: var(--urg-soft); color: var(--urg); }
+  .pill.disp { background: var(--disp-soft); color: var(--disp); }
+  .pill.doctum { background: var(--doctum-soft); color: var(--doctum); }
+  .pill.tribo { background: var(--tribo-soft); color: var(--tribo); }
+  .pill.bruna { background: var(--bruna-soft); color: var(--bruna); }
+  .pill.cuidaja { background: var(--cuidaja-soft); color: var(--cuidaja); }
+
+  .delete-row {
+    background: transparent;
+    border: none;
+    color: var(--text-soft);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 4px;
+  }
+  .delete-row:hover { color: var(--urg); background: var(--urg-soft); }
+
+  .matrix-wrap { overflow-x: auto; }
+  .matrix-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14px;
+  }
+  .matrix-table th, .matrix-table td {
+    padding: 14px 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--card-bg);
+  }
+  .matrix-table thead th {
+    background: var(--card-bg-2);
+    font-size: 11px;
+  }
+  .matrix-table td:first-child, .matrix-table th:first-child {
+    text-align: left;
+    font-weight: 700;
+  }
+  .matrix-table .row-total td {
+    background: var(--card-bg-2);
+    font-weight: 700;
+    font-size: 15px;
+  }
+  .matrix-table .row-imp td:first-child { color: var(--imp); }
+  .matrix-table .row-urg td:first-child { color: var(--urg); }
+  .matrix-table .row-disp td:first-child { color: var(--disp); }
+  .matrix-cell-value { font-size: 16px; font-weight: 700; }
+  .matrix-cell-percent { font-size: 11px; color: var(--text-soft); margin-top: 2px; }
+
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .comparison-card {
+    background: var(--card-bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .comparison-label { font-size: 11px; text-transform: uppercase; color: var(--text-soft); font-weight: 700; }
+  .comparison-values { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
+  .comparison-from { font-size: 16px; color: var(--text-soft); }
+  .comparison-arrow { color: var(--text-soft); }
+  .comparison-to { font-size: 22px; font-weight: 800; }
+  .comparison-delta { font-size: 12px; margin-top: 4px; font-weight: 600; }
+  .delta-good { color: var(--imp); }
+  .delta-bad { color: var(--urg); }
+
+  .insights-list { display: flex; flex-direction: column; gap: 10px; }
+  .insight {
+    background: var(--card-bg-2);
+    border-left: 4px solid;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .insight-good { border-left-color: var(--imp); }
+  .insight-warn { border-left-color: var(--urg); }
+  .insight-tip { border-left-color: var(--accent); }
+  .insight-neutral { border-left-color: var(--disp); }
+  .insight-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .insight-text { font-size: 13px; color: var(--text-soft); line-height: 1.5; }
+
+  .theme-toggle {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--text-page);
+    padding: 8px 14px;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-soft);
+    font-size: 14px;
+  }
+
+  .summary-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .summary-stat {
+    flex: 1;
+    min-width: 140px;
+    background: var(--card-bg-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .summary-stat-label { font-size: 11px; color: var(--text-soft); text-transform: uppercase; font-weight: 700; }
+  .summary-stat-value { font-size: 22px; font-weight: 800; margin-top: 4px; }
+  .summary-stat-sub { font-size: 12px; color: var(--text-soft); margin-top: 2px; }
+
+  .help-banner {
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--text-page);
+  }
+  .help-banner strong { color: var(--accent); }
+
+  @media (max-width: 768px) {
+    .container { padding: 16px 10px 40px; }
+    .section { padding: 16px; }
+    th, td { padding: 8px 6px; font-size: 12px; }
+    .col-task { min-width: 140px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>🧭 Bússola do Tempo — Planilha Piloto</h1>
+      <div class="sub">Bússola do Tempo · Matriz Frente × Categoria · Salvo automaticamente no navegador</div>
+    </div>
+    <div class="topbar-actions">
+      <button class="theme-toggle" onclick="toggleTheme()"><span id="themeIcon">☀️</span><span id="themeLabel">Modo claro</span></button>
+      <button class="btn" onclick="exportData()">⬇ Exportar dados</button>
+      <button class="btn danger" onclick="resetData()">↻ Reset</button>
+    </div>
+  </div>
+
+  <div class="help-banner">
+    💡 <strong>Como usar:</strong> abaixo está pré-preenchido com o caso do Lucas (Doctum/Tribo/Bruna/CuidaJA). Edite os blocos da semana, escolha a categoria (planejada e realizada), e a matriz + insights se calculam automaticamente. Toda mudança é salva no navegador.
+  </div>
+
+  <!-- FRENTES -->
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">⚙️ Suas frentes</div>
+        <div class="section-subtitle">Áreas que disputam tempo na sua semana · Orçamento de horas/sem</div>
+      </div>
+      <button class="btn sm" onclick="addFrente()">+ Frente</button>
+    </div>
+    <div class="frentes-grid" id="frentesGrid"></div>
+  </div>
+
+  <!-- BLOCOS DA SEMANA -->
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">📅 Blocos da semana</div>
+        <div class="section-subtitle">Planeje e ajuste como cada hora foi (planejado vs realizado)</div>
+      </div>
+      <button class="btn sm primary" onclick="addBloco()">+ Bloco</button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table id="blocosTable">
+        <thead>
+          <tr>
+            <th class="col-day">Dia</th>
+            <th class="col-hour">Início</th>
+            <th class="col-hour">Fim</th>
+            <th class="col-frente">Frente</th>
+            <th class="col-task">Tarefa / entrega</th>
+            <th class="col-triade">Planejado</th>
+            <th class="col-triade">Realizado</th>
+            <th class="col-actions"></th>
+          </tr>
+        </thead>
+        <tbody id="blocosBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ESPELHO -->
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">📊 O Espelho — Matriz Frente × Categoria</div>
+        <div class="section-subtitle">Cálculo automático a partir dos blocos acima · Coluna Realizado</div>
+      </div>
+    </div>
+    <div class="summary-bar" id="summaryBar"></div>
+    <div class="matrix-wrap">
+      <table class="matrix-table" id="matrixTable"></table>
+    </div>
+    <div class="comparison-grid" id="comparisonGrid"></div>
+  </div>
+
+  <!-- INSIGHTS -->
+  <div class="section">
+    <div class="section-head">
+      <div>
+        <div class="section-title">💬 Insights do Coach</div>
+        <div class="section-subtitle">Padrões detectados na sua semana · Linguagem humana</div>
+      </div>
+    </div>
+    <div class="insights-list" id="insightsList"></div>
+  </div>
+
+</div>
+
+<script>
+/* ========== ESTADO ========== */
+const DEFAULT_FRENTES = [
+  { id: 'doctum', nome: 'Doctum', icon: '🏢', cor: 'doctum', orcamento: 36 },
+  { id: 'tribo', nome: 'Tribo', icon: '🛒', cor: 'tribo', orcamento: 18 },
+  { id: 'bruna', nome: 'Dra. Bruna', icon: '🎓', cor: 'bruna', orcamento: 2.5 },
+  { id: 'cuidaja', nome: 'CuidaJA', icon: '🤝', cor: 'cuidaja', orcamento: 2.5 },
+];
+
+const DEFAULT_BLOCOS = [
+  // SEGUNDA
+  { dia: 'SEG', inicio: '08:00', fim: '12:00', frente: 'doctum', tarefa: 'Revisar pipeline + alinhar marketing', planejado: 'imp', realizado: 'imp' },
+  { dia: 'SEG', inicio: '13:30', fim: '18:00', frente: 'doctum', tarefa: '1:1 vendedor X + ajustes', planejado: 'urg', realizado: 'urg' },
+  { dia: 'SEG', inicio: '18:30', fim: '21:30', frente: 'tribo', tarefa: '🎤 Mentoria ao vivo - aula 04', planejado: 'imp', realizado: 'imp' },
+  // TERÇA
+  { dia: 'TER', inicio: '08:00', fim: '12:00', frente: 'doctum', tarefa: 'Reunião comitê + revisar metas', planejado: 'imp', realizado: 'urg' },
+  { dia: 'TER', inicio: '13:30', fim: '14:00', frente: 'bruna', tarefa: 'Status semanal Dra. Bruna', planejado: 'disp', realizado: 'disp' },
+  { dia: 'TER', inicio: '14:00', fim: '14:30', frente: 'cuidaja', tarefa: 'Status CuidaJA', planejado: 'disp', realizado: 'disp' },
+  { dia: 'TER', inicio: '14:30', fim: '17:00', frente: 'tribo', tarefa: 'Gravar aula 05 mentoria', planejado: 'imp', realizado: 'imp' },
+  { dia: 'TER', inicio: '17:00', fim: '19:00', frente: 'doctum', tarefa: 'Email + alinhamentos', planejado: 'disp', realizado: 'disp' },
+  // QUARTA
+  { dia: 'QUA', inicio: '08:00', fim: '12:00', frente: 'doctum', tarefa: 'Reuniões com clientes + forecast', planejado: 'imp', realizado: 'urg' },
+  { dia: 'QUA', inicio: '13:30', fim: '14:00', frente: 'bruna', tarefa: 'Revisar material aula Dra. Bruna', planejado: 'imp', realizado: 'imp' },
+  { dia: 'QUA', inicio: '14:00', fim: '14:30', frente: 'cuidaja', tarefa: 'CuidaJA - mensagens / alinhamento', planejado: 'disp', realizado: 'disp' },
+  { dia: 'QUA', inicio: '14:30', fim: '17:00', frente: 'tribo', tarefa: 'TriboCRM - revisar funcionalidades', planejado: 'imp', realizado: 'imp' },
+  { dia: 'QUA', inicio: '17:00', fim: '19:00', frente: 'doctum', tarefa: 'Doctum - administrativo', planejado: 'disp', realizado: 'disp' },
+  // QUINTA
+  { dia: 'QUI', inicio: '08:00', fim: '12:00', frente: 'doctum', tarefa: 'Workshop com time de vendas', planejado: 'imp', realizado: 'imp' },
+  { dia: 'QUI', inicio: '13:30', fim: '17:30', frente: 'doctum', tarefa: 'Reuniões 1:1 + planejamento', planejado: 'imp', realizado: 'urg' },
+  { dia: 'QUI', inicio: '18:00', fim: '21:00', frente: 'tribo', tarefa: '📺 Live Tribo', planejado: 'imp', realizado: 'imp' },
+  // SEXTA
+  { dia: 'SEX', inicio: '08:00', fim: '12:00', frente: 'doctum', tarefa: 'Fechamento semana + relatórios', planejado: 'imp', realizado: 'urg' },
+  { dia: 'SEX', inicio: '13:30', fim: '14:30', frente: 'bruna', tarefa: 'Reunião Dra. Bruna - revisão semana', planejado: 'imp', realizado: 'imp' },
+  { dia: 'SEX', inicio: '14:30', fim: '15:30', frente: 'cuidaja', tarefa: 'Reunião CuidaJA - revisão semana', planejado: 'imp', realizado: 'imp' },
+  { dia: 'SEX', inicio: '15:30', fim: '19:00', frente: 'doctum', tarefa: 'Doctum - fechamento + emails', planejado: 'urg', realizado: 'urg' },
+  // SÁBADO
+  { dia: 'SÁB', inicio: '08:00', fim: '13:00', frente: 'tribo', tarefa: 'Tribo - estratégia + produto', planejado: 'imp', realizado: 'imp' },
+  { dia: 'SÁB', inicio: '13:00', fim: '13:30', frente: 'bruna', tarefa: 'Bruna - preparar semana', planejado: 'imp', realizado: 'imp' },
+  { dia: 'SÁB', inicio: '13:30', fim: '14:00', frente: 'cuidaja', tarefa: 'CuidaJA - preparar semana', planejado: 'imp', realizado: 'imp' },
+  { dia: 'SÁB', inicio: '14:00', fim: '16:00', frente: 'tribo', tarefa: 'Tribo - conteúdo / produto', planejado: 'imp', realizado: 'imp' },
+];
+
+let state = loadState();
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('planilha-piloto-v1');
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return { frentes: DEFAULT_FRENTES, blocos: DEFAULT_BLOCOS };
+}
+
+function saveState() {
+  localStorage.setItem('planilha-piloto-v1', JSON.stringify(state));
+}
+
+function resetData() {
+  if (!confirm('Tem certeza? Vai apagar tudo e voltar ao estado inicial.')) return;
+  state = { frentes: JSON.parse(JSON.stringify(DEFAULT_FRENTES)), blocos: JSON.parse(JSON.stringify(DEFAULT_BLOCOS)) };
+  saveState();
+  renderAll();
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'planilha-piloto-dados.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ========== UTIL ========== */
+function diffHours(inicio, fim) {
+  const [h1, m1] = inicio.split(':').map(Number);
+  const [h2, m2] = fim.split(':').map(Number);
+  return ((h2*60+m2) - (h1*60+m1)) / 60;
+}
+
+function getFrente(id) {
+  return state.frentes.find(f => f.id === id) || { id, nome: id, cor: 'doctum', icon: '?' };
+}
+
+/* ========== RENDER FRENTES ========== */
+function renderFrentes() {
+  const grid = document.getElementById('frentesGrid');
+  if (!state.frentes.length) {
+    grid.innerHTML = '<div class="empty-state">Nenhuma frente. Adicione pra começar.</div>';
+    return;
+  }
+  // calcular realizado por frente
+  const realizadoPorFrente = {};
+  for (const b of state.blocos) {
+    const h = diffHours(b.inicio, b.fim);
+    realizadoPorFrente[b.frente] = (realizadoPorFrente[b.frente] || 0) + h;
+  }
+
+  grid.innerHTML = state.frentes.map(f => {
+    const realizado = realizadoPorFrente[f.id] || 0;
+    const pct = f.orcamento > 0 ? Math.min(100, (realizado / f.orcamento) * 100) : 0;
+    return `
+      <div class="frente-card ${f.cor}">
+        <div class="frente-name">
+          <span>${f.icon} ${f.nome}</span>
+          <button class="delete-row" onclick="removeFrente('${f.id}')" title="Remover frente">×</button>
+        </div>
+        <div class="frente-stats">
+          <span>Orçamento</span>
+          <strong>${f.orcamento}h</strong>
+        </div>
+        <div class="frente-stats" style="margin-top:4px;">
+          <span>Realizado</span>
+          <strong>${realizado.toFixed(1)}h</strong>
+        </div>
+        <div class="frente-bar"><div class="frente-bar-fill" style="width:${pct}%"></div></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function addFrente() {
+  const nome = prompt('Nome da frente:');
+  if (!nome) return;
+  const orcamento = parseFloat(prompt('Orçamento de horas/semana:', '5')) || 5;
+  const cores = ['doctum','tribo','bruna','cuidaja'];
+  const id = nome.toLowerCase().replace(/[^a-z0-9]/g, '') + Date.now().toString(36);
+  state.frentes.push({ id, nome, icon: '🆕', cor: cores[state.frentes.length % cores.length], orcamento });
+  saveState();
+  renderAll();
+}
+
+function removeFrente(id) {
+  if (!confirm('Remover essa frente? Blocos associados ficarão sem frente.')) return;
+  state.frentes = state.frentes.filter(f => f.id !== id);
+  saveState();
+  renderAll();
+}
+
+/* ========== RENDER BLOCOS ========== */
+const DIAS = ['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
+const TRIADE = [
+  { id: 'imp', label: '🎯 Importante', cls: 'imp' },
+  { id: 'urg', label: '🔥 Urgente', cls: 'urg' },
+  { id: 'disp', label: '💨 Disperso', cls: 'disp' },
+];
+
+function renderBlocos() {
+  const tbody = document.getElementById('blocosBody');
+  if (!state.blocos.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Nenhum bloco. Clique em "+ Bloco" pra adicionar.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = state.blocos.map((b, i) => `
+    <tr>
+      <td>
+        <select onchange="updateBloco(${i}, 'dia', this.value)">
+          ${DIAS.map(d => `<option value="${d}" ${b.dia===d?'selected':''}>${d}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="time" value="${b.inicio}" onchange="updateBloco(${i}, 'inicio', this.value)"></td>
+      <td><input type="time" value="${b.fim}" onchange="updateBloco(${i}, 'fim', this.value)"></td>
+      <td>
+        <select onchange="updateBloco(${i}, 'frente', this.value)">
+          ${state.frentes.map(f => `<option value="${f.id}" ${b.frente===f.id?'selected':''}>${f.icon} ${f.nome}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="text" value="${b.tarefa.replace(/"/g,'&quot;')}" onchange="updateBloco(${i}, 'tarefa', this.value)"></td>
+      <td>
+        <select onchange="updateBloco(${i}, 'planejado', this.value)">
+          ${TRIADE.map(t => `<option value="${t.id}" ${b.planejado===t.id?'selected':''}>${t.label}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select onchange="updateBloco(${i}, 'realizado', this.value)">
+          ${TRIADE.map(t => `<option value="${t.id}" ${b.realizado===t.id?'selected':''}>${t.label}</option>`).join('')}
+        </select>
+      </td>
+      <td><button class="delete-row" onclick="removeBloco(${i})" title="Remover">×</button></td>
+    </tr>
+  `).join('');
+}
+
+function addBloco() {
+  state.blocos.push({
+    dia: 'SEG', inicio: '08:00', fim: '09:00',
+    frente: state.frentes[0]?.id || 'doctum',
+    tarefa: '', planejado: 'imp', realizado: 'imp'
+  });
+  saveState();
+  renderAll();
+}
+
+function removeBloco(i) {
+  state.blocos.splice(i, 1);
+  saveState();
+  renderAll();
+}
+
+function updateBloco(i, campo, valor) {
+  state.blocos[i][campo] = valor;
+  saveState();
+  renderAll();
+}
+
+/* ========== CÁLCULO MATRIZ ========== */
+function calcMatrix(coluna) {
+  // coluna: 'planejado' ou 'realizado'
+  const matrix = {};
+  let totalPorFrente = {};
+  let totalPorTriade = { imp: 0, urg: 0, disp: 0 };
+  let total = 0;
+  for (const f of state.frentes) {
+    matrix[f.id] = { imp: 0, urg: 0, disp: 0 };
+    totalPorFrente[f.id] = 0;
+  }
+  for (const b of state.blocos) {
+    const h = diffHours(b.inicio, b.fim);
+    if (h <= 0) continue;
+    if (!matrix[b.frente]) matrix[b.frente] = { imp: 0, urg: 0, disp: 0 };
+    if (totalPorFrente[b.frente] === undefined) totalPorFrente[b.frente] = 0;
+    const cat = b[coluna] || 'disp';
+    matrix[b.frente][cat] += h;
+    totalPorFrente[b.frente] += h;
+    totalPorTriade[cat] += h;
+    total += h;
+  }
+  return { matrix, totalPorFrente, totalPorTriade, total };
+}
+
+function renderMatrix() {
+  const real = calcMatrix('realizado');
+  const plan = calcMatrix('planejado');
+
+  // SUMMARY BAR
+  const summary = document.getElementById('summaryBar');
+  summary.innerHTML = `
+    <div class="summary-stat">
+      <div class="summary-stat-label">Total realizado</div>
+      <div class="summary-stat-value">${real.total.toFixed(1)}h</div>
+      <div class="summary-stat-sub">planejado: ${plan.total.toFixed(1)}h</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-stat-label">🎯 Importante</div>
+      <div class="summary-stat-value" style="color:var(--imp)">${real.total > 0 ? (100 * real.totalPorTriade.imp / real.total).toFixed(0) : 0}%</div>
+      <div class="summary-stat-sub">${real.totalPorTriade.imp.toFixed(1)}h de ${real.total.toFixed(1)}h</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-stat-label">🔥 Urgente</div>
+      <div class="summary-stat-value" style="color:var(--urg)">${real.total > 0 ? (100 * real.totalPorTriade.urg / real.total).toFixed(0) : 0}%</div>
+      <div class="summary-stat-sub">${real.totalPorTriade.urg.toFixed(1)}h de ${real.total.toFixed(1)}h</div>
+    </div>
+    <div class="summary-stat">
+      <div class="summary-stat-label">💨 Disperso</div>
+      <div class="summary-stat-value" style="color:var(--disp)">${real.total > 0 ? (100 * real.totalPorTriade.disp / real.total).toFixed(0) : 0}%</div>
+      <div class="summary-stat-sub">${real.totalPorTriade.disp.toFixed(1)}h de ${real.total.toFixed(1)}h</div>
+    </div>
+  `;
+
+  // MATRIX TABLE
+  const table = document.getElementById('matrixTable');
+  const frentes = state.frentes;
+  let html = '<thead><tr><th></th>';
+  for (const f of frentes) html += `<th>${f.icon} ${f.nome}</th>`;
+  html += '<th>Total</th></tr></thead><tbody>';
+
+  for (const t of TRIADE) {
+    html += `<tr class="row-${t.id}"><td>${t.label}</td>`;
+    for (const f of frentes) {
+      const v = real.matrix[f.id]?.[t.id] || 0;
+      const totalF = real.totalPorFrente[f.id] || 0;
+      const pct = totalF > 0 ? (100 * v / totalF).toFixed(0) : 0;
+      html += `<td><div class="matrix-cell-value">${v.toFixed(1)}h</div>${v > 0 ? `<div class="matrix-cell-percent">${pct}%</div>` : ''}</td>`;
+    }
+    const tt = real.totalPorTriade[t.id];
+    const ttPct = real.total > 0 ? (100 * tt / real.total).toFixed(0) : 0;
+    html += `<td><div class="matrix-cell-value">${tt.toFixed(1)}h</div><div class="matrix-cell-percent">${ttPct}%</div></td></tr>`;
+  }
+
+  html += '<tr class="row-total"><td>Total</td>';
+  for (const f of frentes) {
+    const tt = real.totalPorFrente[f.id] || 0;
+    const orc = f.orcamento || 0;
+    const status = tt > orc ? '⬆' : tt < orc ? '⬇' : '✓';
+    html += `<td><div class="matrix-cell-value">${tt.toFixed(1)}h</div><div class="matrix-cell-percent">${status} de ${orc}h</div></td>`;
+  }
+  html += `<td><div class="matrix-cell-value">${real.total.toFixed(1)}h</div></td></tr>`;
+  html += '</tbody>';
+  table.innerHTML = html;
+
+  // COMPARISON: planejado vs realizado por categoria
+  const comp = document.getElementById('comparisonGrid');
+  const cats = [
+    { id: 'imp', label: '🎯 Importante', color: 'imp' },
+    { id: 'urg', label: '🔥 Urgente', color: 'urg' },
+    { id: 'disp', label: '💨 Disperso', color: 'disp' },
+  ];
+  comp.innerHTML = cats.map(c => {
+    const planPct = plan.total > 0 ? (100 * plan.totalPorTriade[c.id] / plan.total) : 0;
+    const realPct = real.total > 0 ? (100 * real.totalPorTriade[c.id] / real.total) : 0;
+    const delta = realPct - planPct;
+    const isGoodChange = (c.id === 'imp' && delta > 0) || (c.id !== 'imp' && delta < 0);
+    const deltaCls = Math.abs(delta) < 2 ? '' : (isGoodChange ? 'delta-good' : 'delta-bad');
+    return `
+      <div class="comparison-card">
+        <div class="comparison-label">${c.label} · planejado vs realizado</div>
+        <div class="comparison-values">
+          <span class="comparison-from">${planPct.toFixed(0)}%</span>
+          <span class="comparison-arrow">→</span>
+          <span class="comparison-to" style="color:var(--${c.color})">${realPct.toFixed(0)}%</span>
+        </div>
+        <div class="comparison-delta ${deltaCls}">${delta >= 0 ? '+' : ''}${delta.toFixed(0)}pp ${Math.abs(delta) < 2 ? '· no plano' : (isGoodChange ? '· bom sinal' : '· atenção')}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ========== INSIGHTS (regras de coach gentil) ========== */
+function generateInsights() {
+  const real = calcMatrix('realizado');
+  const plan = calcMatrix('planejado');
+  const insights = [];
+
+  if (real.total === 0) {
+    insights.push({ type: 'neutral', title: 'Sem dados ainda', text: 'Preencha alguns blocos pra ver os insights da sua semana.' });
+    return insights;
+  }
+
+  const impPct = (100 * real.totalPorTriade.imp / real.total);
+  const urgPct = (100 * real.totalPorTriade.urg / real.total);
+  const dispPct = (100 * real.totalPorTriade.disp / real.total);
+
+  // Bússola global
+  if (impPct >= 50) {
+    insights.push({ type: 'good', title: '✅ Você viveu em Importante', text: `${impPct.toFixed(0)}% da sua semana foi Importante. Esse é o sinal de uma semana onde estratégia venceu reatividade. Mantenha o ritmo.` });
+  } else if (impPct < 30) {
+    insights.push({ type: 'warn', title: '⚠️ Pouco tempo em Importante', text: `Apenas ${impPct.toFixed(0)}% da semana foi Importante. Sua estratégia está perdendo pra urgência alheia. Vale revisar o que está protegendo deep work.` });
+  }
+
+  if (urgPct >= 50) {
+    insights.push({ type: 'warn', title: '🔥 Semana de bombeiro', text: `${urgPct.toFixed(0)}% Urgente. Você está reagindo, não decidindo. Olhe quais frentes mais consumiram Urgente — provavelmente dá pra delegar ou redesenhar pipeline.` });
+  }
+
+  if (dispPct >= 20) {
+    insights.push({ type: 'warn', title: '💨 Disperso alto', text: `${dispPct.toFixed(0)}% Disperso = ${(real.totalPorTriade.disp).toFixed(1)}h de coisa que pareceu trabalho mas não gerou resultado. Vale cortar reuniões/mensagens sem propósito.` });
+  } else if (dispPct < 10) {
+    insights.push({ type: 'good', title: '🎯 Pouco Disperso', text: `Apenas ${dispPct.toFixed(0)}% Disperso — você tá protegendo bem o tempo de coisa que não rende.` });
+  }
+
+  // Por frente
+  for (const f of state.frentes) {
+    const m = real.matrix[f.id];
+    const totF = real.totalPorFrente[f.id] || 0;
+    if (totF === 0) continue;
+    const fUrgPct = (100 * m.urg / totF);
+    const fImpPct = (100 * m.imp / totF);
+    if (fUrgPct >= 60) {
+      insights.push({ type: 'warn', title: `⚠️ ${f.icon} ${f.nome} virou bombeiro`, text: `${fUrgPct.toFixed(0)}% Urgente nessa frente. Vale pensar em delegar, redesenhar pipeline de demanda ou aceitar conscientemente que essa é sua frente reativa.` });
+    }
+    if (fImpPct >= 70) {
+      insights.push({ type: 'good', title: `🎯 ${f.icon} ${f.nome} bem protegida`, text: `${fImpPct.toFixed(0)}% Importante. Você está investindo bem nessa frente — onde provavelmente está seu maior ROI estratégico.` });
+    }
+    // orçamento vs realizado
+    if (f.orcamento > 0) {
+      const dif = totF - f.orcamento;
+      if (Math.abs(dif) > 2) {
+        if (dif > 0) {
+          insights.push({ type: 'tip', title: `📌 ${f.icon} ${f.nome} estourou orçamento`, text: `Planejou ${f.orcamento}h, executou ${totF.toFixed(1)}h (+${dif.toFixed(1)}h). Outra frente provavelmente sofreu.` });
+        } else {
+          insights.push({ type: 'tip', title: `📌 ${f.icon} ${f.nome} ficou abaixo do orçamento`, text: `Planejou ${f.orcamento}h, executou ${totF.toFixed(1)}h (${dif.toFixed(1)}h a menos). Algo invadiu — ou essa frente não tava precisando.` });
+        }
+      }
+    }
+  }
+
+  // Planejado vs Realizado (diferença Importante)
+  const planImpPct = plan.total > 0 ? (100 * plan.totalPorTriade.imp / plan.total) : 0;
+  const deltaImp = impPct - planImpPct;
+  if (Math.abs(deltaImp) > 8) {
+    if (deltaImp < 0) {
+      insights.push({ type: 'warn', title: '📉 Planejou mais Importante do que executou', text: `Planejou ${planImpPct.toFixed(0)}% Importante, executou ${impPct.toFixed(0)}% (${deltaImp.toFixed(0)}pp). Identifique os blocos que viraram outra coisa — é onde sua semana está vazando.` });
+    } else {
+      insights.push({ type: 'good', title: '📈 Executou mais Importante do que planejou', text: `${deltaImp.toFixed(0)}pp acima do plano em Importante. Bom sinal de que você está protegendo melhor que esperava.` });
+    }
+  }
+
+  // Top 3 desvios (planejado != realizado)
+  const desvios = state.blocos
+    .filter(b => b.planejado !== b.realizado)
+    .map(b => ({ ...b, horas: diffHours(b.inicio, b.fim) }))
+    .filter(d => d.horas > 0)
+    .sort((a, b) => b.horas - a.horas)
+    .slice(0, 3);
+
+  if (desvios.length > 0) {
+    const lista = desvios.map(d => {
+      const f = getFrente(d.frente);
+      return `${d.dia} ${d.inicio}-${d.fim} (${f.nome}): ${TRIADE.find(t=>t.id===d.planejado)?.label.replace(/[🎯🔥💨]\s*/,'') || ''} → ${TRIADE.find(t=>t.id===d.realizado)?.label.replace(/[🎯🔥💨]\s*/,'') || ''}`;
+    }).join(' · ');
+    insights.push({ type: 'tip', title: '🔄 Top desvios da semana (planejado ≠ realizado)', text: lista });
+  }
+
+  if (insights.length === 0) {
+    insights.push({ type: 'good', title: '✓ Semana sem padrões críticos', text: 'Sua semana parece equilibrada. Mantenha o ritmo e revise daqui a 4 semanas pra ver tendência.' });
+  }
+
+  return insights;
+}
+
+function renderInsights() {
+  const list = document.getElementById('insightsList');
+  const insights = generateInsights();
+  list.innerHTML = insights.map(i => `
+    <div class="insight insight-${i.type}">
+      <div class="insight-title">${i.title}</div>
+      <div class="insight-text">${i.text}</div>
+    </div>
+  `).join('');
+}
+
+/* ========== ORQUESTRADOR ========== */
+function renderAll() {
+  renderFrentes();
+  renderBlocos();
+  renderMatrix();
+  renderInsights();
+}
+
+/* ========== TEMA ========== */
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('themeIcon').textContent = '🌙';
+    document.getElementById('themeLabel').textContent = 'Modo escuro';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.getElementById('themeIcon').textContent = '☀️';
+    document.getElementById('themeLabel').textContent = 'Modo claro';
+  }
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'light' ? 'dark' : 'light';
+  localStorage.setItem('planilha-piloto-theme', next);
+  applyTheme(next);
+}
+applyTheme(localStorage.getItem('planilha-piloto-theme') || 'dark');
+
+renderAll();
+</script>
+</body>
+</html>

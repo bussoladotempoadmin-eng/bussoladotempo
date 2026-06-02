@@ -59,3 +59,7 @@ logs/
 coverage/
 playwright-report/
 test-results/
+
+# Conteúdo privado do fundador (senhas, agenda pessoal pausada, etc.)
+# Não compartilhar fora do PC do Lucas.
+pessoal/
