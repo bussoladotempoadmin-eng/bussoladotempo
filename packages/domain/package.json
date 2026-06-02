@@ -1,0 +1,8 @@
+{
+  "name": "@bussola/domain",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Lógica de domínio: AgendaSuggester, EspelhoCalculator, InsightEngine",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts"
+}
