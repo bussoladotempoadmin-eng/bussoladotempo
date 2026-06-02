@@ -1,2 +1,21 @@
-// Placeholder. Prisma client será configurado na Etapa 2.
-export const dbPlaceholder = true;
+/**
+ * @bussola/db — exporta a instância singleton do Prisma Client
+ * Uso: import { prisma } from '@bussola/db'
+ */
+import { PrismaClient } from '@prisma/client';
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
+
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
+}
+
+export * from '@prisma/client';

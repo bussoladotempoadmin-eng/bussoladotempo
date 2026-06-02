@@ -1,0 +1,251 @@
+// ============================================================
+// Bússola do Tempo — Schema do banco de dados
+// Etapa 2 do roadmap (16-roadmap-construcao.md)
+// Spec técnica: 14-spec-tecnica-app.md §6
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum SemanaInicio {
+  DOMINGO
+  SEGUNDA
+}
+
+enum DiaSemana {
+  SEG
+  TER
+  QUA
+  QUI
+  SEX
+  SAB
+  DOM
+}
+
+enum Categoria {
+  IMPORTANTE
+  URGENTE
+  DISPERSO
+}
+
+enum StatusSemana {
+  PLANEJANDO  // em planejamento (antes de começar)
+  ATIVA       // semana corrente
+  REVISAO     // domingo, em revisão
+  FECHADA     // arquivada
+}
+
+enum FonteOrigem {
+  MANUAL
+  AGENDA_PADRAO    // gerado pelo AgendaSuggester
+  CALENDAR_IMPORT  // V2: importado do Google Calendar
+}
+
+enum TipoInsight {
+  GOOD
+  WARN
+  TIP
+  NEUTRAL
+}
+
+// ============================================================
+// AUTENTICAÇÃO (NextAuth)
+// ============================================================
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  name          String?
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  workspaces    Workspace[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================
+// DOMÍNIO — Workspace e Frentes
+// ============================================================
+
+model Workspace {
+  id            String       @id @default(cuid())
+  userId        String
+  nome          String       @default("Meu workspace")
+  timezone      String       @default("America/Sao_Paulo")
+  semanaInicio  SemanaInicio @default(DOMINGO)
+  horaAcordar   String       @default("06:00")
+  horaDormir    String       @default("22:30")
+  horaAlmocoIni String       @default("12:00")
+  horaAlmocoFim String       @default("13:30")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  frentes      Frente[]
+  compromissos CompromissoFixo[]
+  semanas      SemanaPlano[]
+
+  @@index([userId])
+}
+
+model Frente {
+  id             String   @id @default(cuid())
+  workspaceId    String
+  nome           String
+  icone          String   @default("📌")
+  cor            String   @default("#3b82f6")
+  orcamentoHoras Float    @default(0)
+  ordem          Int      @default(0)
+  ativa          Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  workspace    Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  blocos       Bloco[]
+  compromissos CompromissoFixo[]
+
+  @@index([workspaceId])
+}
+
+model CompromissoFixo {
+  id          String    @id @default(cuid())
+  workspaceId String
+  diaSemana   DiaSemana
+  horaInicio  String    // "HH:mm"
+  horaFim     String    // "HH:mm"
+  descricao   String
+  frenteId    String?
+  categoria   Categoria @default(IMPORTANTE)
+  createdAt   DateTime  @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  frente    Frente?   @relation(fields: [frenteId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+}
+
+// ============================================================
+// DOMÍNIO — Semana, Blocos, Revisão, Insights
+// ============================================================
+
+model SemanaPlano {
+  id           String       @id @default(cuid())
+  workspaceId  String
+  semanaIso    String       // ex: "2026-W24"
+  status       StatusSemana @default(PLANEJANDO)
+  prioridade1  String?      // ID do bloco prioritário
+  prioridade2  String?
+  prioridade3  String?
+  riscoSemana  String?      @db.Text
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  blocos    Bloco[]
+  revisao   Revisao?
+  insights  Insight[]
+
+  @@unique([workspaceId, semanaIso])
+  @@index([workspaceId])
+}
+
+model Bloco {
+  id                 String      @id @default(cuid())
+  semanaPlanoId      String
+  frenteId           String
+  diaSemana          DiaSemana
+  horaInicio         String      // "HH:mm"
+  horaFim            String      // "HH:mm"
+  tarefa             String      @db.Text
+  categoriaPlanejada Categoria
+  categoriaRealizada Categoria
+  motivoDesvio       String?     @db.Text
+  prioridadeSemana   Int?        // 1, 2 ou 3
+  invadido           Boolean     @default(false)
+  fonteOrigem        FonteOrigem @default(MANUAL)
+  externalEventId    String?     // id do Google Calendar (V2)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  semanaPlano SemanaPlano @relation(fields: [semanaPlanoId], references: [id], onDelete: Cascade)
+  frente      Frente      @relation(fields: [frenteId], references: [id])
+
+  @@index([semanaPlanoId])
+  @@index([frenteId])
+}
+
+model Revisao {
+  id                String    @id @default(cuid())
+  semanaPlanoId     String    @unique
+  retroFuncionou    String?   @db.Text
+  retroNaoFuncionou String?   @db.Text
+  retroMudanca      String?   @db.Text
+  sensacaoMedia     Int?      // 1-5
+  fechadaEm         DateTime?
+  createdAt         DateTime  @default(now())
+
+  semanaPlano SemanaPlano @relation(fields: [semanaPlanoId], references: [id], onDelete: Cascade)
+}
+
+model Insight {
+  id            String      @id @default(cuid())
+  semanaPlanoId String
+  tipo          TipoInsight
+  titulo        String
+  texto         String      @db.Text
+  frenteId      String?     // opcional, quando insight é sobre uma frente
+  geradoEm      DateTime    @default(now())
+
+  semanaPlano SemanaPlano @relation(fields: [semanaPlanoId], references: [id], onDelete: Cascade)
+
+  @@index([semanaPlanoId])
+}
