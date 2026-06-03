@@ -8,9 +8,9 @@
 | 3 | Autenticação (NextAuth + magic link) | ✅ | `b53dd10` |
 | 4 | CRUD Frentes | ✅ | `cc652fc` |
 | 5 | CRUD Compromissos Fixos | ✅ | `69334da` |
-| 6 | AgendaSuggester (algoritmo) | ✅ | — |
-| 7 | CRUD Blocos da Semana | ⏳ próxima | — |
-| 8 | EspelhoCalculator (matriz) | ⏸ | — |
+| 6 | AgendaSuggester (algoritmo) | ✅ | `80fec7a` |
+| 7 | CRUD Blocos da Semana | ✅ | — |
+| 8 | EspelhoCalculator (matriz) | ⏳ próxima | — |
 | 9 | InsightEngine (Coach Gentil) | ⏸ | — |
 | 10 | Revisão Semanal | ⏸ | — |
 | 11 | Painel do Dia | ⏸ | — |
@@ -18,6 +18,28 @@
 | 13 | Fechamento da noite | ⏸ | — |
 | 14 | PWA + polimento | ⏸ | — |
 | 15 | Testes + Deploy + Domínio | ⏸ | — |
+
+## Etapa 7 — entregue em 02/06/2026
+
+### O que ficou pronto
+
+**CRUD completo de Blocos da Semana** — equivalente online da aba "Blocos" da planilha.
+
+- **Validação Zod** em `apps/web/src/lib/schemas/bloco.ts` (dia, horários `HH:mm`,
+  tarefa, frente obrigatória, categorias planejada/realizada, hora-fim > início).
+- **Helpers de semana ISO** em `apps/web/src/lib/semana.ts`: cálculo da semana ISO,
+  navegação (semana anterior/próxima), rótulo de intervalo, e `getOrCreateSemana`
+  (cria a SemanaPlano no primeiro acesso).
+- **Rotas de API:**
+  - `GET /api/blocos?semana=2026-W24` — lista os blocos da semana
+  - `POST /api/blocos` — cria (resolve/cria a SemanaPlano; valida frente do workspace)
+  - `PATCH/DELETE /api/blocos/[id]` — edita e remove (posse via SemanaPlano → workspace)
+- **Página `/semana/[iso]`** (e `/semana` → redireciona pra semana atual):
+  blocos agrupados por dia, **cor por frente** (borda) + **cor por categoria** (chips
+  da tríade), badge de desvio planejado→realizado, navegação entre semanas, total de
+  horas por dia e da semana. Formulário inline pra criar/editar.
+
+---
 
 ## Etapa 6 — entregue em 02/06/2026
 

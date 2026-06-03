@@ -10,6 +10,7 @@ import {
   Compass,
   CalendarClock,
   CalendarRange,
+  CalendarDays,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -93,6 +94,14 @@ export function UserMenu({ className }: { className?: string }) {
             >
               <CalendarRange className="h-4 w-4" />
               Agenda padrão
+            </Link>
+            <Link
+              href="/semana"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+            >
+              <CalendarDays className="h-4 w-4" />
+              Semana atual
             </Link>
             <Link
               href="/perfil"
