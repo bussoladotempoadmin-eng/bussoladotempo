@@ -7,9 +7,9 @@
 | 2 | Prisma + Supabase + schema + migration + seed | ✅ | — |
 | 3 | Autenticação (NextAuth + magic link) | ✅ | `b53dd10` |
 | 4 | CRUD Frentes | ✅ | `cc652fc` |
-| 5 | CRUD Compromissos Fixos | ✅ | — |
-| 6 | AgendaSuggester (algoritmo) | ⏳ próxima | — |
-| 7 | CRUD Blocos da Semana | ⏸ | — |
+| 5 | CRUD Compromissos Fixos | ✅ | `69334da` |
+| 6 | AgendaSuggester (algoritmo) | ✅ | — |
+| 7 | CRUD Blocos da Semana | ⏳ próxima | — |
 | 8 | EspelhoCalculator (matriz) | ⏸ | — |
 | 9 | InsightEngine (Coach Gentil) | ⏸ | — |
 | 10 | Revisão Semanal | ⏸ | — |
@@ -18,6 +18,34 @@
 | 13 | Fechamento da noite | ⏸ | — |
 | 14 | PWA + polimento | ⏸ | — |
 | 15 | Testes + Deploy + Domínio | ⏸ | — |
+
+## Etapa 6 — entregue em 02/06/2026
+
+### O que ficou pronto
+
+**Algoritmo `AgendaSuggester`** (o coração do produto) + **testes Vitest** + tela.
+
+- **`packages/domain/src/agenda-suggester.ts`** — heurística V1 da §9.1 da spec,
+  função pura e determinística:
+  - Janelas por dia (manhã pós-acordar+1h, tarde até dormir-30min)
+  - Subtrai compromissos fixos, distribui cada frente por prioridade (campo `ordem`),
+    preferindo manhãs e espalhando entre os dias úteis (SEG–SEX)
+  - Junta blocos contíguos e retorna aviso de capacidade quando o orçamento não cabe
+- **`agenda-suggester.test.ts`** — 6 testes (os 4 obrigatórios da spec + manhãs +
+  frente 0h). Rodar com `pnpm test`.
+- **Infra de testes:** Vitest adicionado ao `@bussola/domain`; script `test` na raiz.
+- **`POST /api/agenda-padrao`** — gera o preview (sem persistir; persistência fica
+  na Etapa 7).
+- **Página `/agenda-padrao`** — botão "Gerar agenda padrão", grid semanal SEG–SEX
+  com blocos coloridos por frente, compromissos fixos como blocos travados,
+  legenda com horas por frente e aviso de capacidade.
+
+### Achado importante (validado pelos testes)
+A capacidade de SEG–SEX do Lucas é ~56,5h, mas o orçamento é 59h. O algoritmo
+**avisa que excede** e sugere usar o sábado ou reduzir uma frente — comportamento
+correto, bate com a realidade (a agenda real do Lucas usa o sábado).
+
+---
 
 ## Etapa 5 — entregue em 02/06/2026
 
