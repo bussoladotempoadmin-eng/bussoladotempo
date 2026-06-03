@@ -14,10 +14,26 @@
 | 9 | InsightEngine (Coach Gentil) | ✅ | `ad7c412` |
 | 10 | Revisão Semanal | ✅ | `e5baa7f` |
 | 11 | Painel do Dia | ✅ | `6022747` |
-| 12 | Swipe rápido entre blocos | ✅ | — |
-| 13 | Fechamento da noite | ⏳ próxima | — |
-| 14 | PWA + polimento | ⏸ | — |
+| 12 | Swipe rápido entre blocos | ✅ | `c11746a` |
+| 13 | Fechamento da noite | ✅ | — |
+| 14 | PWA + polimento | ⏳ próxima | — |
 | 15 | Testes + Deploy + Domínio | ⏸ | — |
+
+## Etapa 13 — entregue em 02/06/2026
+
+### O que ficou pronto
+
+**Fechamento da noite** — ritual de 2 min antes de dormir.
+
+- **Novo modelo `FechamentoDia`** (migration `add_fechamento_dia`): 1 anotação por
+  dia por workspace (`@@unique([workspaceId, data])`) com destaque, aprendizado e nota.
+- **`GET/PUT /api/noite`** (upsert por data) + Zod em `lib/schemas/noite.ts`.
+- **Página `/noite`** + `noite-form.tsx` (client): resumo do dia (horas, quantos
+  blocos foram como planejado vs desviaram — calculado no cliente pra respeitar o
+  timezone), 2 campos livres (o que foi bom / o que melhorar) e nota 1-5. Carrega o
+  fechamento existente do dia pra reeditar. Tela de sucesso ao fechar.
+
+---
 
 ## Etapa 12 — entregue em 02/06/2026
 

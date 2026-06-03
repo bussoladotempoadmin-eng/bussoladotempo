@@ -13,6 +13,7 @@ import {
   CalendarDays,
   LayoutGrid,
   ClipboardCheck,
+  Moon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -120,6 +121,14 @@ export function UserMenu({ className }: { className?: string }) {
             >
               <ClipboardCheck className="h-4 w-4" />
               Revisão semanal
+            </Link>
+            <Link
+              href="/noite"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+            >
+              <Moon className="h-4 w-4" />
+              Fechamento da noite
             </Link>
             <Link
               href="/perfil"

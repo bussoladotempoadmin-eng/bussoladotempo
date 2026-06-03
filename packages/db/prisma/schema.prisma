@@ -133,6 +133,7 @@ model Workspace {
   frentes      Frente[]
   compromissos CompromissoFixo[]
   semanas      SemanaPlano[]
+  fechamentos  FechamentoDia[]
 
   @@index([userId])
 }
@@ -153,6 +154,22 @@ model Frente {
   blocos       Bloco[]
   compromissos CompromissoFixo[]
 
+  @@index([workspaceId])
+}
+
+model FechamentoDia {
+  id          String   @id @default(cuid())
+  workspaceId String
+  data        String   // "YYYY-MM-DD" (dia local do usuário)
+  destaque    String?  @db.Text // o que foi bom hoje
+  aprendizado String?  @db.Text // o que dá pra melhorar amanhã
+  nota        Int? // 1-5
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, data])
   @@index([workspaceId])
 }
 

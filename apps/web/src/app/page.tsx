@@ -128,9 +128,9 @@ function LandingHome() {
         </div>
 
         <div className="grid w-full max-w-3xl grid-cols-1 gap-4 pt-8 md:grid-cols-3">
-          <StatusCard label="Etapa 9" title="Insights (Coach)" status="✅ Concluída" />
-          <StatusCard label="Etapa 10" title="Revisão Semanal" status="✅ Concluída" />
           <StatusCard label="Etapa 11" title="Painel do Dia" status="✅ Concluída" />
+          <StatusCard label="Etapa 12" title="Swipe rápido" status="✅ Concluída" />
+          <StatusCard label="Etapa 13" title="Fechamento da noite" status="✅ Concluída" />
         </div>
       </section>
 
