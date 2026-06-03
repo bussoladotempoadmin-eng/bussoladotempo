@@ -15,9 +15,31 @@
 | 10 | Revisão Semanal | ✅ | `e5baa7f` |
 | 11 | Painel do Dia | ✅ | `6022747` |
 | 12 | Swipe rápido entre blocos | ✅ | `c11746a` |
-| 13 | Fechamento da noite | ✅ | — |
-| 14 | PWA + polimento | ⏳ próxima | — |
-| 15 | Testes + Deploy + Domínio | ⏸ | — |
+| 13 | Fechamento da noite | ✅ | `4daff37` |
+| 14 | PWA + polimento | ✅ | — |
+| 15 | Testes + Deploy + Domínio | ⏳ próxima (precisa do Lucas) | — |
+
+## Etapa 14 — entregue em 02/06/2026
+
+### O que ficou pronto
+
+**PWA — instalável no celular.**
+
+- **Ícones** (compasso em azul da marca) gerados em `public/`: 192, 512, maskable 512
+  e apple-touch 180. Script reproduzível em `apps/web/scripts/gen-icons.mjs` (usa
+  `sharp` instalado ad-hoc — não fica como dependência do app).
+- **Manifesto** em `app/manifest.ts` (name, short_name, display standalone,
+  theme/background color, ícones any + maskable).
+- **Service worker** `public/sw.js`: shell offline + cache-first de estáticos +
+  network-first nas navegações (com fallback offline). Não cacheia `/api`.
+  Registrado via `components/pwa-register.tsx` (só em produção).
+- **Metadata** no `layout.tsx`: manifest, apple-web-app, ícones e `themeColor`.
+- Tema claro/escuro persistente (next-themes) já vinha da Etapa 1.
+
+> Para instalar: abrir o site no celular → "Adicionar à tela inicial". O service
+> worker só ativa em produção (após o deploy da Etapa 15).
+
+---
 
 ## Etapa 13 — entregue em 02/06/2026
 
