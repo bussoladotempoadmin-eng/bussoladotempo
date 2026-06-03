@@ -11,13 +11,36 @@
 | 6 | AgendaSuggester (algoritmo) | ✅ | `80fec7a` |
 | 7 | CRUD Blocos da Semana | ✅ | `cf1ab37` |
 | 8 | EspelhoCalculator (matriz) | ✅ | `0dde681` |
-| 9 | InsightEngine (Coach Gentil) | ✅ | — |
-| 10 | Revisão Semanal | ⏳ próxima | — |
-| 11 | Painel do Dia | ⏸ | — |
+| 9 | InsightEngine (Coach Gentil) | ✅ | `ad7c412` |
+| 10 | Revisão Semanal | ✅ | — |
+| 11 | Painel do Dia | ⏳ próxima | — |
 | 12 | Swipe rápido entre blocos | ⏸ | — |
 | 13 | Fechamento da noite | ⏸ | — |
 | 14 | PWA + polimento | ⏸ | — |
 | 15 | Testes + Deploy + Domínio | ⏸ | — |
+
+## Etapa 10 — entregue em 02/06/2026
+
+### O que ficou pronto
+
+**Revisão Semanal** — o fluxo guiado de domingo, em 4 passos.
+
+- **`PUT/GET /api/semanas/[iso]/revisao`** — salva a retro e já **prepara a próxima
+  semana** (risco + 3 prioridades gravados na SemanaPlano seguinte). Ao concluir,
+  marca a semana revisada como `FECHADA`.
+- **Página `/revisao/[iso]`** (+ `/revisao` → semana atual) com stepper:
+  1. **Espelho** da semana (total + % por categoria)
+  2. **Maiores desvios + Coach Gentil** (reusa EspelhoCalculator e InsightEngine)
+  3. **Retrospectiva** — 4 campos (funcionou / não funcionou / vou mudar) + sensação 1–5
+  4. **Próxima semana** — maior risco + 3 prioridades
+  - Botões "Salvar rascunho" e "Concluir revisão"; tela de sucesso encadeia pro
+    planejamento da próxima (`/semana/[próxima]`).
+- **Validação Zod** em `apps/web/src/lib/schemas/revisao.ts`.
+
+> Nota: as 3 prioridades passam a ser **texto livre** (descrição da prioridade),
+> gravadas em `prioridade1/2/3` da SemanaPlano. O Painel (Etapa 11) lê esses campos.
+
+---
 
 ## Etapa 9 — entregue em 02/06/2026
 

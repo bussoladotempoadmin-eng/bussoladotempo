@@ -12,6 +12,7 @@ import {
   CalendarRange,
   CalendarDays,
   LayoutGrid,
+  ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -111,6 +112,14 @@ export function UserMenu({ className }: { className?: string }) {
             >
               <LayoutGrid className="h-4 w-4" />
               Espelho da semana
+            </Link>
+            <Link
+              href="/revisao"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+            >
+              <ClipboardCheck className="h-4 w-4" />
+              Revisão semanal
             </Link>
             <Link
               href="/perfil"
