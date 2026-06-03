@@ -4,3 +4,6 @@ export * from './agenda-suggester';
 
 // Etapa 8 — cálculo do espelho (matriz Frente × Categoria).
 export * from './espelho-calculator';
+
+// Etapa 9 — engine de insights (Coach Gentil).
+export * from './insight-engine';

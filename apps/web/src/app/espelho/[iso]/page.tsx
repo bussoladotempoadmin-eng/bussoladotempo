@@ -13,8 +13,10 @@ import {
 import { categoriaLabel, type Categoria } from '@/lib/schemas/compromisso';
 import {
   calcEspelho,
+  gerarInsights,
   CATEGORIAS,
   type BlocoEspelho,
+  type TipoInsight,
 } from '@bussola/domain';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
@@ -41,6 +43,13 @@ const catBar: Record<Categoria, string> = {
   IMPORTANTE: 'bg-triade-importante',
   URGENTE: 'bg-triade-urgente',
   DISPERSO: 'bg-triade-disperso',
+};
+
+const insightClasses: Record<TipoInsight, string> = {
+  GOOD: 'border-emerald-500/30 bg-emerald-500/10',
+  WARN: 'border-amber-500/30 bg-amber-500/10',
+  TIP: 'border-sky-500/30 bg-sky-500/10',
+  NEUTRAL: 'border-border bg-card',
 };
 
 function pct(frac: number): string {
@@ -90,6 +99,11 @@ export default async function EspelhoPage({ params }: { params: { iso: string } 
       }),
     ),
     frentes.map((f) => ({ id: f.id })),
+  );
+
+  const insights = gerarInsights(
+    espelho,
+    frentes.map((f) => ({ id: f.id, nome: f.nome, icone: f.icone })),
   );
 
   const frenteById = new Map(frentes.map((f) => [f.id, f]));
@@ -189,6 +203,26 @@ export default async function EspelhoPage({ params }: { params: { iso: string } 
                 </div>
               ))}
             </div>
+
+            {/* Coach Gentil — insights */}
+            {insights.length > 0 && (
+              <div>
+                <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                  Coach Gentil
+                </h2>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {insights.map((ins, i) => (
+                    <div
+                      key={i}
+                      className={`rounded-xl border p-4 ${insightClasses[ins.tipo]}`}
+                    >
+                      <p className="text-sm font-bold">{ins.titulo}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{ins.texto}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Matriz Frente × Categoria */}
             <div className="overflow-x-auto rounded-xl border border-border">

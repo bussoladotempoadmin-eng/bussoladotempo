@@ -10,14 +10,34 @@
 | 5 | CRUD Compromissos Fixos | ✅ | `69334da` |
 | 6 | AgendaSuggester (algoritmo) | ✅ | `80fec7a` |
 | 7 | CRUD Blocos da Semana | ✅ | `cf1ab37` |
-| 8 | EspelhoCalculator (matriz) | ✅ | — |
-| 9 | InsightEngine (Coach Gentil) | ⏳ próxima | — |
-| 10 | Revisão Semanal | ⏸ | — |
+| 8 | EspelhoCalculator (matriz) | ✅ | `0dde681` |
+| 9 | InsightEngine (Coach Gentil) | ✅ | — |
+| 10 | Revisão Semanal | ⏳ próxima | — |
 | 11 | Painel do Dia | ⏸ | — |
 | 12 | Swipe rápido entre blocos | ⏸ | — |
 | 13 | Fechamento da noite | ⏸ | — |
 | 14 | PWA + polimento | ⏸ | — |
 | 15 | Testes + Deploy + Domínio | ⏸ | — |
+
+## Etapa 9 — entregue em 02/06/2026
+
+### O que ficou pronto
+
+**InsightEngine (Coach Gentil)** — lê o espelho e gera recados em linguagem humana.
+
+- **`packages/domain/src/insight-engine.ts`** — 15 regras V1 (11 globais + 4 por
+  frente), cada uma com 3 variações de template escolhidas de forma determinística
+  (sem `Math.random`, pra ser testável). Tom: nunca culpa, sempre dá próximo passo.
+  - Globais: importante alto/baixo, bombeiro, urgência subindo, disperso alto/baixo,
+    semana equilibrada, planejado×realizado (caiu/bateu/urgência invadiu), concentração.
+  - Por frente: virou bombeiro, bem protegida, dispersando, tempo migalha.
+- **`insight-engine.test.ts`** — 7 testes (vazia, imp alto, bombeiro, disperso,
+  por frente, determinismo, título/texto não vazios). Domínio agora: **18 testes**.
+- **`GET /api/semanas/[iso]/insights`**.
+- **UI na página `/espelho/[iso]`** — seção "Coach Gentil" com cards coloridos por
+  tipo (GOOD verde, WARN âmbar, TIP azul, NEUTRAL neutro).
+
+---
 
 ## Etapa 8 — entregue em 02/06/2026
 
