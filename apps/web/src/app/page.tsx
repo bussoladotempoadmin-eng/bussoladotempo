@@ -1,8 +1,85 @@
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { getCurrentWorkspace } from '@/lib/workspace';
+import { prisma } from '@bussola/db';
+import { currentIsoWeek } from '@/lib/semana';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { Compass, Construction } from 'lucide-react';
+import { PainelDia, type PainelBloco, type PainelFrente } from './painel-dia';
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    return <LandingHome />;
+  }
+
+  const workspace = await getCurrentWorkspace();
+  const iso = currentIsoWeek();
+
+  const semana = workspace
+    ? await prisma.semanaPlano.findUnique({
+        where: { workspaceId_semanaIso: { workspaceId: workspace.id, semanaIso: iso } },
+      })
+    : null;
+
+  const [blocos, frentes] = workspace
+    ? await Promise.all([
+        semana
+          ? prisma.bloco.findMany({ where: { semanaPlanoId: semana.id } })
+          : Promise.resolve([]),
+        prisma.frente.findMany({
+          where: { workspaceId: workspace.id, ativa: true },
+          orderBy: { ordem: 'asc' },
+        }),
+      ])
+    : [[], []];
+
+  const painelBlocos: PainelBloco[] = blocos.map((b) => ({
+    id: b.id,
+    diaSemana: b.diaSemana,
+    horaInicio: b.horaInicio,
+    horaFim: b.horaFim,
+    tarefa: b.tarefa,
+    frenteId: b.frenteId,
+    categoriaPlanejada: b.categoriaPlanejada,
+  }));
+  const painelFrentes: PainelFrente[] = frentes.map((f) => ({
+    id: f.id,
+    nome: f.nome,
+    icone: f.icone,
+    cor: f.cor,
+  }));
+  const prioridades = [semana?.prioridade1, semana?.prioridade2, semana?.prioridade3].filter(
+    (p): p is string => Boolean(p),
+  );
+
+  return (
+    <main className="min-h-screen">
+      <header className="container flex items-center justify-between py-6">
+        <div className="flex items-center gap-2 text-lg font-bold">
+          <Compass className="h-6 w-6 text-primary" />
+          <span>Bússola do Tempo</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <UserMenu />
+        </div>
+      </header>
+
+      <PainelDia
+        nome={session.user.name ?? ''}
+        semanaIso={iso}
+        prioridades={prioridades}
+        blocos={painelBlocos}
+        frentes={painelFrentes}
+      />
+    </main>
+  );
+}
+
+function LandingHome() {
   return (
     <main className="relative min-h-screen overflow-hidden">
       <div className="pointer-events-none absolute inset-0 -z-10">
@@ -52,7 +129,7 @@ export default function Home() {
         <div className="grid w-full max-w-3xl grid-cols-1 gap-4 pt-8 md:grid-cols-3">
           <StatusCard label="Etapa 9" title="Insights (Coach)" status="✅ Concluída" />
           <StatusCard label="Etapa 10" title="Revisão Semanal" status="✅ Concluída" />
-          <StatusCard label="Etapa 11" title="Painel do Dia" status="⏳ Próxima" />
+          <StatusCard label="Etapa 11" title="Painel do Dia" status="✅ Concluída" />
         </div>
       </section>
 

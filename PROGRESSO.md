@@ -12,12 +12,30 @@
 | 7 | CRUD Blocos da Semana | ✅ | `cf1ab37` |
 | 8 | EspelhoCalculator (matriz) | ✅ | `0dde681` |
 | 9 | InsightEngine (Coach Gentil) | ✅ | `ad7c412` |
-| 10 | Revisão Semanal | ✅ | — |
-| 11 | Painel do Dia | ⏳ próxima | — |
-| 12 | Swipe rápido entre blocos | ⏸ | — |
+| 10 | Revisão Semanal | ✅ | `e5baa7f` |
+| 11 | Painel do Dia | ✅ | — |
+| 12 | Swipe rápido entre blocos | ⏳ próxima | — |
 | 13 | Fechamento da noite | ⏸ | — |
 | 14 | PWA + polimento | ⏸ | — |
 | 15 | Testes + Deploy + Domínio | ⏸ | — |
+
+## Etapa 11 — entregue em 02/06/2026
+
+### O que ficou pronto
+
+**Painel do Dia** — a home `/` agora é condicional: deslogado mostra a landing,
+logado mostra o painel da manhã.
+
+- **`apps/web/src/app/painel-dia.tsx`** (client): saudação por horário, as **3
+  prioridades da semana**, a **lista de blocos de hoje** e **quick actions**
+  (Semana / Espelho / Revisão / Frentes).
+- **Indicador "agora"**: usa o relógio do dispositivo (atualiza a cada minuto),
+  destaca o bloco em andamento com anel + badge "agora" e esmaece os já passados.
+  Filtra o dia no cliente (evita problema de timezone do servidor).
+- **`page.tsx`** virou server component async: checa sessão, carrega a SemanaPlano
+  da semana atual + blocos + frentes + prioridades, e renderiza `PainelDia`.
+
+---
 
 ## Etapa 10 — entregue em 02/06/2026
 
