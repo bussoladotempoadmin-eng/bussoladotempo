@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
-import { LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import { LogIn, LogOut, User as UserIcon, Compass } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function UserMenu({ className }: { className?: string }) {
@@ -63,6 +63,14 @@ export function UserMenu({ className }: { className?: string }) {
               <p className="truncate text-sm font-semibold">{session.user.name ?? 'Usuário'}</p>
               <p className="truncate text-xs text-muted-foreground">{session.user.email}</p>
             </div>
+            <Link
+              href="/frentes"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+            >
+              <Compass className="h-4 w-4" />
+              Minhas frentes
+            </Link>
             <Link
               href="/perfil"
               onClick={() => setOpen(false)}

@@ -5,9 +5,9 @@
 | 0 | Contas criadas (GitHub, Vercel, Supabase, Resend) | ✅ | — |
 | 1 | Setup monorepo + Next.js + Tailwind + tema | ✅ | `6ef7775` |
 | 2 | Prisma + Supabase + schema + migration + seed | ✅ | — |
-| 3 | Autenticação (NextAuth + magic link) | ⏳ próxima | — |
-| 4 | CRUD Frentes | ⏸ | — |
-| 5 | CRUD Compromissos Fixos | ⏸ | — |
+| 3 | Autenticação (NextAuth + magic link) | ✅ | `b53dd10` |
+| 4 | CRUD Frentes | ✅ | — |
+| 5 | CRUD Compromissos Fixos | ⏳ próxima | — |
 | 6 | AgendaSuggester (algoritmo) | ⏸ | — |
 | 7 | CRUD Blocos da Semana | ⏸ | — |
 | 8 | EspelhoCalculator (matriz) | ⏸ | — |
@@ -18,6 +18,37 @@
 | 13 | Fechamento da noite | ⏸ | — |
 | 14 | PWA + polimento | ⏸ | — |
 | 15 | Testes + Deploy + Domínio | ⏸ | — |
+
+## Etapa 4 — entregue em 02/06/2026
+
+### O que ficou pronto
+
+**CRUD completo de Frentes**, ligado ao workspace do usuário logado:
+
+- **Validação Zod compartilhada** front/back em `apps/web/src/lib/schemas/frente.ts`
+  (nome, ícone, cor `#RRGGBB`, orçamento de horas 0–168).
+- **Helper de workspace** em `apps/web/src/lib/workspace.ts` — todo usuário logado
+  tem (ou ganha no 1º acesso) um workspace.
+- **Rotas de API:**
+  - `GET/POST /api/frentes` — lista e cria (nova frente vai pro fim da ordem)
+  - `PATCH/DELETE /api/frentes/[id]` — edita e remove (com proteção de posse +
+    erro amigável 409 se a frente tiver blocos vinculados)
+  - `PATCH /api/frentes/reorder` — persiste a nova ordem (transação)
+- **Página `/frentes`** (`apps/web/src/app/frentes/`): lista com drag-and-drop
+  (@dnd-kit), formulário inline pra criar/editar, ativar/desativar (soft delete),
+  excluir, e total de horas/semana orçadas. Acessível pelo menu do usuário.
+
+### Dependências adicionadas
+- `zod` 4 (validação)
+- `@dnd-kit/core`, `@dnd-kit/sortable`, `@dnd-kit/utilities` (reordenação)
+
+### ⚠️ Ponto de atenção (descoberto nesta etapa)
+O seed usa o email `lucasctgasilveira@gmail.com`, mas o login real do Lucas é
+`lucas.ctga.silveira@gmail.com` (com pontos). São usuários diferentes pro NextAuth —
+ao logar de verdade, cai num workspace vazio. Resolver: ou ajustar o email do seed,
+ou criar as frentes pela própria UI (que é justamente o que a Etapa 4 entrega).
+
+---
 
 ## Etapa 2 — entregue em 02/06/2026
 

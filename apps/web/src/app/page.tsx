@@ -50,9 +50,9 @@ export default function Home() {
         </div>
 
         <div className="grid w-full max-w-3xl grid-cols-1 gap-4 pt-8 md:grid-cols-3">
-          <StatusCard label="Etapa 2" title="Banco de dados" status="✅ Concluída" />
           <StatusCard label="Etapa 3" title="Autenticação" status="✅ Concluída" />
-          <StatusCard label="Etapa 4" title="CRUD Frentes" status="⏳ Próxima" />
+          <StatusCard label="Etapa 4" title="CRUD Frentes" status="✅ Concluída" />
+          <StatusCard label="Etapa 5" title="Compromissos Fixos" status="⏳ Próxima" />
         </div>
       </section>
 

@@ -15,7 +15,7 @@ import { PrismaClient, Categoria, DiaSemana, FonteOrigem, StatusSemana } from '@
 
 const prisma = new PrismaClient();
 
-const LUCAS_EMAIL = 'lucasctgasilveira@gmail.com';
+const LUCAS_EMAIL = 'lucas.ctga.silveira@gmail.com';
 const LUCAS_NOME = 'Lucas Silveira';
 const SEMANA_ISO = '2026-W24'; // semana de 08-14/06/2026
 
