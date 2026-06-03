@@ -11,6 +11,7 @@ import {
   CalendarClock,
   CalendarRange,
   CalendarDays,
+  LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -102,6 +103,14 @@ export function UserMenu({ className }: { className?: string }) {
             >
               <CalendarDays className="h-4 w-4" />
               Semana atual
+            </Link>
+            <Link
+              href="/espelho"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+            >
+              <LayoutGrid className="h-4 w-4" />
+              Espelho da semana
             </Link>
             <Link
               href="/perfil"

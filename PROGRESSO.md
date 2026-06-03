@@ -9,15 +9,35 @@
 | 4 | CRUD Frentes | ✅ | `cc652fc` |
 | 5 | CRUD Compromissos Fixos | ✅ | `69334da` |
 | 6 | AgendaSuggester (algoritmo) | ✅ | `80fec7a` |
-| 7 | CRUD Blocos da Semana | ✅ | — |
-| 8 | EspelhoCalculator (matriz) | ⏳ próxima | — |
-| 9 | InsightEngine (Coach Gentil) | ⏸ | — |
+| 7 | CRUD Blocos da Semana | ✅ | `cf1ab37` |
+| 8 | EspelhoCalculator (matriz) | ✅ | — |
+| 9 | InsightEngine (Coach Gentil) | ⏳ próxima | — |
 | 10 | Revisão Semanal | ⏸ | — |
 | 11 | Painel do Dia | ⏸ | — |
 | 12 | Swipe rápido entre blocos | ⏸ | — |
 | 13 | Fechamento da noite | ⏸ | — |
 | 14 | PWA + polimento | ⏸ | — |
 | 15 | Testes + Deploy + Domínio | ⏸ | — |
+
+## Etapa 8 — entregue em 02/06/2026
+
+### O que ficou pronto
+
+**EspelhoCalculator** (a killer feature: matriz Frente × Categoria) + testes + tela.
+
+- **`packages/domain/src/espelho-calculator.ts`** — função pura da §9.2 da spec:
+  matriz Frente × Categoria (horas realizadas), totais por frente/categoria/geral,
+  percentuais, comparativo planejado vs realizado (com delta) e top 3 desvios.
+- **`espelho-calculator.test.ts`** — 5 testes (semana vazia, soma na célula certa,
+  percentuais somam 1, comparativo/delta, top 3 desvios por duração). Total no
+  domínio agora: **11 testes**.
+- **`GET /api/semanas/[iso]/espelho`** — retorna o espelho + frentes pra render.
+- **Página `/espelho/[iso]`** (+ `/espelho` → semana atual): summary bar (total +
+  % por categoria), matriz visual com totais, comparativo planejado vs realizado
+  com barras, e cards dos 3 maiores desvios. Navegação entre semanas + atalho
+  "Editar blocos".
+
+---
 
 ## Etapa 7 — entregue em 02/06/2026
 
