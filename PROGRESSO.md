@@ -13,11 +13,29 @@
 | 8 | EspelhoCalculator (matriz) | ✅ | `0dde681` |
 | 9 | InsightEngine (Coach Gentil) | ✅ | `ad7c412` |
 | 10 | Revisão Semanal | ✅ | `e5baa7f` |
-| 11 | Painel do Dia | ✅ | — |
-| 12 | Swipe rápido entre blocos | ⏳ próxima | — |
-| 13 | Fechamento da noite | ⏸ | — |
+| 11 | Painel do Dia | ✅ | `6022747` |
+| 12 | Swipe rápido entre blocos | ✅ | — |
+| 13 | Fechamento da noite | ⏳ próxima | — |
 | 14 | PWA + polimento | ⏸ | — |
 | 15 | Testes + Deploy + Domínio | ⏸ | — |
+
+## Etapa 12 — entregue em 02/06/2026
+
+### O que ficou pronto
+
+**Swipe rápido** — registrar o que aconteceu num bloco com um toque (Tela 4).
+
+- **`PATCH /api/blocos/[id]/realizado`** — body `{ resultado }`:
+  - `SIM` → realizado = planejado
+  - `URGENTE` → realizado = Urgente + marca `invadido`
+  - `DISPERSO` → realizado = Disperso
+- **Modal no Painel do Dia**: ao tocar num bloco, abre com 4 opções (Fiz / Virou
+  urgente / Foi disperso / Depois). **Update otimista** (a categoria realizada muda
+  na hora, reverte se a API falhar) e **auto-fecha em 60s = "Fiz"**.
+- A linha do bloco passa a mostrar o badge de desvio quando o realizado difere do
+  planejado.
+
+---
 
 ## Etapa 11 — entregue em 02/06/2026
 

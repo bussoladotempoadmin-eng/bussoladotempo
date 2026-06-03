@@ -44,6 +44,7 @@ export default async function Home() {
     tarefa: b.tarefa,
     frenteId: b.frenteId,
     categoriaPlanejada: b.categoriaPlanejada,
+    categoriaRealizada: b.categoriaRealizada,
   }));
   const painelFrentes: PainelFrente[] = frentes.map((f) => ({
     id: f.id,
