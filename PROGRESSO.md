@@ -6,9 +6,9 @@
 | 1 | Setup monorepo + Next.js + Tailwind + tema | ✅ | `6ef7775` |
 | 2 | Prisma + Supabase + schema + migration + seed | ✅ | — |
 | 3 | Autenticação (NextAuth + magic link) | ✅ | `b53dd10` |
-| 4 | CRUD Frentes | ✅ | — |
-| 5 | CRUD Compromissos Fixos | ⏳ próxima | — |
-| 6 | AgendaSuggester (algoritmo) | ⏸ | — |
+| 4 | CRUD Frentes | ✅ | `cc652fc` |
+| 5 | CRUD Compromissos Fixos | ✅ | — |
+| 6 | AgendaSuggester (algoritmo) | ⏳ próxima | — |
 | 7 | CRUD Blocos da Semana | ⏸ | — |
 | 8 | EspelhoCalculator (matriz) | ⏸ | — |
 | 9 | InsightEngine (Coach Gentil) | ⏸ | — |
@@ -18,6 +18,25 @@
 | 13 | Fechamento da noite | ⏸ | — |
 | 14 | PWA + polimento | ⏸ | — |
 | 15 | Testes + Deploy + Domínio | ⏸ | — |
+
+## Etapa 5 — entregue em 02/06/2026
+
+### O que ficou pronto
+
+**CRUD completo de Compromissos Fixos** (o que se repete toda semana em horário fixo):
+
+- **Validação Zod** em `apps/web/src/lib/schemas/compromisso.ts` — dia da semana,
+  horários `HH:mm`, descrição, frente (opcional) e categoria, com regra
+  **hora-fim > hora-início**. Inclui labels de dia/categoria reutilizáveis.
+- **Rotas de API:**
+  - `GET/POST /api/compromissos` — lista (ordenada por dia e hora) e cria
+  - `PATCH/DELETE /api/compromissos/[id]` — edita e remove
+  - Toda escrita valida posse por workspace + que a frente escolhida é do usuário
+- **Página `/compromissos`**: lista agrupada por dia da semana, formulário inline
+  (dia, início, fim, descrição, frente, categoria), editar/excluir. Acessível pelo
+  menu do usuário.
+
+---
 
 ## Etapa 4 — entregue em 02/06/2026
 

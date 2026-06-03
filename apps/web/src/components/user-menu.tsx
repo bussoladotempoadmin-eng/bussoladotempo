@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
-import { LogIn, LogOut, User as UserIcon, Compass } from 'lucide-react';
+import { LogIn, LogOut, User as UserIcon, Compass, CalendarClock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function UserMenu({ className }: { className?: string }) {
@@ -70,6 +70,14 @@ export function UserMenu({ className }: { className?: string }) {
             >
               <Compass className="h-4 w-4" />
               Minhas frentes
+            </Link>
+            <Link
+              href="/compromissos"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+            >
+              <CalendarClock className="h-4 w-4" />
+              Compromissos fixos
             </Link>
             <Link
               href="/perfil"
