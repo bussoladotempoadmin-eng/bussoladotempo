@@ -16,8 +16,41 @@
 | 11 | Painel do Dia | ✅ | `6022747` |
 | 12 | Swipe rápido entre blocos | ✅ | `c11746a` |
 | 13 | Fechamento da noite | ✅ | `4daff37` |
-| 14 | PWA + polimento | ✅ | — |
-| 15 | Testes + Deploy + Domínio | ⏳ próxima (precisa do Lucas) | — |
+| 14 | PWA + polimento | ✅ | `a66b47b` |
+| 15 | Deploy na Vercel (app NO AR) | ✅ | — |
+
+## Etapa 15 — APP NO AR em 04/06/2026 🚀
+
+**URL de produção:** https://bussoladotempo-web.vercel.app (Vercel + Supabase dev)
+
+### O que ficou pronto
+- Deploy automático Vercel (push na `main` = deploy). Root Directory `apps/web`.
+- Página pública `/sobre` + `DEPLOY.md`.
+- Login com magic link funcionando em produção.
+
+### A batalha do Prisma na Vercel (pra não esquecer)
+O engine nativo do Prisma (`.so.node`) **não** era empacotado/encontrado no
+runtime serverless da Vercel em monorepo pnpm. Solução definitiva: **Prisma
+sem engine nativo** (`engineType = "client"` + driver `pg` via
+`@prisma/adapter-pg`, com SSL). O query engine vira WASM (independente de
+plataforma) e é incluído no bundle via `outputFileTracingIncludes`.
+
+> Armadilha que custou horas: o engine nativo que sobrava no PC local mascarava
+> o problema (testes locais "passavam"). A verificação real é apagar os engines
+> nativos do disco antes de testar.
+
+### Variáveis de ambiente na Vercel (todas obrigatórias)
+`DATABASE_URL`, `DIRECT_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`,
+`RESEND_API_KEY`, `EMAIL_FROM`. (As do banco faltavam no início → 500 conectando
+em 127.0.0.1.)
+
+### Pendências conhecidas
+- **Resend free:** `onboarding@resend.dev` só entrega pro email da conta Resend
+  (`bussoladotempo.admin@gmail.com`). Pra enviar pra outros, verificar domínio.
+- Conta logada (`admin`) está sem dados de seed (seed está sob outro email).
+- Domínio próprio `bussoladotempo.com.br` ainda não comprado (usando URL Vercel).
+
+---
 
 ## Etapa 14 — entregue em 02/06/2026
 
