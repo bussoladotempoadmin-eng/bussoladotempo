@@ -34,7 +34,7 @@ const adapter = new PrismaPg({
 });
 const prisma = new PrismaClient({ adapter });
 
-const LUCAS_EMAIL = 'lucas.ctga.silveira@gmail.com';
+const LUCAS_EMAIL = 'bussoladotempo.admin@gmail.com';
 const LUCAS_NOME = 'Lucas Silveira';
 const SEMANA_ISO = '2026-W24'; // semana de 08-14/06/2026
 
