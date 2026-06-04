@@ -14,9 +14,9 @@ export default withAuth({
 export const config = {
   matcher: [
     // Protege tudo, exceto:
-    // - rotas estáticas do Next.js (_next, favicon, etc.)
-    // - rotas de auth da API
-    // - páginas públicas (/, /login, /auth/*)
-    '/((?!_next/static|_next/image|favicon.ico|api/auth|login|auth|$).*)',
+    // - rotas internas do Next (_next) e da API de auth
+    // - qualquer arquivo estático (tem ponto: sw.js, manifest.webmanifest, ícones, favicon)
+    // - páginas públicas (/, /login, /auth/*, /sobre)
+    '/((?!_next|api/auth|login|auth|sobre|.*\\..*|$).*)',
   ],
 };
