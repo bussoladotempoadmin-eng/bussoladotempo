@@ -52,11 +52,15 @@ function dur(b: { horaInicio: string; horaFim: string }): number {
 export function AgendaPadraoView({
   frentesCount,
   compromissosCount,
+  semanas,
 }: {
   frentesCount: number;
   compromissosCount: number;
+  semanas: { iso: string; label: string }[];
 }) {
   const [data, setData] = React.useState<Resposta | null>(null);
+  const [aplicando, setAplicando] = React.useState<string | null>(null);
+  const [aplicado, setAplicado] = React.useState<{ iso: string; count: number } | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -70,6 +74,35 @@ export function AgendaPadraoView({
       return;
     }
     setData(await res.json());
+  }
+
+  async function aplicar(iso: string, substituir = false) {
+    setAplicando(iso);
+    setError(null);
+    const res = await fetch('/api/agenda-padrao/aplicar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ semanaIso: iso, substituir }),
+    });
+    if (res.status === 409) {
+      setAplicando(null);
+      const d = await res.json().catch(() => null);
+      if (
+        window.confirm(
+          `A semana ${iso} já tem ${d?.total ?? ''} blocos. Substituir todos pela agenda padrão?`,
+        )
+      ) {
+        return aplicar(iso, true);
+      }
+      return;
+    }
+    setAplicando(null);
+    if (!res.ok) {
+      setError('Não consegui aplicar a agenda nessa semana.');
+      return;
+    }
+    const d = await res.json();
+    setAplicado({ iso, count: d.count });
   }
 
   const frenteById = React.useMemo(
@@ -229,6 +262,44 @@ export function AgendaPadraoView({
             Total sugerido: {data.avisoCapacidade.horasAlocadas.toLocaleString('pt-BR')}h
             distribuídas. Sábado e domingo ficam livres por padrão.
           </p>
+
+          {/* Usar como semana */}
+          <div className="rounded-xl border border-primary/40 bg-card p-5">
+            <h3 className="text-sm font-bold">Usar esta agenda como semana</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Cria os blocos acima de verdade na semana escolhida — daí você ajusta o que
+              quiser na tela da Semana.
+            </p>
+            {aplicado ? (
+              <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm">
+                <span className="font-medium text-emerald-700 dark:text-emerald-400">
+                  ✓ {aplicado.count} blocos criados em {aplicado.iso}
+                </span>
+                <Link
+                  href={`/semana/${aplicado.iso}`}
+                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                >
+                  Abrir a semana
+                </Link>
+              </div>
+            ) : (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {semanas.map((s) => (
+                  <button
+                    key={s.iso}
+                    type="button"
+                    onClick={() => aplicar(s.iso)}
+                    disabled={aplicando !== null}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-semibold transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
+                  >
+                    {aplicando === s.iso && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Aplicar em {s.iso}
+                    <span className="text-xs font-normal text-muted-foreground">{s.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

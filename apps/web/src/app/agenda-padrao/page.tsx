@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { getCurrentWorkspace } from '@/lib/workspace';
 import { prisma } from '@bussola/db';
+import { currentIsoWeek, shiftIsoWeek, isoWeekRangeLabel } from '@/lib/semana';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { Compass, ArrowLeft } from 'lucide-react';
@@ -26,6 +27,13 @@ export default async function AgendaPadraoPage() {
         prisma.compromissoFixo.count({ where: { workspaceId: workspace.id } }),
       ])
     : [0, 0];
+
+  const atualIso = currentIsoWeek();
+  const proximaIso = shiftIsoWeek(atualIso, 1);
+  const semanas = [
+    { iso: atualIso, label: isoWeekRangeLabel(atualIso) },
+    { iso: proximaIso, label: isoWeekRangeLabel(proximaIso) },
+  ];
 
   return (
     <main className="min-h-screen">
@@ -57,7 +65,11 @@ export default async function AgendaPadraoPage() {
           ajusta bloco a bloco.
         </p>
 
-        <AgendaPadraoView frentesCount={frentesCount} compromissosCount={compromissosCount} />
+        <AgendaPadraoView
+          frentesCount={frentesCount}
+          compromissosCount={compromissosCount}
+          semanas={semanas}
+        />
       </section>
     </main>
   );

@@ -19,6 +19,22 @@
 | 14 | PWA + polimento | ✅ | `a66b47b` |
 | 15 | Deploy na Vercel (app NO AR) | ✅ | — |
 
+## MVP+1 — fechando a "cola" (pós-auditoria, 04/06/2026)
+
+Auditoria (planejado × construído) apontou que o core está pronto, mas falta a cola
+que torna o app usável por qualquer pessoa (não só o caso Lucas). Frentes do MVP+1:
+
+- **Etapa 16 — Configurações do workspace** ✅: tela `/configuracoes` + `PATCH /api/workspace`
+  pra editar acordar/dormir/almoço/timezone/semana-início (alimentam o AgendaSuggester).
+- **Etapa 17 — "Usar agenda padrão como semana"** ✅: `POST /api/agenda-padrao/aplicar`
+  cria os blocos sugeridos numa semana real (com confirmação se já houver blocos).
+  Fecha o ciclo gerar → aplicar, antes o sugestor era só preview.
+- Etapa 18 — Onboarding guiado (pendente)
+- Etapa 19 — Prioridades vinculadas a blocos (pendente)
+- Etapa 20 — LGPD: exportar + deletar conta (pendente)
+
+---
+
 ## Etapa 15 — APP NO AR em 04/06/2026 🚀
 
 **URL de produção:** https://bussoladotempo-web.vercel.app (Vercel + Supabase dev)
