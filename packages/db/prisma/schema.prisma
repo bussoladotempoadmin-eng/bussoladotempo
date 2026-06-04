@@ -6,8 +6,10 @@
 
 generator client {
   provider        = "prisma-client-js"
-  // Sem engine nativo: o queryCompiler compila as queries em JS e o driver `pg`
-  // faz a conexão. Elimina o .so.node — não há engine pra empacotar na Vercel.
+  // engineType "client" = sem engine nativo (.so.node): as queries são
+  // compiladas em WASM e o driver `pg` faz a conexão. Elimina o binário que
+  // não era empacotado no runtime serverless da Vercel.
+  engineType      = "client"
   previewFeatures = ["driverAdapters", "queryCompiler"]
 }
 
