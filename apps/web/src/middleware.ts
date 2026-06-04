@@ -17,6 +17,6 @@ export const config = {
     // - rotas internas do Next (_next) e da API de auth
     // - qualquer arquivo estático (tem ponto: sw.js, manifest.webmanifest, ícones, favicon)
     // - páginas públicas (/, /login, /auth/*, /sobre)
-    '/((?!_next|api/auth|login|auth|sobre|.*\\..*|$).*)',
+    '/((?!_next|api/auth|api/_diag|login|auth|sobre|.*\\..*|$).*)',
   ],
 };
