@@ -10,7 +10,8 @@
     "lint": "pnpm --filter web lint",
     "test": "pnpm --filter @bussola/domain test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "postinstall": "pnpm --filter @bussola/db generate"
   },
   "devDependencies": {
     "prettier": "^3.8.3",
