@@ -8,15 +8,23 @@ const nextConfig = {
   experimental: {
     // Em monorepo pnpm, a raiz de tracing precisa ser o repo todo.
     outputFileTracingRoot: path.join(__dirname, '../../'),
-    // O engine do Prisma é carregado dinamicamente em runtime, então o
-    // file-tracing automático não o detecta. Forçamos a inclusão do .so.node
-    // (e todo o client gerado) no bundle serverless de TODAS as rotas.
+    // O engine do Prisma é carregado dinamicamente (fora do file-tracing
+    // automático). Forçamos a inclusão dos binários .node, cobrindo AS DUAS
+    // bases possíveis de resolução (pasta do app e raiz de tracing) e os dois
+    // diretórios onde o engine pode cair (.prisma/client e @prisma/client).
     outputFileTracingIncludes: {
       '/**': [
-        '../../node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client/**/*',
+        // relativo à pasta do app (apps/web)
+        '../../node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client/*.node',
+        '../../node_modules/.pnpm/@prisma+client@*/node_modules/@prisma/client/*.node',
+        '../../node_modules/.pnpm/prisma@*/node_modules/prisma/*.node',
+        // relativo à raiz de tracing (repo root)
+        'node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client/*.node',
+        'node_modules/.pnpm/@prisma+client@*/node_modules/@prisma/client/*.node',
+        'node_modules/.pnpm/prisma@*/node_modules/prisma/*.node',
       ],
     },
-    // Não empacotar o Prisma — deixa em node_modules pra ele achar o engine.
+    // Mantém o Prisma fora do bundle (Next file-traça o .node em vez de empacotar).
     serverComponentsExternalPackages: ['@prisma/client', '@bussola/db'],
   },
 };
