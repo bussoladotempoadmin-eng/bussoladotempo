@@ -7,6 +7,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const out: Record<string, unknown> = {};
+  const db = process.env.DATABASE_URL;
+  out.hasDatabaseUrl = Boolean(db);
+  out.databaseUrlMasked = db ? db.replace(/:\/\/[^@]+@/, '://***@').slice(0, 70) : null;
+  out.hasDirectUrl = Boolean(process.env.DIRECT_URL);
+  out.hasNextauthSecret = Boolean(process.env.NEXTAUTH_SECRET);
+  out.nextauthUrl = process.env.NEXTAUTH_URL ?? null;
   try {
     out.frentes = await prisma.frente.count();
     out.queryOk = true;
