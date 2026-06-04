@@ -5,9 +5,10 @@
 // ============================================================
 
 generator client {
-  provider      = "prisma-client-js"
-  // "native" pro dev local; "rhel-openssl-3.0.x" pro runtime serverless da Vercel.
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  // Sem engine nativo: o queryCompiler compila as queries em JS e o driver `pg`
+  // faz a conexão. Elimina o .so.node — não há engine pra empacotar na Vercel.
+  previewFeatures = ["driverAdapters", "queryCompiler"]
 }
 
 datasource db {

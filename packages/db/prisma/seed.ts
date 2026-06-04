@@ -11,9 +11,28 @@
  * Rode com: pnpm --filter db seed
  */
 
+import { readFileSync } from 'node:fs';
 import { PrismaClient, Categoria, DiaSemana, FonteOrigem, StatusSemana } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-const prisma = new PrismaClient();
+// Carrega DATABASE_URL do .env do pacote db, se ainda não estiver no ambiente.
+if (!process.env.DATABASE_URL) {
+  try {
+    const env = readFileSync(new URL('../.env', import.meta.url), 'utf8');
+    for (const line of env.split('\n')) {
+      const m = line.match(/^\s*DATABASE_URL\s*=\s*"?([^"\r\n]+)"?/);
+      if (m) process.env.DATABASE_URL = m[1];
+    }
+  } catch {
+    /* ignora */
+  }
+}
+
+const adapter = new PrismaPg({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+const prisma = new PrismaClient({ adapter });
 
 const LUCAS_EMAIL = 'lucas.ctga.silveira@gmail.com';
 const LUCAS_NOME = 'Lucas Silveira';

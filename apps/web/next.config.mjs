@@ -8,23 +8,18 @@ const nextConfig = {
   experimental: {
     // Em monorepo pnpm, a raiz de tracing precisa ser o repo todo.
     outputFileTracingRoot: path.join(__dirname, '../../'),
-    // O engine do Prisma é carregado dinamicamente (fora do file-tracing
-    // automático). Forçamos a inclusão dos binários .node, cobrindo AS DUAS
-    // bases possíveis de resolução (pasta do app e raiz de tracing) e os dois
-    // diretórios onde o engine pode cair (.prisma/client e @prisma/client).
+    // Prisma sem engine nativo usa um query engine em WASM, carregado
+    // dinamicamente. Forçamos sua inclusão no bundle serverless (WASM é
+    // independente de plataforma — sem o problema de hash/SO do .so.node).
+    // Cobrimos as duas bases possíveis de resolução do glob (app e raiz).
     outputFileTracingIncludes: {
       '/**': [
-        // relativo à pasta do app (apps/web)
-        '../../node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client/*.node',
-        '../../node_modules/.pnpm/@prisma+client@*/node_modules/@prisma/client/*.node',
-        '../../node_modules/.pnpm/prisma@*/node_modules/prisma/*.node',
-        // relativo à raiz de tracing (repo root)
-        'node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client/*.node',
-        'node_modules/.pnpm/@prisma+client@*/node_modules/@prisma/client/*.node',
-        'node_modules/.pnpm/prisma@*/node_modules/prisma/*.node',
+        '../../node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client/*.wasm',
+        '../../node_modules/.pnpm/@prisma+client@*/node_modules/@prisma/client/*.wasm',
+        'node_modules/.pnpm/@prisma+client@*/node_modules/.prisma/client/*.wasm',
+        'node_modules/.pnpm/@prisma+client@*/node_modules/@prisma/client/*.wasm',
       ],
     },
-    // Mantém o Prisma fora do bundle (Next file-traça o .node em vez de empacotar).
     serverComponentsExternalPackages: ['@prisma/client', '@bussola/db'],
   },
 };
