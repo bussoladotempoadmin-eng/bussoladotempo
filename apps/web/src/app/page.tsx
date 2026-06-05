@@ -1,4 +1,5 @@
 import { getServerSession } from 'next-auth';
+import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { getCurrentWorkspace } from '@/lib/workspace';
 import { prisma } from '@bussola/db';
@@ -17,6 +18,12 @@ export default async function Home() {
 
   const workspace = await getCurrentWorkspace();
   const iso = currentIsoWeek();
+
+  // Usuário novo (sem nenhuma frente) → fluxo de boas-vindas.
+  if (workspace) {
+    const totalFrentes = await prisma.frente.count({ where: { workspaceId: workspace.id } });
+    if (totalFrentes === 0) redirect('/onboarding');
+  }
 
   const semana = workspace
     ? await prisma.semanaPlano.findUnique({

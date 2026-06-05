@@ -29,7 +29,10 @@ que torna o app usável por qualquer pessoa (não só o caso Lucas). Frentes do 
 - **Etapa 17 — "Usar agenda padrão como semana"** ✅: `POST /api/agenda-padrao/aplicar`
   cria os blocos sugeridos numa semana real (com confirmação se já houver blocos).
   Fecha o ciclo gerar → aplicar, antes o sugestor era só preview.
-- Etapa 18 — Onboarding guiado (pendente)
+- **Etapa 18 — Onboarding guiado** ✅: `/onboarding` (wizard 4 passos: ritmo →
+  frentes → compromissos → gerar a semana). Usuário novo (0 frentes) é redirecionado
+  pra cá ao logar. Orquestra as APIs existentes (workspace, frentes, compromissos,
+  aplicar agenda).
 - Etapa 19 — Prioridades vinculadas a blocos (pendente)
 - Etapa 20 — LGPD: exportar + deletar conta (pendente)
 
