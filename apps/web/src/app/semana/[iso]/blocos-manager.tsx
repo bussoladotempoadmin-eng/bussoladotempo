@@ -14,6 +14,7 @@ import {
   ChevronDown,
   CheckSquare,
   Square,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -68,6 +69,15 @@ function dur(b: { horaInicio: string; horaFim: string }): number {
   return (toMin(b.horaFim) - toMin(b.horaInicio)) / 60;
 }
 
+// Dois blocos conflitam se são no mesmo dia e os horários se sobrepõem.
+function sobrepoe(a: BlocoDTO, b: BlocoDTO): boolean {
+  return (
+    a.diaSemana === b.diaSemana &&
+    toMin(a.horaInicio) < toMin(b.horaFim) &&
+    toMin(b.horaInicio) < toMin(a.horaFim)
+  );
+}
+
 export function BlocosManager({
   semanaIso,
   initialBlocos,
@@ -87,6 +97,20 @@ export function BlocosManager({
     () => new Map(frentes.map((f) => [f.id, f])),
     [frentes],
   );
+
+  // Ids dos blocos que se sobrepõem a algum outro no mesmo dia.
+  const conflitoIds = React.useMemo(() => {
+    const set = new Set<string>();
+    for (let i = 0; i < blocos.length; i++) {
+      for (let j = i + 1; j < blocos.length; j++) {
+        if (sobrepoe(blocos[i], blocos[j])) {
+          set.add(blocos[i].id);
+          set.add(blocos[j].id);
+        }
+      }
+    }
+    return set;
+  }, [blocos]);
 
   const emptyForm: FormState = React.useMemo(
     () => ({
@@ -265,6 +289,16 @@ export function BlocosManager({
         </div>
       )}
 
+      {conflitoIds.size > 0 && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <p className="text-amber-700 dark:text-amber-400">
+            Você tem blocos com <strong>horários sobrepostos</strong> (marcados com ⚠️
+            abaixo). Não trava — mas confira se é proposital.
+          </p>
+        </div>
+      )}
+
       <div className="space-y-5">
         {diaSemanaValues.map((dia) => {
           const doDia = blocos.filter((b) => b.diaSemana === dia);
@@ -296,6 +330,7 @@ export function BlocosManager({
                       key={b.id}
                       bloco={b}
                       frente={frenteById.get(b.frenteId)}
+                      temConflito={conflitoIds.has(b.id)}
                       onEdit={() => {
                         setEditingId(b.id);
                         setAdding(false);
@@ -372,6 +407,7 @@ function toForm(b: BlocoDTO): FormState {
 function BlocoRow({
   bloco: b,
   frente,
+  temConflito,
   onEdit,
   onDelete,
   onTogglePrioridade,
@@ -381,6 +417,7 @@ function BlocoRow({
 }: {
   bloco: BlocoDTO;
   frente?: FrenteOption;
+  temConflito: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onTogglePrioridade: () => void;
@@ -455,6 +492,15 @@ function BlocoRow({
             >
               {categoriaLabel[b.categoriaPlanejada]}
             </span>
+            {temConflito && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 font-semibold text-amber-700 dark:text-amber-400"
+                title="Esse bloco se sobrepõe a outro no mesmo dia"
+              >
+                <AlertTriangle className="h-3 w-3" />
+                conflito
+              </span>
+            )}
             {desviou && (
               <span
                 className={cn(

@@ -28,8 +28,9 @@ Após testar, Lucas pediu 3 melhorias. Decidido construir nesta ordem:
   `PATCH/DELETE /api/tarefas/[id]`. Na tela Semana, cada bloco expande num
   checklist (marcar feito, adicionar, remover) com contador "feitas/total". O
   Painel do Dia mostra o contador (ex: 2/5) em cada bloco de hoje.
-- **Etapa 22 — Aviso de conflito de horário** (pendente): ao salvar bloco que
-  sobrepõe outro, avisar (sem travar). Decidido: avisar, não bloquear.
+- **Etapa 22 — Aviso de conflito de horário** ✅: detecção client-side de blocos
+  sobrepostos no mesmo dia. Banner âmbar no topo + badge "⚠️ conflito" em cada bloco
+  envolvido. Não trava (decisão: avisar, não bloquear).
 - **Etapa 23 — Visão de calendário** (pendente): adotar biblioteca pronta
   (react-big-calendar) com visão semana primeiro; mês/dia + Google Calendar depois.
 
