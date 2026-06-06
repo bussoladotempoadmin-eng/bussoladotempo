@@ -62,6 +62,17 @@ export default async function Home() {
   const prioridades = [semana?.prioridade1, semana?.prioridade2, semana?.prioridade3].filter(
     (p): p is string => Boolean(p),
   );
+  const frenteMap = new Map(frentes.map((f) => [f.id, f]));
+  const prioridadeBlocos = blocos
+    .filter((b) => b.prioridadeSemana != null)
+    .sort((a, b) => (a.prioridadeSemana ?? 0) - (b.prioridadeSemana ?? 0))
+    .map((b) => ({
+      ordem: b.prioridadeSemana as number,
+      tarefa: b.tarefa,
+      frenteIcone: frenteMap.get(b.frenteId)?.icone ?? '',
+      frenteNome: frenteMap.get(b.frenteId)?.nome ?? '',
+      frenteCor: frenteMap.get(b.frenteId)?.cor ?? '#999',
+    }));
 
   return (
     <main className="min-h-screen">
@@ -80,6 +91,7 @@ export default async function Home() {
         nome={session.user.name ?? ''}
         semanaIso={iso}
         prioridades={prioridades}
+        prioridadeBlocos={prioridadeBlocos}
         blocos={painelBlocos}
         frentes={painelFrentes}
       />

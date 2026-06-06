@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Pencil, Trash2, Plus, Check, X, Clock } from 'lucide-react';
+import { Pencil, Trash2, Plus, Check, X, Clock, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   diaSemanaValues,
@@ -25,6 +25,7 @@ export type BlocoDTO = {
   frenteId: string;
   categoriaPlanejada: Categoria;
   categoriaRealizada: Categoria;
+  prioridadeSemana: number | null;
 };
 
 type FormState = {
@@ -149,6 +150,23 @@ export function BlocosManager({
     setBlocos((prev) => prev.filter((x) => x.id !== b.id));
   }
 
+  async function handleTogglePrioridade(b: BlocoDTO) {
+    setError(null);
+    const marcar = !b.prioridadeSemana;
+    const res = await fetch(`/api/blocos/${b.id}/prioridade`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ marcar }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => null);
+      setError(d?.error ?? 'Não consegui mudar a prioridade.');
+      return;
+    }
+    const atualizado: BlocoDTO = await res.json();
+    setBlocos((prev) => prev.map((x) => (x.id === b.id ? atualizado : x)));
+  }
+
   if (frentes.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border py-10 text-center">
@@ -210,6 +228,7 @@ export function BlocosManager({
                         setError(null);
                       }}
                       onDelete={() => handleDelete(b)}
+                      onTogglePrioridade={() => handleTogglePrioridade(b)}
                     />
                   ),
                 )}
@@ -278,18 +297,44 @@ function BlocoRow({
   frente,
   onEdit,
   onDelete,
+  onTogglePrioridade,
 }: {
   bloco: BlocoDTO;
   frente?: FrenteOption;
   onEdit: () => void;
   onDelete: () => void;
+  onTogglePrioridade: () => void;
 }) {
   const desviou = b.categoriaPlanejada !== b.categoriaRealizada;
+  const prioridade = b.prioridadeSemana;
   return (
     <li
-      className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 shadow-sm"
+      className={cn(
+        'flex items-center gap-3 rounded-xl border bg-card p-3 shadow-sm',
+        prioridade ? 'border-amber-400/60 ring-1 ring-amber-400/40' : 'border-border',
+      )}
       style={{ borderLeft: `4px solid ${frente?.cor ?? '#999'}` }}
     >
+      <button
+        type="button"
+        onClick={onTogglePrioridade}
+        aria-label={prioridade ? 'Tirar prioridade' : 'Marcar como prioridade'}
+        title={prioridade ? `Prioridade ${prioridade}` : 'Marcar como prioridade da semana'}
+        className="relative shrink-0 rounded-lg p-1.5 transition-colors hover:bg-muted"
+      >
+        <Star
+          className={cn(
+            'h-4 w-4',
+            prioridade ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground',
+          )}
+        />
+        {prioridade && (
+          <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-white">
+            {prioridade}
+          </span>
+        )}
+      </button>
+
       <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-2.5 py-1 font-mono text-xs font-semibold">
         <Clock className="h-3 w-3" />
         {b.horaInicio}–{b.horaFim}

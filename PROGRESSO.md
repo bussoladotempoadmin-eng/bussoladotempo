@@ -33,8 +33,11 @@ que torna o app usável por qualquer pessoa (não só o caso Lucas). Frentes do 
   frentes → compromissos → gerar a semana). Usuário novo (0 frentes) é redirecionado
   pra cá ao logar. Orquestra as APIs existentes (workspace, frentes, compromissos,
   aplicar agenda).
-- Etapa 19 — Prioridades vinculadas a blocos (pendente)
-- Etapa 20 — LGPD: exportar + deletar conta (pendente)
+- **Etapa 19 — Prioridades vinculadas a blocos** ✅: ⭐ em cada bloco na tela Semana
+  (`PATCH /api/blocos/[id]/prioridade`, máx. 3, slot 1/2/3 automático). O Painel do Dia
+  passa a mostrar os blocos prioritários (com fallback pro texto livre da Revisão).
+- **Etapa 20 — LGPD mínima** ✅: `GET /api/exportar` (baixa todos os dados em JSON) e
+  `DELETE /api/conta` (apaga conta + tudo, em ordem segura). UI na tela `/perfil`.
 
 ---
 

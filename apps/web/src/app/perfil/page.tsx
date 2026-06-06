@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { Compass, ArrowLeft } from 'lucide-react';
+import { ContaActions } from './conta-actions';
 
 export default async function PerfilPage() {
   const session = await getServerSession(authOptions);
@@ -65,6 +66,8 @@ export default async function PerfilPage() {
             </div>
           </dl>
         </div>
+
+        <ContaActions />
       </section>
     </main>
   );

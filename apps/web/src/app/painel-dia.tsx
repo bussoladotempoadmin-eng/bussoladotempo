@@ -54,16 +54,26 @@ function realizadaDe(b: PainelBloco, r: Resultado): Categoria {
   return 'DISPERSO';
 }
 
+export type PainelPrioridade = {
+  ordem: number;
+  tarefa: string;
+  frenteIcone: string;
+  frenteNome: string;
+  frenteCor: string;
+};
+
 export function PainelDia({
   nome,
   semanaIso,
   prioridades,
+  prioridadeBlocos,
   blocos: blocosIniciais,
   frentes,
 }: {
   nome: string;
   semanaIso: string;
   prioridades: string[];
+  prioridadeBlocos: PainelPrioridade[];
   blocos: PainelBloco[];
   frentes: PainelFrente[];
 }) {
@@ -145,7 +155,33 @@ export function PainelDia({
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">Semana {semanaIso}</p>
 
-      {prioridades.length > 0 && (
+      {prioridadeBlocos.length > 0 ? (
+        <div className="mt-6">
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Prioridades da semana
+          </h2>
+          <ol className="space-y-2">
+            {prioridadeBlocos.map((p) => (
+              <li
+                key={p.ordem}
+                className="flex items-center gap-3 rounded-xl border border-amber-400/50 bg-card p-3"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-400 text-xs font-bold text-white">
+                  {p.ordem}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{p.tarefa}</span>
+                  {p.frenteNome && (
+                    <span className="text-xs" style={{ color: p.frenteCor }}>
+                      {p.frenteIcone} {p.frenteNome}
+                    </span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : prioridades.length > 0 ? (
         <div className="mt-6">
           <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Prioridades da semana
@@ -164,7 +200,7 @@ export function PainelDia({
             ))}
           </ol>
         </div>
-      )}
+      ) : null}
 
       <div className="mt-6">
         <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
