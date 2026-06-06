@@ -12,6 +12,7 @@ import {
   Wind,
   Clock3,
   X,
+  ListChecks,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -31,6 +32,8 @@ export type PainelBloco = {
   frenteId: string;
   categoriaPlanejada: Categoria;
   categoriaRealizada: Categoria;
+  tarefasTotal: number;
+  tarefasFeitas: number;
 };
 
 type Resultado = 'SIM' | 'URGENTE' | 'DISPERSO';
@@ -261,6 +264,19 @@ export function PainelDia({
                             )}
                           >
                             → {categoriaLabel[b.categoriaRealizada]}
+                          </span>
+                        )}
+                        {b.tarefasTotal > 0 && (
+                          <span
+                            className={cn(
+                              'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 font-semibold',
+                              b.tarefasFeitas === b.tarefasTotal
+                                ? 'bg-emerald-500/15 text-emerald-600'
+                                : 'bg-muted text-muted-foreground',
+                            )}
+                          >
+                            <ListChecks className="h-3 w-3" />
+                            {b.tarefasFeitas}/{b.tarefasTotal}
                           </span>
                         )}
                       </p>

@@ -34,7 +34,10 @@ export default async function Home() {
   const [blocos, frentes] = workspace
     ? await Promise.all([
         semana
-          ? prisma.bloco.findMany({ where: { semanaPlanoId: semana.id } })
+          ? prisma.bloco.findMany({
+              where: { semanaPlanoId: semana.id },
+              include: { subtarefas: { select: { feito: true } } },
+            })
           : Promise.resolve([]),
         prisma.frente.findMany({
           where: { workspaceId: workspace.id, ativa: true },
@@ -52,6 +55,8 @@ export default async function Home() {
     frenteId: b.frenteId,
     categoriaPlanejada: b.categoriaPlanejada,
     categoriaRealizada: b.categoriaRealizada,
+    tarefasTotal: b.subtarefas.length,
+    tarefasFeitas: b.subtarefas.filter((t) => t.feito).length,
   }));
   const painelFrentes: PainelFrente[] = frentes.map((f) => ({
     id: f.id,

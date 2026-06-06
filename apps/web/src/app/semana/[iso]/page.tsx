@@ -39,6 +39,7 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
     prisma.bloco.findMany({
       where: { semanaPlanoId: semana.id },
       orderBy: [{ diaSemana: 'asc' }, { horaInicio: 'asc' }],
+      include: { subtarefas: { orderBy: { ordem: 'asc' } } },
     }),
     prisma.frente.findMany({
       where: { workspaceId: workspace.id, ativa: true },
@@ -56,6 +57,7 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
     categoriaPlanejada: b.categoriaPlanejada,
     categoriaRealizada: b.categoriaRealizada,
     prioridadeSemana: b.prioridadeSemana,
+    subtarefas: b.subtarefas.map((t) => ({ id: t.id, texto: t.texto, feito: t.feito })),
   }));
 
   const frenteOptions: FrenteOption[] = frentes.map((f) => ({

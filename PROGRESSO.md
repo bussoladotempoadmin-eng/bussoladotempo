@@ -19,6 +19,22 @@
 | 14 | PWA + polimento | ✅ | `a66b47b` |
 | 15 | Deploy na Vercel (app NO AR) | ✅ | — |
 
+## Rodada de feedback do Lucas (06/06/2026)
+
+Após testar, Lucas pediu 3 melhorias. Decidido construir nesta ordem:
+
+- **Etapa 21 — Tarefas (checklist) dentro do bloco** ✅: novo modelo `SubTarefa`
+  (migration `add_subtarefa_bloco`), `GET/POST /api/blocos/[id]/tarefas` e
+  `PATCH/DELETE /api/tarefas/[id]`. Na tela Semana, cada bloco expande num
+  checklist (marcar feito, adicionar, remover) com contador "feitas/total". O
+  Painel do Dia mostra o contador (ex: 2/5) em cada bloco de hoje.
+- **Etapa 22 — Aviso de conflito de horário** (pendente): ao salvar bloco que
+  sobrepõe outro, avisar (sem travar). Decidido: avisar, não bloquear.
+- **Etapa 23 — Visão de calendário** (pendente): adotar biblioteca pronta
+  (react-big-calendar) com visão semana primeiro; mês/dia + Google Calendar depois.
+
+---
+
 ## MVP+1 — fechando a "cola" (pós-auditoria, 04/06/2026)
 
 Auditoria (planejado × construído) apontou que o core está pronto, mas falta a cola

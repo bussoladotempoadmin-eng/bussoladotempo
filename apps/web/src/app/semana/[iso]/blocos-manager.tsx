@@ -2,7 +2,19 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Pencil, Trash2, Plus, Check, X, Clock, Star } from 'lucide-react';
+import {
+  Pencil,
+  Trash2,
+  Plus,
+  Check,
+  X,
+  Clock,
+  Star,
+  ListChecks,
+  ChevronDown,
+  CheckSquare,
+  Square,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   diaSemanaValues,
@@ -26,7 +38,10 @@ export type BlocoDTO = {
   categoriaPlanejada: Categoria;
   categoriaRealizada: Categoria;
   prioridadeSemana: number | null;
+  subtarefas: SubTarefa[];
 };
+
+export type SubTarefa = { id: string; texto: string; feito: boolean };
 
 type FormState = {
   diaSemana: DiaSemana;
@@ -114,7 +129,7 @@ export function BlocosManager({
       return;
     }
     const novo: BlocoDTO = await res.json();
-    setBlocos((prev) => [...prev, novo]);
+    setBlocos((prev) => [...prev, { ...novo, subtarefas: [] }]);
     setAdding(false);
   }
 
@@ -135,7 +150,9 @@ export function BlocosManager({
       return;
     }
     const atualizado: BlocoDTO = await res.json();
-    setBlocos((prev) => prev.map((b) => (b.id === id ? atualizado : b)));
+    setBlocos((prev) =>
+      prev.map((b) => (b.id === id ? { ...atualizado, subtarefas: b.subtarefas } : b)),
+    );
     setEditingId(null);
   }
 
@@ -164,7 +181,64 @@ export function BlocosManager({
       return;
     }
     const atualizado: BlocoDTO = await res.json();
-    setBlocos((prev) => prev.map((x) => (x.id === b.id ? atualizado : x)));
+    setBlocos((prev) =>
+      prev.map((x) => (x.id === b.id ? { ...atualizado, subtarefas: x.subtarefas } : x)),
+    );
+  }
+
+  async function handleAddTarefa(blocoId: string, texto: string) {
+    setError(null);
+    const res = await fetch(`/api/blocos/${blocoId}/tarefas`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto }),
+    });
+    if (!res.ok) {
+      setError('Não consegui adicionar a tarefa.');
+      return;
+    }
+    const t: SubTarefa = await res.json();
+    setBlocos((prev) =>
+      prev.map((b) =>
+        b.id === blocoId ? { ...b, subtarefas: [...b.subtarefas, t] } : b,
+      ),
+    );
+  }
+
+  async function handleToggleTarefa(blocoId: string, tarefaId: string, feito: boolean) {
+    setBlocos((prev) =>
+      prev.map((b) =>
+        b.id === blocoId
+          ? { ...b, subtarefas: b.subtarefas.map((t) => (t.id === tarefaId ? { ...t, feito } : t)) }
+          : b,
+      ),
+    );
+    const res = await fetch(`/api/tarefas/${tarefaId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ feito }),
+    });
+    if (!res.ok) {
+      setBlocos((prev) =>
+        prev.map((b) =>
+          b.id === blocoId
+            ? { ...b, subtarefas: b.subtarefas.map((t) => (t.id === tarefaId ? { ...t, feito: !feito } : t)) }
+            : b,
+        ),
+      );
+    }
+  }
+
+  async function handleDeleteTarefa(blocoId: string, tarefaId: string) {
+    const res = await fetch(`/api/tarefas/${tarefaId}`, { method: 'DELETE' });
+    if (!res.ok) return;
+    setBlocos((prev) =>
+      prev.map((b) =>
+        b.id === blocoId
+          ? { ...b, subtarefas: b.subtarefas.filter((t) => t.id !== tarefaId) }
+          : b,
+      ),
+    );
   }
 
   if (frentes.length === 0) {
@@ -229,6 +303,9 @@ export function BlocosManager({
                       }}
                       onDelete={() => handleDelete(b)}
                       onTogglePrioridade={() => handleTogglePrioridade(b)}
+                      onAddTarefa={(texto) => handleAddTarefa(b.id, texto)}
+                      onToggleTarefa={(tid, feito) => handleToggleTarefa(b.id, tid, feito)}
+                      onDeleteTarefa={(tid) => handleDeleteTarefa(b.id, tid)}
                     />
                   ),
                 )}
@@ -298,99 +375,203 @@ function BlocoRow({
   onEdit,
   onDelete,
   onTogglePrioridade,
+  onAddTarefa,
+  onToggleTarefa,
+  onDeleteTarefa,
 }: {
   bloco: BlocoDTO;
   frente?: FrenteOption;
   onEdit: () => void;
   onDelete: () => void;
   onTogglePrioridade: () => void;
+  onAddTarefa: (texto: string) => void;
+  onToggleTarefa: (tarefaId: string, feito: boolean) => void;
+  onDeleteTarefa: (tarefaId: string) => void;
 }) {
+  const [aberto, setAberto] = React.useState(false);
+  const [novaTarefa, setNovaTarefa] = React.useState('');
   const desviou = b.categoriaPlanejada !== b.categoriaRealizada;
   const prioridade = b.prioridadeSemana;
+  const total = b.subtarefas.length;
+  const feitas = b.subtarefas.filter((t) => t.feito).length;
+
+  function submitTarefa() {
+    const t = novaTarefa.trim();
+    if (!t) return;
+    onAddTarefa(t);
+    setNovaTarefa('');
+  }
+
   return (
     <li
       className={cn(
-        'flex items-center gap-3 rounded-xl border bg-card p-3 shadow-sm',
+        'rounded-xl border bg-card shadow-sm',
         prioridade ? 'border-amber-400/60 ring-1 ring-amber-400/40' : 'border-border',
       )}
       style={{ borderLeft: `4px solid ${frente?.cor ?? '#999'}` }}
     >
-      <button
-        type="button"
-        onClick={onTogglePrioridade}
-        aria-label={prioridade ? 'Tirar prioridade' : 'Marcar como prioridade'}
-        title={prioridade ? `Prioridade ${prioridade}` : 'Marcar como prioridade da semana'}
-        className="relative shrink-0 rounded-lg p-1.5 transition-colors hover:bg-muted"
-      >
-        <Star
-          className={cn(
-            'h-4 w-4',
-            prioridade ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground',
-          )}
-        />
-        {prioridade && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-white">
-            {prioridade}
-          </span>
-        )}
-      </button>
-
-      <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-2.5 py-1 font-mono text-xs font-semibold">
-        <Clock className="h-3 w-3" />
-        {b.horaInicio}–{b.horaFim}
-      </span>
-
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold">{b.tarefa}</p>
-        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
-          {frente && (
-            <span
-              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium"
-              style={{ backgroundColor: `${frente.cor}22`, color: frente.cor }}
-            >
-              {frente.icone} {frente.nome}
+      <div className="flex items-center gap-3 p-3">
+        <button
+          type="button"
+          onClick={onTogglePrioridade}
+          aria-label={prioridade ? 'Tirar prioridade' : 'Marcar como prioridade'}
+          title={prioridade ? `Prioridade ${prioridade}` : 'Marcar como prioridade da semana'}
+          className="relative shrink-0 rounded-lg p-1.5 transition-colors hover:bg-muted"
+        >
+          <Star
+            className={cn(
+              'h-4 w-4',
+              prioridade ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground',
+            )}
+          />
+          {prioridade && (
+            <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-400 text-[9px] font-bold text-white">
+              {prioridade}
             </span>
           )}
-          <span
-            className={cn(
-              'rounded-full px-2 py-0.5 font-semibold',
-              categoriaClasses[b.categoriaPlanejada],
+        </button>
+
+        <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-2.5 py-1 font-mono text-xs font-semibold">
+          <Clock className="h-3 w-3" />
+          {b.horaInicio}–{b.horaFim}
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-semibold">{b.tarefa}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+            {frente && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium"
+                style={{ backgroundColor: `${frente.cor}22`, color: frente.cor }}
+              >
+                {frente.icone} {frente.nome}
+              </span>
             )}
-          >
-            {categoriaLabel[b.categoriaPlanejada]}
-          </span>
-          {desviou && (
             <span
               className={cn(
                 'rounded-full px-2 py-0.5 font-semibold',
-                categoriaClasses[b.categoriaRealizada],
+                categoriaClasses[b.categoriaPlanejada],
               )}
-              title="Categoria realizada (diferente da planejada)"
             >
-              → {categoriaLabel[b.categoriaRealizada]}
+              {categoriaLabel[b.categoriaPlanejada]}
+            </span>
+            {desviou && (
+              <span
+                className={cn(
+                  'rounded-full px-2 py-0.5 font-semibold',
+                  categoriaClasses[b.categoriaRealizada],
+                )}
+                title="Categoria realizada (diferente da planejada)"
+              >
+                → {categoriaLabel[b.categoriaRealizada]}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setAberto((v) => !v)}
+          aria-label="Tarefas do bloco"
+          title="Tarefas do bloco"
+          className={cn(
+            'inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors hover:bg-muted',
+            total > 0 ? 'text-foreground' : 'text-muted-foreground',
+          )}
+        >
+          <ListChecks className="h-4 w-4" />
+          {total > 0 && (
+            <span className={cn(feitas === total && 'text-emerald-600')}>
+              {feitas}/{total}
             </span>
           )}
-        </div>
+          <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', aberto && 'rotate-180')} />
+        </button>
+
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label="Editar"
+          title="Editar"
+          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label="Excluir"
+          title="Excluir"
+          className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
       </div>
 
-      <button
-        type="button"
-        onClick={onEdit}
-        aria-label="Editar"
-        title="Editar"
-        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      >
-        <Pencil className="h-4 w-4" />
-      </button>
-      <button
-        type="button"
-        onClick={onDelete}
-        aria-label="Excluir"
-        title="Excluir"
-        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+      {aberto && (
+        <div className="border-t border-border px-3 py-2.5">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            O que fazer neste bloco
+          </p>
+          {b.subtarefas.length > 0 && (
+            <ul className="mb-2 space-y-1">
+              {b.subtarefas.map((t) => (
+                <li key={t.id} className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onToggleTarefa(t.id, !t.feito)}
+                    aria-label={t.feito ? 'Desmarcar' : 'Marcar como feita'}
+                    className="shrink-0"
+                  >
+                    {t.feito ? (
+                      <CheckSquare className="h-4 w-4 text-emerald-600" />
+                    ) : (
+                      <Square className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </button>
+                  <span
+                    className={cn(
+                      'flex-1 text-sm',
+                      t.feito && 'text-muted-foreground line-through',
+                    )}
+                  >
+                    {t.texto}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteTarefa(t.id)}
+                    aria-label="Remover tarefa"
+                    className="rounded p-1 text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="flex items-center gap-2">
+            <input
+              value={novaTarefa}
+              onChange={(e) => setNovaTarefa(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  submitTarefa();
+                }
+              }}
+              placeholder="Adicionar tarefa…"
+              className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
+            />
+            <button
+              type="button"
+              onClick={submitTarefa}
+              className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </li>
   );
 }

@@ -240,9 +240,23 @@ model Bloco {
 
   semanaPlano SemanaPlano @relation(fields: [semanaPlanoId], references: [id], onDelete: Cascade)
   frente      Frente      @relation(fields: [frenteId], references: [id])
+  subtarefas  SubTarefa[]
 
   @@index([semanaPlanoId])
   @@index([frenteId])
+}
+
+model SubTarefa {
+  id        String   @id @default(cuid())
+  blocoId   String
+  texto     String   @db.Text
+  feito     Boolean  @default(false)
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  bloco Bloco @relation(fields: [blocoId], references: [id], onDelete: Cascade)
+
+  @@index([blocoId])
 }
 
 model Revisao {
