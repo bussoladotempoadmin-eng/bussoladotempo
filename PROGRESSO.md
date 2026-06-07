@@ -36,8 +36,11 @@ Após testar, Lucas pediu 3 melhorias. Decidido construir nesta ordem:
   (editável) + no adicionar; tarefas com hora aparecem primeiro em ordem cronológica.
   Fix: os blocos do dia agora são ordenados por hora de início (bug: bloco novo ia pro
   fim da lista).
-- **Etapa 24 — Visão de calendário** (pendente): react-big-calendar, visão semana
-  primeiro; mês/dia + Google Calendar depois.
+- **Etapa 24 — Visão de calendário** ✅: `react-big-calendar` + `date-fns`. Toggle
+  **Lista | Calendário** na tela Semana (estado compartilhado via `SemanaView`). Visão
+  semana (grade hora × dia), eventos coloridos por frente, **arrastar pra mover** e
+  **redimensionar pra mudar duração** (grava via `PATCH /api/blocos/[id]`). CSS adaptado
+  ao tema claro/escuro. Mês/dia + Google Calendar ficam pra depois.
 
 ---
 

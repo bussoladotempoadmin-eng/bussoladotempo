@@ -31,6 +31,12 @@ function mondayOfIsoWeek(year: number, week: number): Date {
   return monday;
 }
 
+/** Segunda-feira (UTC) da semana ISO — pública, pra montar o calendário. */
+export function isoWeekMonday(iso: string): Date {
+  const [year, week] = iso.split('-W').map(Number);
+  return mondayOfIsoWeek(year, week);
+}
+
 /** Desloca uma semana ISO em `delta` semanas (pode ser negativo). */
 export function shiftIsoWeek(iso: string, delta: number): string {
   const [year, week] = iso.split('-W').map(Number);

@@ -80,14 +80,15 @@ function sobrepoe(a: BlocoDTO, b: BlocoDTO): boolean {
 
 export function BlocosManager({
   semanaIso,
-  initialBlocos,
+  blocos,
+  setBlocos,
   frentes,
 }: {
   semanaIso: string;
-  initialBlocos: BlocoDTO[];
+  blocos: BlocoDTO[];
+  setBlocos: React.Dispatch<React.SetStateAction<BlocoDTO[]>>;
   frentes: FrenteOption[];
 }) {
-  const [blocos, setBlocos] = React.useState<BlocoDTO[]>(initialBlocos);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [adding, setAdding] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);

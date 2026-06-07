@@ -60,3 +60,47 @@
       'calt' 1;
   }
 }
+
+/* react-big-calendar — adapta ao tema (claro/escuro) da Bússola */
+.rbc-bussola .rbc-calendar {
+  color: hsl(var(--foreground));
+}
+.rbc-bussola .rbc-time-view,
+.rbc-bussola .rbc-time-header.rbc-overflowing,
+.rbc-bussola .rbc-time-header-content,
+.rbc-bussola .rbc-time-content,
+.rbc-bussola .rbc-day-slot,
+.rbc-bussola .rbc-timeslot-group,
+.rbc-bussola .rbc-time-content > * + * > *,
+.rbc-bussola .rbc-day-bg + .rbc-day-bg,
+.rbc-bussola .rbc-header,
+.rbc-bussola .rbc-header + .rbc-header,
+.rbc-bussola .rbc-time-header-gutter {
+  border-color: hsl(var(--border)) !important;
+}
+.rbc-bussola .rbc-header {
+  color: hsl(var(--muted-foreground));
+  padding: 6px 4px;
+  font-weight: 600;
+}
+.rbc-bussola .rbc-label,
+.rbc-bussola .rbc-time-slot {
+  color: hsl(var(--muted-foreground));
+}
+.rbc-bussola .rbc-today {
+  background-color: hsl(var(--muted) / 0.4);
+}
+.rbc-bussola .rbc-event {
+  color: #fff;
+  border: none;
+  padding: 2px 5px;
+  font-size: 11px;
+}
+.rbc-bussola .rbc-event-label {
+  font-size: 10px;
+  opacity: 0.85;
+}
+.rbc-bussola .rbc-current-time-indicator {
+  background-color: hsl(var(--primary));
+  height: 2px;
+}

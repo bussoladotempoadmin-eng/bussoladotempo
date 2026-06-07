@@ -10,11 +10,13 @@ import {
   currentIsoWeek,
   shiftIsoWeek,
   isoWeekRangeLabel,
+  isoWeekMonday,
 } from '@/lib/semana';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { Compass, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
-import { BlocosManager, type BlocoDTO, type FrenteOption } from './blocos-manager';
+import type { BlocoDTO, FrenteOption } from './blocos-manager';
+import { SemanaView } from './semana-view';
 
 export const metadata = {
   title: 'Semana · Bússola do Tempo',
@@ -74,6 +76,8 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
 
   const semanaAnterior = shiftIsoWeek(iso, -1);
   const proximaSemana = shiftIsoWeek(iso, 1);
+  const md = isoWeekMonday(iso);
+  const mondayISO = `${md.getUTCFullYear()}-${String(md.getUTCMonth() + 1).padStart(2, '0')}-${String(md.getUTCDate()).padStart(2, '0')}`;
 
   return (
     <main className="min-h-screen">
@@ -88,7 +92,7 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
         </div>
       </header>
 
-      <section className="container max-w-3xl py-10">
+      <section className="container max-w-5xl py-10">
         <Link
           href="/"
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -121,10 +125,11 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
         </div>
 
         <div className="mt-8">
-          <BlocosManager
+          <SemanaView
             semanaIso={iso}
             initialBlocos={initialBlocos}
             frentes={frenteOptions}
+            mondayISO={mondayISO}
           />
         </div>
       </section>
