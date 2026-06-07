@@ -41,6 +41,9 @@ Após testar, Lucas pediu 3 melhorias. Decidido construir nesta ordem:
   semana (grade hora × dia), eventos coloridos por frente, **arrastar pra mover** e
   **redimensionar pra mudar duração** (grava via `PATCH /api/blocos/[id]`). CSS adaptado
   ao tema claro/escuro. Mês/dia + Google Calendar ficam pra depois.
+- **Etapa 25 — Polimento do calendário** ✅: linhas do dark suavizadas (bordas com
+  opacidade, sem a linha interna de 30 min) + botões de view **Semana/Dia** (com
+  seletor de dia). Mês fica pra depois (junto da evolução do modelo / Google Calendar).
 
 ---
 

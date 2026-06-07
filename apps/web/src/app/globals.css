@@ -70,13 +70,19 @@
 .rbc-bussola .rbc-time-header-content,
 .rbc-bussola .rbc-time-content,
 .rbc-bussola .rbc-day-slot,
-.rbc-bussola .rbc-timeslot-group,
 .rbc-bussola .rbc-time-content > * + * > *,
 .rbc-bussola .rbc-day-bg + .rbc-day-bg,
 .rbc-bussola .rbc-header,
 .rbc-bussola .rbc-header + .rbc-header,
 .rbc-bussola .rbc-time-header-gutter {
-  border-color: hsl(var(--border)) !important;
+  border-color: hsl(var(--border) / 0.45) !important;
+}
+/* linha da hora cheia bem suave; esconde a linha interna de 30 min */
+.rbc-bussola .rbc-timeslot-group {
+  border-bottom-color: hsl(var(--border) / 0.45);
+}
+.rbc-bussola .rbc-time-slot {
+  border-top: none !important;
 }
 .rbc-bussola .rbc-header {
   color: hsl(var(--muted-foreground));
@@ -88,7 +94,7 @@
   color: hsl(var(--muted-foreground));
 }
 .rbc-bussola .rbc-today {
-  background-color: hsl(var(--muted) / 0.4);
+  background-color: hsl(var(--muted) / 0.25);
 }
 .rbc-bussola .rbc-event {
   color: #fff;

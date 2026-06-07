@@ -46,7 +46,27 @@ export function BlocosCalendario({
     return new Date(y, mo - 1, d);
   }, [mondayISO]);
 
+  const dias = React.useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, o) => {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + o);
+        return d;
+      }),
+    [monday],
+  );
+
+  const [view, setView] = React.useState<'week' | 'day'>('week');
+  const [dayDate, setDayDate] = React.useState<Date>(() => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const dentro = dias.some((d) => d.getTime() === hoje.getTime());
+    return dentro ? hoje : dias[0];
+  });
+
   const frenteById = React.useMemo(() => new Map(frentes.map((f) => [f.id, f])), [frentes]);
+
+  const nomesDia = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
   const events: BlocoEvent[] = React.useMemo(() => {
     return blocos.map((b) => {
@@ -98,17 +118,66 @@ export function BlocosCalendario({
   }
 
   return (
-    <div className="rbc-bussola" style={{ height: '70vh', minHeight: 520 }}>
-      <DnDCalendar
-        localizer={localizer}
-        culture="pt-BR"
-        events={events}
-        date={monday}
-        view="week"
-        views={['week']}
-        toolbar={false}
-        onNavigate={() => {}}
-        onView={() => {}}
+    <div>
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="inline-flex rounded-lg border border-border p-0.5 text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => setView('week')}
+            className={
+              view === 'week'
+                ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground'
+                : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'
+            }
+          >
+            Semana
+          </button>
+          <button
+            type="button"
+            onClick={() => setView('day')}
+            className={
+              view === 'day'
+                ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground'
+                : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'
+            }
+          >
+            Dia
+          </button>
+        </div>
+        {view === 'day' && (
+          <div className="inline-flex flex-wrap gap-1">
+            {dias.map((d, i) => {
+              const ativo = d.getTime() === dayDate.getTime();
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setDayDate(d)}
+                  className={
+                    ativo
+                      ? 'rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground'
+                      : 'rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-foreground'
+                  }
+                >
+                  {nomesDia[i]} {String(d.getDate()).padStart(2, '0')}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="rbc-bussola" style={{ height: '70vh', minHeight: 520 }}>
+        <DnDCalendar
+          localizer={localizer}
+          culture="pt-BR"
+          events={events}
+          date={view === 'week' ? monday : dayDate}
+          view={view}
+          views={['week', 'day']}
+          toolbar={false}
+          onNavigate={() => {}}
+          onView={() => {}}
         step={30}
         timeslots={2}
         min={new Date(1970, 0, 1, 5, 0)}
@@ -121,8 +190,9 @@ export function BlocosCalendario({
           const cor = frenteById.get(event.bloco.frenteId)?.cor ?? '#3b82f6';
           return { style: { backgroundColor: cor, borderColor: cor } };
         }}
-        messages={{ week: 'Semana', day: 'Dia', today: 'Hoje', previous: 'Anterior', next: 'Próxima' }}
-      />
+          messages={{ week: 'Semana', day: 'Dia', today: 'Hoje', previous: 'Anterior', next: 'Próxima' }}
+        />
+      </div>
     </div>
   );
 }
