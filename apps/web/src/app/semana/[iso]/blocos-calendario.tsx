@@ -35,11 +35,13 @@ export function BlocosCalendario({
   setBlocos,
   frentes,
   mondayISO,
+  onSelectBloco,
 }: {
   blocos: BlocoDTO[];
   setBlocos: React.Dispatch<React.SetStateAction<BlocoDTO[]>>;
   frentes: FrenteOption[];
   mondayISO: string;
+  onSelectBloco: (id: string) => void;
 }) {
   const monday = React.useMemo(() => {
     const [y, mo, d] = mondayISO.split('-').map(Number);
@@ -184,6 +186,7 @@ export function BlocosCalendario({
         max={new Date(1970, 0, 1, 23, 30)}
         draggableAccessor={() => true}
         resizable
+        onSelectEvent={(event) => onSelectBloco(event.bloco.id)}
         onEventDrop={({ event, start, end }) => persistir(event.bloco, start as Date, end as Date)}
         onEventResize={({ event, start, end }) => persistir(event.bloco, start as Date, end as Date)}
         eventPropGetter={(event) => {

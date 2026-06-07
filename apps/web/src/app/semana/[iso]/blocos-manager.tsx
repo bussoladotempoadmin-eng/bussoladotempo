@@ -44,7 +44,7 @@ export type BlocoDTO = {
 
 export type SubTarefa = { id: string; texto: string; feito: boolean; hora: string | null };
 
-type FormState = {
+export type FormState = {
   diaSemana: DiaSemana;
   horaInicio: string;
   horaFim: string;
@@ -411,7 +411,7 @@ export function BlocosManager({
   );
 }
 
-function toForm(b: BlocoDTO): FormState {
+export function toForm(b: BlocoDTO): FormState {
   return {
     diaSemana: b.diaSemana,
     horaInicio: b.horaInicio,
@@ -668,7 +668,7 @@ function BlocoRow({
   );
 }
 
-function BlocoForm({
+export function BlocoForm({
   initial,
   frentes,
   busy,

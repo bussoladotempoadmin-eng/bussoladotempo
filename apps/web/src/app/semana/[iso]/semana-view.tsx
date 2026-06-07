@@ -5,6 +5,8 @@ import { List, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BlocosManager, type BlocoDTO, type FrenteOption } from './blocos-manager';
 import { BlocosCalendario } from './blocos-calendario';
+import { BlocoModal } from './bloco-modal';
+import { useBlocoMutations } from './use-bloco-mutations';
 
 export function SemanaView({
   semanaIso,
@@ -19,6 +21,13 @@ export function SemanaView({
 }) {
   const [blocos, setBlocos] = React.useState<BlocoDTO[]>(initialBlocos);
   const [view, setView] = React.useState<'lista' | 'calendario'>('lista');
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const mut = useBlocoMutations(setBlocos);
+
+  const selectedBloco = selectedId ? blocos.find((b) => b.id === selectedId) ?? null : null;
+  const frenteDoSelecionado = selectedBloco
+    ? frentes.find((f) => f.id === selectedBloco.frenteId)
+    : undefined;
 
   return (
     <div className="space-y-4">
@@ -50,7 +59,23 @@ export function SemanaView({
       {view === 'lista' ? (
         <BlocosManager semanaIso={semanaIso} blocos={blocos} setBlocos={setBlocos} frentes={frentes} />
       ) : (
-        <BlocosCalendario blocos={blocos} setBlocos={setBlocos} frentes={frentes} mondayISO={mondayISO} />
+        <BlocosCalendario
+          blocos={blocos}
+          setBlocos={setBlocos}
+          frentes={frentes}
+          mondayISO={mondayISO}
+          onSelectBloco={setSelectedId}
+        />
+      )}
+
+      {selectedBloco && (
+        <BlocoModal
+          bloco={selectedBloco}
+          frente={frenteDoSelecionado}
+          frentes={frentes}
+          mut={mut}
+          onClose={() => setSelectedId(null)}
+        />
       )}
     </div>
   );
