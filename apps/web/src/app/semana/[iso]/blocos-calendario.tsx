@@ -9,6 +9,7 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 import type { BlocoDTO, FrenteOption } from './blocos-manager';
 import type { DiaSemana } from '@/lib/schemas/compromisso';
+import { MesOverview } from './mes-overview';
 
 const locales = { 'pt-BR': ptBR };
 const localizer = dateFnsLocalizer({
@@ -60,7 +61,7 @@ export function BlocosCalendario({
     [monday],
   );
 
-  const [view, setView] = React.useState<'week' | 'day'>('week');
+  const [view, setView] = React.useState<'week' | 'day' | 'month'>('week');
   const [dayDate, setDayDate] = React.useState<Date>(() => {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -147,6 +148,17 @@ export function BlocosCalendario({
           >
             Dia
           </button>
+          <button
+            type="button"
+            onClick={() => setView('month')}
+            className={
+              view === 'month'
+                ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground'
+                : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'
+            }
+          >
+            Mês
+          </button>
         </div>
         {view === 'day' && (
           <div className="inline-flex flex-wrap gap-1">
@@ -171,6 +183,9 @@ export function BlocosCalendario({
         )}
       </div>
 
+      {view === 'month' ? (
+        <MesOverview frentes={frentes} mondayISO={mondayISO} />
+      ) : (
       <div className="rbc-bussola" style={{ height: '70vh', minHeight: 520 }}>
         <DnDCalendar
           localizer={localizer}
@@ -205,6 +220,7 @@ export function BlocosCalendario({
           messages={{ week: 'Semana', day: 'Dia', today: 'Hoje', previous: 'Anterior', next: 'Próxima' }}
         />
       </div>
+      )}
     </div>
   );
 }
