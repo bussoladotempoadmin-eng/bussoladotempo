@@ -8,8 +8,32 @@
 import type { NextAuthOptions } from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import EmailProvider from 'next-auth/providers/email';
+import GoogleProvider from 'next-auth/providers/google';
 import { prisma } from '@bussola/db';
 import { sendMagicLinkEmail } from './email';
+
+const providers: NextAuthOptions['providers'] = [
+  EmailProvider({
+    from: process.env.EMAIL_FROM,
+    maxAge: 24 * 60 * 60, // link vale 24h
+    async sendVerificationRequest({ identifier, url }) {
+      await sendMagicLinkEmail({ to: identifier, magicLink: url });
+    },
+  }),
+];
+
+// Google só entra na lista se as credenciais existirem (evita quebrar o
+// ambiente local enquanto as chaves não estão configuradas).
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  providers.push(
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      // Mesmo e-mail (verificado pelo magic link e pelo Google) = mesma conta.
+      allowDangerousEmailAccountLinking: true,
+    }),
+  );
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -22,15 +46,7 @@ export const authOptions: NextAuthOptions = {
     verifyRequest: '/auth/verify',
     error: '/auth/error',
   },
-  providers: [
-    EmailProvider({
-      from: process.env.EMAIL_FROM,
-      maxAge: 24 * 60 * 60, // link vale 24h
-      async sendVerificationRequest({ identifier, url }) {
-        await sendMagicLinkEmail({ to: identifier, magicLink: url });
-      },
-    }),
-  ],
+  providers,
   callbacks: {
     // No sign-in, guarda o id do usuário no token JWT.
     async jwt({ token, user }) {
