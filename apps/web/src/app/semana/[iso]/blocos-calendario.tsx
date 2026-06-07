@@ -36,12 +36,14 @@ export function BlocosCalendario({
   frentes,
   mondayISO,
   onSelectBloco,
+  onCreateSlot,
 }: {
   blocos: BlocoDTO[];
   setBlocos: React.Dispatch<React.SetStateAction<BlocoDTO[]>>;
   frentes: FrenteOption[];
   mondayISO: string;
   onSelectBloco: (id: string) => void;
+  onCreateSlot: (slot: { diaSemana: DiaSemana; horaInicio: string; horaFim: string }) => void;
 }) {
   const monday = React.useMemo(() => {
     const [y, mo, d] = mondayISO.split('-').map(Number);
@@ -186,6 +188,13 @@ export function BlocosCalendario({
         max={new Date(1970, 0, 1, 23, 30)}
         draggableAccessor={() => true}
         resizable
+        selectable
+        onSelectSlot={({ start, end }) => {
+          const s = start as Date;
+          let e = end as Date;
+          if (e.getTime() <= s.getTime()) e = new Date(s.getTime() + 60 * 60 * 1000);
+          onCreateSlot({ diaSemana: JS_TO_DIA[s.getDay()], horaInicio: hhmm(s), horaFim: hhmm(e) });
+        }}
         onSelectEvent={(event) => onSelectBloco(event.bloco.id)}
         onEventDrop={({ event, start, end }) => persistir(event.bloco, start as Date, end as Date)}
         onEventResize={({ event, start, end }) => persistir(event.bloco, start as Date, end as Date)}

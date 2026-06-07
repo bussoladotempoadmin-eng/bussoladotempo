@@ -18,7 +18,22 @@ export type BlocoUpdateData = {
  * Mutações de bloco/subtarefa reutilizáveis (lista, calendário e modal).
  * Atualizam o estado compartilhado e persistem na API.
  */
-export function useBlocoMutations(setBlocos: SetBlocos) {
+export function useBlocoMutations(setBlocos: SetBlocos, semanaIso: string) {
+  const createBloco = React.useCallback(
+    async (data: BlocoUpdateData) => {
+      const res = await fetch('/api/blocos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, semanaIso }),
+      });
+      if (!res.ok) return false;
+      const novo: BlocoDTO = await res.json();
+      setBlocos((prev) => [...prev, { ...novo, subtarefas: [] }]);
+      return true;
+    },
+    [setBlocos, semanaIso],
+  );
+
   const updateBloco = React.useCallback(
     async (id: string, data: BlocoUpdateData) => {
       const res = await fetch(`/api/blocos/${id}`, {
@@ -143,6 +158,7 @@ export function useBlocoMutations(setBlocos: SetBlocos) {
   );
 
   return {
+    createBloco,
     updateBloco,
     deleteBloco,
     togglePrioridade,

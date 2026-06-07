@@ -44,6 +44,13 @@ Após testar, Lucas pediu 3 melhorias. Decidido construir nesta ordem:
 - **Etapa 25 — Polimento do calendário** ✅: linhas do dark suavizadas (bordas com
   opacidade, sem a linha interna de 30 min) + botões de view **Semana/Dia** (com
   seletor de dia). Mês fica pra depois (junto da evolução do modelo / Google Calendar).
+- **Etapa 26 — Painel do bloco** ✅: clicar num evento (no calendário) abre um modal
+  com tudo: registrar realizado (Fiz/Urgente/Disperso), checklist de tarefas, prioridade
+  ⭐, editar (form) e excluir. Mutações extraídas pro hook `useBlocoMutations`
+  (compartilhado por lista, calendário e modal); estado de blocos centralizado no
+  `SemanaView`.
+- **Etapa 27 — Criar bloco no calendário** ✅: clicar/arrastar num espaço vazio abre o
+  form de novo bloco já com dia e horário preenchidos (`selectable` + `onSelectSlot`).
 
 ---
 
