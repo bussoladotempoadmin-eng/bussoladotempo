@@ -18,7 +18,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (!existing) return NextResponse.json({ error: 'Tarefa não encontrada' }, { status: 404 });
 
   const body = await req.json().catch(() => null);
-  const data: { feito?: boolean; texto?: string } = {};
+  const data: { feito?: boolean; texto?: string; hora?: string | null } = {};
   if (typeof body?.feito === 'boolean') data.feito = body.feito;
   if (typeof body?.texto === 'string') {
     const t = body.texto.trim();
@@ -26,6 +26,14 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       return NextResponse.json({ error: 'Texto inválido' }, { status: 422 });
     }
     data.texto = t;
+  }
+  // hora: string "HH:mm" pra setar, "" ou null pra limpar
+  if ('hora' in (body ?? {})) {
+    const h = body.hora ? String(body.hora) : null;
+    if (h && !/^([01]\d|2[0-3]):[0-5]\d$/.test(h)) {
+      return NextResponse.json({ error: 'Hora inválida' }, { status: 422 });
+    }
+    data.hora = h;
   }
 
   const tarefa = await prisma.subTarefa.update({ where: { id: params.id }, data });

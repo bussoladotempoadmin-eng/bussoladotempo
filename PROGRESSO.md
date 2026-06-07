@@ -31,8 +31,13 @@ Após testar, Lucas pediu 3 melhorias. Decidido construir nesta ordem:
 - **Etapa 22 — Aviso de conflito de horário** ✅: detecção client-side de blocos
   sobrepostos no mesmo dia. Banner âmbar no topo + badge "⚠️ conflito" em cada bloco
   envolvido. Não trava (decisão: avisar, não bloquear).
-- **Etapa 23 — Visão de calendário** (pendente): adotar biblioteca pronta
-  (react-big-calendar) com visão semana primeiro; mês/dia + Google Calendar depois.
+- **Etapa 23 — Hora opcional nas subtarefas + fix ordenação** ✅: `SubTarefa` ganhou
+  campo `hora` (opcional, migration `add_hora_subtarefa`). UI: input de hora por tarefa
+  (editável) + no adicionar; tarefas com hora aparecem primeiro em ordem cronológica.
+  Fix: os blocos do dia agora são ordenados por hora de início (bug: bloco novo ia pro
+  fim da lista).
+- **Etapa 24 — Visão de calendário** (pendente): react-big-calendar, visão semana
+  primeiro; mês/dia + Google Calendar depois.
 
 ---
 

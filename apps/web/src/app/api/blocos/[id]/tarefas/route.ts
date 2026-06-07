@@ -36,10 +36,14 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   if (!texto || texto.length > 500) {
     return NextResponse.json({ error: 'Texto inválido' }, { status: 422 });
   }
+  const hora = body?.hora ? String(body.hora) : null;
+  if (hora && !/^([01]\d|2[0-3]):[0-5]\d$/.test(hora)) {
+    return NextResponse.json({ error: 'Hora inválida' }, { status: 422 });
+  }
 
   const ordem = await prisma.subTarefa.count({ where: { blocoId: bloco.id } });
   const tarefa = await prisma.subTarefa.create({
-    data: { blocoId: bloco.id, texto, ordem },
+    data: { blocoId: bloco.id, texto, hora, ordem },
   });
   return NextResponse.json(tarefa, { status: 201 });
 }

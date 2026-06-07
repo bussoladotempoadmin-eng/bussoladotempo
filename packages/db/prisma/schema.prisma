@@ -250,6 +250,7 @@ model SubTarefa {
   id        String   @id @default(cuid())
   blocoId   String
   texto     String   @db.Text
+  hora      String? // "HH:mm" opcional — quando a tarefa tem horário marcado
   feito     Boolean  @default(false)
   ordem     Int      @default(0)
   createdAt DateTime @default(now())

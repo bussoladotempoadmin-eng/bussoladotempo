@@ -57,7 +57,12 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
     categoriaPlanejada: b.categoriaPlanejada,
     categoriaRealizada: b.categoriaRealizada,
     prioridadeSemana: b.prioridadeSemana,
-    subtarefas: b.subtarefas.map((t) => ({ id: t.id, texto: t.texto, feito: t.feito })),
+    subtarefas: b.subtarefas.map((t) => ({
+      id: t.id,
+      texto: t.texto,
+      feito: t.feito,
+      hora: t.hora,
+    })),
   }));
 
   const frenteOptions: FrenteOption[] = frentes.map((f) => ({

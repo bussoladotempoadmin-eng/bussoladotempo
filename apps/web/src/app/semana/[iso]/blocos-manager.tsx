@@ -42,7 +42,7 @@ export type BlocoDTO = {
   subtarefas: SubTarefa[];
 };
 
-export type SubTarefa = { id: string; texto: string; feito: boolean };
+export type SubTarefa = { id: string; texto: string; feito: boolean; hora: string | null };
 
 type FormState = {
   diaSemana: DiaSemana;
@@ -210,12 +210,12 @@ export function BlocosManager({
     );
   }
 
-  async function handleAddTarefa(blocoId: string, texto: string) {
+  async function handleAddTarefa(blocoId: string, texto: string, hora: string | null) {
     setError(null);
     const res = await fetch(`/api/blocos/${blocoId}/tarefas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ texto }),
+      body: JSON.stringify({ texto, hora }),
     });
     if (!res.ok) {
       setError('Não consegui adicionar a tarefa.');
@@ -227,6 +227,21 @@ export function BlocosManager({
         b.id === blocoId ? { ...b, subtarefas: [...b.subtarefas, t] } : b,
       ),
     );
+  }
+
+  async function handleUpdateTarefaHora(blocoId: string, tarefaId: string, hora: string | null) {
+    setBlocos((prev) =>
+      prev.map((b) =>
+        b.id === blocoId
+          ? { ...b, subtarefas: b.subtarefas.map((t) => (t.id === tarefaId ? { ...t, hora } : t)) }
+          : b,
+      ),
+    );
+    await fetch(`/api/tarefas/${tarefaId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hora }),
+    });
   }
 
   async function handleToggleTarefa(blocoId: string, tarefaId: string, feito: boolean) {
@@ -301,7 +316,9 @@ export function BlocosManager({
 
       <div className="space-y-5">
         {diaSemanaValues.map((dia) => {
-          const doDia = blocos.filter((b) => b.diaSemana === dia);
+          const doDia = blocos
+            .filter((b) => b.diaSemana === dia)
+            .sort((a, b) => toMin(a.horaInicio) - toMin(b.horaInicio));
           if (doDia.length === 0) return null;
           const horasDia = doDia.reduce((s, b) => s + dur(b), 0);
           return (
@@ -338,9 +355,10 @@ export function BlocosManager({
                       }}
                       onDelete={() => handleDelete(b)}
                       onTogglePrioridade={() => handleTogglePrioridade(b)}
-                      onAddTarefa={(texto) => handleAddTarefa(b.id, texto)}
+                      onAddTarefa={(texto, hora) => handleAddTarefa(b.id, texto, hora)}
                       onToggleTarefa={(tid, feito) => handleToggleTarefa(b.id, tid, feito)}
                       onDeleteTarefa={(tid) => handleDeleteTarefa(b.id, tid)}
+                      onUpdateTarefaHora={(tid, hora) => handleUpdateTarefaHora(b.id, tid, hora)}
                     />
                   ),
                 )}
@@ -414,6 +432,7 @@ function BlocoRow({
   onAddTarefa,
   onToggleTarefa,
   onDeleteTarefa,
+  onUpdateTarefaHora,
 }: {
   bloco: BlocoDTO;
   frente?: FrenteOption;
@@ -421,22 +440,31 @@ function BlocoRow({
   onEdit: () => void;
   onDelete: () => void;
   onTogglePrioridade: () => void;
-  onAddTarefa: (texto: string) => void;
+  onAddTarefa: (texto: string, hora: string | null) => void;
   onToggleTarefa: (tarefaId: string, feito: boolean) => void;
   onDeleteTarefa: (tarefaId: string) => void;
+  onUpdateTarefaHora: (tarefaId: string, hora: string | null) => void;
 }) {
   const [aberto, setAberto] = React.useState(false);
   const [novaTarefa, setNovaTarefa] = React.useState('');
+  const [novaHora, setNovaHora] = React.useState('');
   const desviou = b.categoriaPlanejada !== b.categoriaRealizada;
   const prioridade = b.prioridadeSemana;
   const total = b.subtarefas.length;
   const feitas = b.subtarefas.filter((t) => t.feito).length;
+  // tarefas com hora primeiro (em ordem cronológica), depois as sem hora
+  const tarefasOrdenadas = [...b.subtarefas].sort((a, c) => {
+    const ha = a.hora ?? '99:99';
+    const hc = c.hora ?? '99:99';
+    return ha.localeCompare(hc);
+  });
 
   function submitTarefa() {
     const t = novaTarefa.trim();
     if (!t) return;
-    onAddTarefa(t);
+    onAddTarefa(t, novaHora || null);
     setNovaTarefa('');
+    setNovaHora('');
   }
 
   return (
@@ -559,9 +587,9 @@ function BlocoRow({
           <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             O que fazer neste bloco
           </p>
-          {b.subtarefas.length > 0 && (
+          {tarefasOrdenadas.length > 0 && (
             <ul className="mb-2 space-y-1">
-              {b.subtarefas.map((t) => (
+              {tarefasOrdenadas.map((t) => (
                 <li key={t.id} className="flex items-center gap-2">
                   <button
                     type="button"
@@ -575,6 +603,16 @@ function BlocoRow({
                       <Square className="h-4 w-4 text-muted-foreground" />
                     )}
                   </button>
+                  <input
+                    type="time"
+                    value={t.hora ?? ''}
+                    onChange={(e) => onUpdateTarefaHora(t.id, e.target.value || null)}
+                    title="Horário (opcional)"
+                    className={cn(
+                      'w-[5.5rem] shrink-0 rounded-md border border-border bg-background px-1.5 py-0.5 font-mono text-xs',
+                      !t.hora && 'text-muted-foreground',
+                    )}
+                  />
                   <span
                     className={cn(
                       'flex-1 text-sm',
@@ -596,6 +634,13 @@ function BlocoRow({
             </ul>
           )}
           <div className="flex items-center gap-2">
+            <input
+              type="time"
+              value={novaHora}
+              onChange={(e) => setNovaHora(e.target.value)}
+              title="Horário (opcional)"
+              className="w-[5.5rem] shrink-0 rounded-lg border border-border bg-background px-2 py-1.5 font-mono text-xs text-muted-foreground"
+            />
             <input
               value={novaTarefa}
               onChange={(e) => setNovaTarefa(e.target.value)}
