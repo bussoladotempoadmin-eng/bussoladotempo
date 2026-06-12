@@ -41,6 +41,7 @@ export function BlocosCalendario({
   onSelectBloco,
   onCreateSlot,
   googleEvents,
+  showGoogle = false,
 }: {
   blocos: BlocoDTO[];
   setBlocos: React.Dispatch<React.SetStateAction<BlocoDTO[]>>;
@@ -50,6 +51,7 @@ export function BlocosCalendario({
   onSelectBloco: (id: string) => void;
   onCreateSlot: (slot: { diaSemana: DiaSemana; horaInicio: string; horaFim: string }) => void;
   googleEvents?: GoogleOverlay[];
+  showGoogle?: boolean;
 }) {
   const monday = React.useMemo(() => {
     const [y, mo, d] = mondayISO.split('-').map(Number);
@@ -162,7 +164,7 @@ export function BlocosCalendario({
       )}
 
       {view === 'month' ? (
-        <MesOverview frentes={frentes} mondayISO={mondayISO} />
+        <MesOverview frentes={frentes} mondayISO={mondayISO} showGoogle={showGoogle} />
       ) : (
       <div className="rbc-bussola" style={{ height: '70vh', minHeight: 520 }}>
         <DnDCalendar

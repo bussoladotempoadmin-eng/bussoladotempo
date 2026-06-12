@@ -220,6 +220,7 @@ export function SemanaView({
           onSelectBloco={setSelectedId}
           onCreateSlot={abrirCriacao}
           googleEvents={showGoogle ? googleEvents : []}
+          showGoogle={googleConnected === true && showGoogle}
         />
       )}
 

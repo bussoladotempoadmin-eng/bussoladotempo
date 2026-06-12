@@ -8,6 +8,7 @@ import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { isoWeek, isoWeekMondayYMD } from '@/lib/iso-week';
 import type { FrenteOption } from './blocos-manager';
+import type { GoogleOverlay } from './blocos-calendario';
 import type { DiaSemana } from '@/lib/schemas/compromisso';
 
 const locales = { 'pt-BR': ptBR };
@@ -31,7 +32,7 @@ type RangeBloco = {
   frenteId: string;
 };
 
-type MesEvent = RbcEvent & { id: string; semanaIso: string };
+type MesEvent = RbcEvent & { id: string; navIso: string; google?: boolean };
 
 function ymd(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -40,9 +41,11 @@ function ymd(d: Date): string {
 export function MesOverview({
   frentes,
   mondayISO,
+  showGoogle = false,
 }: {
   frentes: FrenteOption[];
   mondayISO: string;
+  showGoogle?: boolean;
 }) {
   const router = useRouter();
   const frenteById = React.useMemo(() => new Map(frentes.map((f) => [f.id, f])), [frentes]);
@@ -54,19 +57,25 @@ export function MesOverview({
   });
 
   const [blocos, setBlocos] = React.useState<RangeBloco[]>([]);
+  const [googleEvents, setGoogleEvents] = React.useState<GoogleOverlay[]>([]);
   const [loading, setLoading] = React.useState(false);
 
-  React.useEffect(() => {
+  // Intervalo da grade do mês (segunda antes do dia 1 → domingo depois do fim).
+  const grade = React.useMemo(() => {
     const year = monthDate.getFullYear();
     const month = monthDate.getMonth();
     const first = new Date(year, month, 1);
     const last = new Date(year, month + 1, 0);
-    const from = startOfWeek(first, { weekStartsOn: 1 });
-    const to = endOfWeek(last, { weekStartsOn: 1 });
+    return {
+      from: startOfWeek(first, { weekStartsOn: 1 }),
+      to: endOfWeek(last, { weekStartsOn: 1 }),
+    };
+  }, [monthDate]);
 
+  React.useEffect(() => {
     let cancelado = false;
     setLoading(true);
-    fetch(`/api/blocos/range?from=${ymd(from)}&to=${ymd(to)}`)
+    fetch(`/api/blocos/range?from=${ymd(grade.from)}&to=${ymd(grade.to)}`)
       .then((r) => (r.ok ? r.json() : []))
       .then((data: RangeBloco[]) => {
         if (!cancelado) setBlocos(data);
@@ -80,10 +89,29 @@ export function MesOverview({
     return () => {
       cancelado = true;
     };
-  }, [monthDate]);
+  }, [grade]);
+
+  React.useEffect(() => {
+    if (!showGoogle) {
+      setGoogleEvents([]);
+      return;
+    }
+    let cancelado = false;
+    fetch(`/api/google/calendar?from=${grade.from.toISOString()}&to=${grade.to.toISOString()}`)
+      .then((r) => (r.ok ? r.json() : { events: [] }))
+      .then((data: { events?: GoogleOverlay[] }) => {
+        if (!cancelado) setGoogleEvents(data.events ?? []);
+      })
+      .catch(() => {
+        if (!cancelado) setGoogleEvents([]);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [grade, showGoogle]);
 
   const events: MesEvent[] = React.useMemo(() => {
-    return blocos.map((b) => {
+    const dosBlocos: MesEvent[] = blocos.map((b) => {
       const [y, mo, d] = isoWeekMondayYMD(b.semanaIso).split('-').map(Number);
       const start = new Date(y, mo - 1, d + OFFSET[b.diaSemana]);
       const [hi, mi] = b.horaInicio.split(':').map(Number);
@@ -97,10 +125,25 @@ export function MesOverview({
         title: `${f ? f.icone + ' ' : ''}${b.tarefa}`,
         start,
         end,
-        semanaIso: b.semanaIso,
+        navIso: b.semanaIso,
       };
     });
-  }, [blocos, frenteById]);
+
+    const doGoogle: MesEvent[] = googleEvents.map((g) => {
+      const start = new Date(g.start);
+      return {
+        id: `g_${g.id}`,
+        title: g.title,
+        start,
+        end: new Date(g.end),
+        allDay: g.allDay,
+        navIso: isoWeek(start),
+        google: true,
+      };
+    });
+
+    return [...dosBlocos, ...doGoogle];
+  }, [blocos, googleEvents, frenteById]);
 
   function irParaData(d: Date) {
     router.push(`/semana/${isoWeek(d)}`);
@@ -147,10 +190,20 @@ export function MesOverview({
           onNavigate={() => {}}
           selectable
           popup
-          onSelectEvent={(event) => router.push(`/semana/${event.semanaIso}`)}
+          onSelectEvent={(event) => router.push(`/semana/${event.navIso}`)}
           onSelectSlot={({ start }) => irParaData(start as Date)}
           onDrillDown={(date) => irParaData(date)}
           eventPropGetter={(event) => {
+            if (event.google) {
+              return {
+                style: {
+                  backgroundColor: 'hsl(var(--muted))',
+                  border: '1px dashed hsl(var(--muted-foreground) / 0.6)',
+                  color: 'hsl(var(--muted-foreground))',
+                  opacity: 0.9,
+                },
+              };
+            }
             const b = blocos.find((x) => x.id === event.id);
             const cor = (b && frenteById.get(b.frenteId)?.cor) ?? '#3b82f6';
             return { style: { backgroundColor: cor, borderColor: cor } };
