@@ -139,6 +139,18 @@ export default async function EspelhoPage({ params }: { params: { iso: string } 
             <p className="mt-1 text-sm text-muted-foreground">
               {iso} · {isoWeekRangeLabel(iso)}
             </p>
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+              O retrato da sua semana em números — pra onde seu tempo realmente foi, por
+              frente e por categoria. Aqui você só observa; refletir e fechar a semana é
+              na{' '}
+              <Link
+                href={`/revisao/${iso}`}
+                className="font-medium text-primary underline-offset-2 hover:underline"
+              >
+                Revisão
+              </Link>
+              .
+            </p>
           </div>
           <div className="flex items-center gap-1">
             <Link

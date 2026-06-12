@@ -130,6 +130,17 @@ export default async function RevisaoPage({ params }: { params: { iso: string } 
         <p className="mt-1 text-sm text-muted-foreground">
           {iso} · {data.rangeLabel}
         </p>
+        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+          O fechamento da semana: você reflete sobre o que rolou e já planeja a próxima.
+          Os números crus da semana ficam no{' '}
+          <Link
+            href={`/espelho/${iso}`}
+            className="font-medium text-primary underline-offset-2 hover:underline"
+          >
+            Espelho
+          </Link>
+          .
+        </p>
 
         <div className="mt-8">
           <InsightsIA semanaIso={iso} temBlocos={blocos.length > 0} />
