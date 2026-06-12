@@ -51,7 +51,11 @@ export function AgendaIAView({
   const [error, setError] = React.useState<string | null>(null);
   const [proposta, setProposta] = React.useState<Proposta | null>(null);
   const [aplicando, setAplicando] = React.useState(false);
-  const [aplicado, setAplicado] = React.useState<{ iso: string; count: number } | null>(null);
+  const [repetir, setRepetir] = React.useState(1); // 1 = só a semana-alvo; 4 = "mês"
+  const [aplicado, setAplicado] = React.useState<{
+    criadas: string[];
+    puladas: string[];
+  } | null>(null);
 
   async function gerar() {
     setLoading(true);
@@ -81,34 +85,41 @@ export function AgendaIAView({
     setProposta((p) => (p ? { ...p, blocos: p.blocos.filter((_, i) => i !== idx) } : p));
   }
 
+  // Semanas-alvo: a escolhida + as seguintes (até `repetir`), dentro da lista disponível.
+  function isosAlvo(): string[] {
+    const start = semanas.findIndex((s) => s.iso === alvo);
+    if (start < 0) return [alvo];
+    return semanas.slice(start, start + repetir).map((s) => s.iso);
+  }
+
   async function aplicar(substituir = false) {
     if (!proposta) return;
+    const isos = isosAlvo();
     setAplicando(true);
     setError(null);
     const res = await fetch('/api/agenda-ia/aplicar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ semanaIso: alvo, substituir, blocos: proposta.blocos }),
+      body: JSON.stringify({ isos, substituir, blocos: proposta.blocos }),
     });
-    if (res.status === 409) {
-      setAplicando(false);
-      const d = await res.json().catch(() => null);
+    setAplicando(false);
+    if (!res.ok) {
+      setError('Não consegui salvar a agenda.');
+      return;
+    }
+    const d: { criadas: string[]; puladas: string[] } = await res.json();
+    // Se nada foi criado porque todas já tinham blocos, oferece substituir.
+    if (d.criadas.length === 0 && d.puladas.length > 0) {
       if (
         window.confirm(
-          `A semana ${alvo} já tem ${d?.total ?? ''} blocos. Substituir todos pela agenda da IA?`,
+          `${d.puladas.length === 1 ? 'A semana já tem' : 'As semanas já têm'} blocos (${d.puladas.join(', ')}). Substituir pelo padrão da IA?`,
         )
       ) {
         return aplicar(true);
       }
       return;
     }
-    setAplicando(false);
-    if (!res.ok) {
-      setError('Não consegui salvar a agenda nessa semana.');
-      return;
-    }
-    const d = await res.json();
-    setAplicado({ iso: alvo, count: d.count });
+    setAplicado(d);
   }
 
   // Indexa blocos com seu índice original (pra remover certo após filtrar por dia).
@@ -250,6 +261,35 @@ export function AgendaIAView({
             mouse no bloco) e confirme — você ajusta o resto na tela da Semana.
           </p>
 
+          {/* Aplicar em 1 semana ou repetir o padrão nas próximas (o "mês") */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-muted-foreground">Aplicar em:</span>
+            <div className="inline-flex rounded-lg border border-border p-0.5 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setRepetir(1)}
+                className={
+                  repetir === 1
+                    ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground'
+                    : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'
+                }
+              >
+                Só esta semana
+              </button>
+              <button
+                type="button"
+                onClick={() => setRepetir(4)}
+                className={
+                  repetir === 4
+                    ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground'
+                    : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'
+                }
+              >
+                Próximas 4 semanas (mês)
+              </button>
+            </div>
+          </div>
+
           <button
             type="button"
             onClick={() => aplicar()}
@@ -257,22 +297,41 @@ export function AgendaIAView({
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-md disabled:opacity-60"
           >
             {aplicando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-            Confirmar e salvar em {alvo}
+            {repetir === 1
+              ? `Confirmar e salvar em ${alvo}`
+              : `Confirmar e repetir nas próximas ${isosAlvo().length} semanas`}
           </button>
+          {repetir === 4 && (
+            <p className="text-xs text-muted-foreground">
+              Mesmo padrão aplicado a {isosAlvo().join(', ')}. Semanas que já têm blocos são
+              puladas (não sobrescreve sem você confirmar).
+            </p>
+          )}
         </div>
       )}
 
       {aplicado && (
-        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm">
-          <span className="font-medium text-emerald-700 dark:text-emerald-400">
-            ✓ {aplicado.count} blocos criados em {aplicado.iso}
-          </span>
-          <Link
-            href={`/semana/${aplicado.iso}`}
-            className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-          >
-            Abrir a semana
-          </Link>
+        <div className="mt-4 space-y-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="font-medium text-emerald-700 dark:text-emerald-400">
+              ✓ Agenda criada em {aplicado.criadas.length}{' '}
+              {aplicado.criadas.length === 1 ? 'semana' : 'semanas'}
+              {aplicado.criadas.length > 0 && `: ${aplicado.criadas.join(', ')}`}
+            </span>
+            {aplicado.criadas[0] && (
+              <Link
+                href={`/semana/${aplicado.criadas[0]}`}
+                className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+              >
+                Abrir {aplicado.criadas[0]}
+              </Link>
+            )}
+          </div>
+          {aplicado.puladas.length > 0 && (
+            <p className="text-xs text-muted-foreground">
+              Puladas (já tinham blocos): {aplicado.puladas.join(', ')}
+            </p>
+          )}
         </div>
       )}
     </div>
