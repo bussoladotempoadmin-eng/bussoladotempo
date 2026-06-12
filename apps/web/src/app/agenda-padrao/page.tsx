@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { Compass, ArrowLeft } from 'lucide-react';
 import { AgendaPadraoView } from './agenda-padrao-view';
+import { AgendaIAView } from './agenda-ia-view';
 
 export const metadata = {
   title: 'Agenda padrão · Bússola do Tempo',
@@ -21,12 +22,17 @@ export default async function AgendaPadraoPage() {
   }
 
   const workspace = await getCurrentWorkspace();
-  const [frentesCount, compromissosCount] = workspace
+  const [frentesCount, compromissosCount, frentes] = workspace
     ? await Promise.all([
         prisma.frente.count({ where: { workspaceId: workspace.id, ativa: true } }),
         prisma.compromissoFixo.count({ where: { workspaceId: workspace.id } }),
+        prisma.frente.findMany({
+          where: { workspaceId: workspace.id, ativa: true },
+          orderBy: { ordem: 'asc' },
+          select: { id: true, nome: true, icone: true, cor: true },
+        }),
       ])
-    : [0, 0];
+    : [0, 0, []];
 
   const atualIso = currentIsoWeek();
   const proximaIso = shiftIsoWeek(atualIso, 1);
@@ -64,6 +70,12 @@ export default async function AgendaPadraoPage() {
           espalhando entre os dias. É um ponto de partida; nas próximas etapas você
           ajusta bloco a bloco.
         </p>
+
+        {frentesCount > 0 && (
+          <div className="mt-8">
+            <AgendaIAView frentes={frentes} semanas={semanas} />
+          </div>
+        )}
 
         <AgendaPadraoView
           frentesCount={frentesCount}
