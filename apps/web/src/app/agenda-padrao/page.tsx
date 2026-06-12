@@ -35,11 +35,16 @@ export default async function AgendaPadraoPage() {
     : [0, 0, []];
 
   const atualIso = currentIsoWeek();
-  const proximaIso = shiftIsoWeek(atualIso, 1);
+  // Gerador determinístico: semana atual + próxima (ponto de partida simples).
   const semanas = [
     { iso: atualIso, label: isoWeekRangeLabel(atualIso) },
-    { iso: proximaIso, label: isoWeekRangeLabel(proximaIso) },
+    { iso: shiftIsoWeek(atualIso, 1), label: isoWeekRangeLabel(shiftIsoWeek(atualIso, 1)) },
   ];
+  // IA: deixa escolher as próximas ~6 semanas pra planejar mais à frente.
+  const semanasIA = Array.from({ length: 6 }, (_, i) => {
+    const iso = shiftIsoWeek(atualIso, i);
+    return { iso, label: isoWeekRangeLabel(iso) };
+  });
 
   return (
     <main className="min-h-screen">
@@ -73,7 +78,7 @@ export default async function AgendaPadraoPage() {
 
         {frentesCount > 0 && (
           <div className="mt-8">
-            <AgendaIAView frentes={frentes} semanas={semanas} />
+            <AgendaIAView frentes={frentes} semanas={semanasIA} />
           </div>
         )}
 

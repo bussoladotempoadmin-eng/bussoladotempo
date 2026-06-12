@@ -13,7 +13,13 @@ type PropostaBloco = {
   frenteId: string;
   categoriaPlanejada: string;
 };
-type Proposta = { resumo: string; insights: string[]; blocos: PropostaBloco[] };
+type Proposta = {
+  resumo: string;
+  insights: string[];
+  blocos: PropostaBloco[];
+  semanasComDados: number;
+  poucoHistorico: boolean;
+};
 
 const DIAS: { key: string; label: string }[] = [
   { key: 'SEG', label: 'Segunda' },
@@ -39,7 +45,8 @@ export function AgendaIAView({
 }) {
   const frenteById = React.useMemo(() => new Map(frentes.map((f) => [f.id, f])), [frentes]);
 
-  const [alvo, setAlvo] = React.useState(semanas[semanas.length - 1]?.iso ?? '');
+  // Default: próxima semana (índice 1), que é o caso de uso mais comum.
+  const [alvo, setAlvo] = React.useState(semanas[1]?.iso ?? semanas[0]?.iso ?? '');
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [proposta, setProposta] = React.useState<Proposta | null>(null);
@@ -159,6 +166,20 @@ export function AgendaIAView({
 
       {proposta && !aplicado && (
         <div className="mt-5 space-y-4">
+          {proposta.poucoHistorico && (
+            <div className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-3 text-sm">
+              <p className="font-semibold text-sky-700 dark:text-sky-400">
+                Histórico ainda curto ({proposta.semanasComDados}{' '}
+                {proposta.semanasComDados === 1 ? 'semana' : 'semanas'} com dados)
+              </p>
+              <p className="text-muted-foreground">
+                Esta proposta é um bom ponto de partida, montada mais pelos seus
+                orçamentos e compromissos. Conforme você usa a Bússola, a IA aprende seus
+                padrões e as próximas ficam cada vez mais afiadas. 🎯
+              </p>
+            </div>
+          )}
+
           {proposta.resumo && (
             <p className="rounded-lg bg-muted/60 px-4 py-3 text-sm">{proposta.resumo}</p>
           )}

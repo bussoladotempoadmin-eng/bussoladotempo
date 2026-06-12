@@ -29,6 +29,10 @@ export type PropostaAgenda = {
   resumo: string;
   insights: string[];
   blocos: PropostaBloco[];
+  /** Quantas das semanas de histórico realmente tinham blocos (pro cold start). */
+  semanasComDados: number;
+  /** Histórico fino: a proposta é mais "ponto de partida" do que aprendida. */
+  poucoHistorico: boolean;
 };
 
 /** Erro amigável quando a chave da Anthropic não está configurada. */
@@ -141,10 +145,14 @@ export async function gerarAgendaIA(
     `- Respeite a janela do dia: acorda ${workspace.horaAcordar}, dorme ${workspace.horaDormir}; almoço ${workspace.horaAlmocoIni}-${workspace.horaAlmocoFim} (não agende em cima do almoço).`,
     '- Mantenha os compromissos fixos nos horários deles.',
     '- Distribua o tempo de cada frente perto do orçamento de horas dela.',
-    '- Aprenda com o padrão planejado × realizado: se um tipo de trabalho sempre vira DISPERSO ou URGENTE em certo horário, evite colocar trabalho IMPORTANTE ali; proteja os horários que funcionam.',
+    '- Baseie-se FORTEMENTE no que REALMENTE aconteceu (categoriaRealizada), não só no que foi planejado. O que repetiu em várias semanas provavelmente repete — proponha de novo (é assim que a recorrência emerge).',
+    '- Se um tipo de trabalho sempre vira DISPERSO ou URGENTE em certo horário, evite colocar trabalho IMPORTANTE ali; proteja os horários que historicamente funcionam.',
     '- Leve em conta as reflexões e fechamentos (o que o usuário disse que funcionou/atrapalhou).',
+    '- Fins de semana (Sáb/Dom): deixe livres, a menos que o histórico mostre trabalho recorrente neles.',
+    '- Com pouco histórico, seja conservador: gere a partir dos orçamentos e compromissos e não invente uma semana lotada.',
     '- Use APENAS os IDs de frente fornecidos. Horários no formato HH:mm (24h). Blocos sem sobreposição.',
-    '- Gere uma semana realista (não lote o dia inteiro). Devolva também um resumo curto e 2-4 insights acionáveis.',
+    '- Gere uma semana realista (não lote o dia inteiro).',
+    '- Insights: 2 a 4, cada um citando um padrão CONCRETO do histórico (ex: "Doctum vira disperso depois das 17h em 3 das 4 semanas"). Nada genérico.',
     'Responda SOMENTE chamando a ferramenta propor_agenda.',
   ].join('\n');
 
@@ -242,6 +250,11 @@ export async function gerarAgendaIA(
   );
   proposta.insights = proposta.insights ?? [];
   proposta.resumo = proposta.resumo ?? '';
+
+  // Cold start: quantas semanas de histórico realmente tinham blocos.
+  const semanasComDados = semanas.filter((s) => s.blocos.length > 0).length;
+  proposta.semanasComDados = semanasComDados;
+  proposta.poucoHistorico = semanasComDados < 2;
 
   return proposta;
 }
