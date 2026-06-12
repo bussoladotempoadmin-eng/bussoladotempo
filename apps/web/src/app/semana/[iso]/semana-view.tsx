@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { List, CalendarDays } from 'lucide-react';
+import { List, CalendarDays, Eye, EyeOff, Link2, Loader2 } from 'lucide-react';
+import { signIn } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { blocoUpdateSchema } from '@/lib/schemas/bloco';
 import type { DiaSemana } from '@/lib/schemas/compromisso';
@@ -12,7 +13,7 @@ import {
   type FrenteOption,
   type FormState,
 } from './blocos-manager';
-import { BlocosCalendario } from './blocos-calendario';
+import { BlocosCalendario, type GoogleOverlay } from './blocos-calendario';
 import { BlocoModal } from './bloco-modal';
 import { useBlocoMutations } from './use-bloco-mutations';
 
@@ -34,6 +35,46 @@ export function SemanaView({
   const [createBusy, setCreateBusy] = React.useState(false);
   const [createError, setCreateError] = React.useState<string | null>(null);
   const mut = useBlocoMutations(setBlocos, semanaIso);
+
+  // Google Agenda (Fase C)
+  const [googleConnected, setGoogleConnected] = React.useState<boolean | null>(null);
+  const [googleEvents, setGoogleEvents] = React.useState<GoogleOverlay[]>([]);
+  const [showGoogle, setShowGoogle] = React.useState(true);
+  const [googleBusy, setGoogleBusy] = React.useState(false);
+
+  React.useEffect(() => {
+    if (view !== 'calendario') return;
+    const [y, mo, d] = mondayISO.split('-').map(Number);
+    const from = new Date(y, mo - 1, d).toISOString();
+    const to = new Date(y, mo - 1, d + 7).toISOString();
+    let cancel = false;
+    fetch(`/api/google/calendar?from=${from}&to=${to}`)
+      .then((r) => (r.ok ? r.json() : { connected: false, events: [] }))
+      .then((data: { connected: boolean; events: GoogleOverlay[] }) => {
+        if (cancel) return;
+        setGoogleConnected(Boolean(data.connected));
+        setGoogleEvents(data.events ?? []);
+      })
+      .catch(() => {
+        if (!cancel) setGoogleConnected(false);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [view, mondayISO]);
+
+  function conectarGoogle() {
+    signIn('google-calendar', { callbackUrl: `/semana/${semanaIso}` });
+  }
+
+  async function desconectarGoogle() {
+    if (!window.confirm('Desconectar o Google Agenda? Os eventos deixam de aparecer.')) return;
+    setGoogleBusy(true);
+    await fetch('/api/google/calendar', { method: 'DELETE' });
+    setGoogleBusy(false);
+    setGoogleConnected(false);
+    setGoogleEvents([]);
+  }
 
   const selectedBloco = selectedId ? blocos.find((b) => b.id === selectedId) ?? null : null;
   const frenteDoSelecionado = selectedBloco
@@ -99,14 +140,60 @@ export function SemanaView({
       {view === 'lista' ? (
         <BlocosManager semanaIso={semanaIso} blocos={blocos} setBlocos={setBlocos} frentes={frentes} />
       ) : (
-        <BlocosCalendario
-          blocos={blocos}
-          setBlocos={setBlocos}
-          frentes={frentes}
-          mondayISO={mondayISO}
-          onSelectBloco={setSelectedId}
-          onCreateSlot={abrirCriacao}
-        />
+        <>
+          {/* Barra do Google Agenda */}
+          {googleConnected === false && (
+            <button
+              type="button"
+              onClick={conectarGoogle}
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <Link2 className="h-4 w-4" />
+              Conectar Google Agenda
+            </button>
+          )}
+          {googleConnected === true && (
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setShowGoogle((v) => !v)}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold transition-colors',
+                  showGoogle
+                    ? 'border-border text-foreground'
+                    : 'border-border text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {showGoogle ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                Google Agenda
+                {googleEvents.length > 0 && (
+                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    {googleEvents.length}
+                  </span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={desconectarGoogle}
+                disabled={googleBusy}
+                className="inline-flex items-center gap-1 text-muted-foreground hover:text-destructive disabled:opacity-50"
+              >
+                {googleBusy && <Loader2 className="h-3 w-3 animate-spin" />}
+                desconectar
+              </button>
+            </div>
+          )}
+
+          <BlocosCalendario
+            blocos={blocos}
+            setBlocos={setBlocos}
+            frentes={frentes}
+            mondayISO={mondayISO}
+            onSelectBloco={setSelectedId}
+            onCreateSlot={abrirCriacao}
+            googleEvents={showGoogle ? googleEvents : []}
+          />
+        </>
       )}
 
       {selectedBloco && (

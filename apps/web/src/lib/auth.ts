@@ -25,12 +25,34 @@ const providers: NextAuthOptions['providers'] = [
 // Google só entra na lista se as credenciais existirem (evita quebrar o
 // ambiente local enquanto as chaves não estão configuradas).
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  // Provider de LOGIN — escopo leve (sem agenda). Mantém o login limpo.
   providers.push(
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       // Mesmo e-mail (verificado pelo magic link e pelo Google) = mesma conta.
       allowDangerousEmailAccountLinking: true,
+    }),
+  );
+
+  // Provider separado de CONEXÃO DA AGENDA — pedido só quando o usuário clica
+  // em "Conectar Google Agenda". Guarda os tokens (com refresh) numa Account
+  // com provider='google-calendar', sem precisar mexer no schema.
+  providers.push(
+    GoogleProvider({
+      id: 'google-calendar',
+      name: 'Google Calendar',
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
+      authorization: {
+        params: {
+          scope:
+            'openid email profile https://www.googleapis.com/auth/calendar.readonly',
+          access_type: 'offline', // garante refresh_token
+          prompt: 'consent', // força tela de consentimento (pra vir o refresh_token)
+        },
+      },
     }),
   );
 }

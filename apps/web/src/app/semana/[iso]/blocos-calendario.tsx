@@ -20,12 +20,13 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-const DnDCalendar = withDragAndDrop<BlocoEvent>(Calendar);
+const DnDCalendar = withDragAndDrop<CalEvent>(Calendar);
 
 const OFFSET: Record<DiaSemana, number> = { SEG: 0, TER: 1, QUA: 2, QUI: 3, SEX: 4, SAB: 5, DOM: 6 };
 const JS_TO_DIA: DiaSemana[] = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
-type BlocoEvent = RbcEvent & { id: string; bloco: BlocoDTO };
+export type GoogleOverlay = { id: string; title: string; start: string; end: string; allDay: boolean };
+type CalEvent = RbcEvent & { id: string; bloco?: BlocoDTO; google?: boolean };
 
 function hhmm(d: Date): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -38,6 +39,7 @@ export function BlocosCalendario({
   mondayISO,
   onSelectBloco,
   onCreateSlot,
+  googleEvents,
 }: {
   blocos: BlocoDTO[];
   setBlocos: React.Dispatch<React.SetStateAction<BlocoDTO[]>>;
@@ -45,6 +47,7 @@ export function BlocosCalendario({
   mondayISO: string;
   onSelectBloco: (id: string) => void;
   onCreateSlot: (slot: { diaSemana: DiaSemana; horaInicio: string; horaFim: string }) => void;
+  googleEvents?: GoogleOverlay[];
 }) {
   const monday = React.useMemo(() => {
     const [y, mo, d] = mondayISO.split('-').map(Number);
@@ -73,8 +76,8 @@ export function BlocosCalendario({
 
   const nomesDia = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
-  const events: BlocoEvent[] = React.useMemo(() => {
-    return blocos.map((b) => {
+  const events: CalEvent[] = React.useMemo(() => {
+    const dosBlocos: CalEvent[] = blocos.map((b) => {
       const [hi, mi] = b.horaInicio.split(':').map(Number);
       const [hf, mf] = b.horaFim.split(':').map(Number);
       const start = new Date(monday);
@@ -85,7 +88,18 @@ export function BlocosCalendario({
       const f = frenteById.get(b.frenteId);
       return { id: b.id, title: `${f ? f.icone + ' ' : ''}${b.tarefa}`, start, end, bloco: b };
     });
-  }, [blocos, monday, frenteById]);
+
+    const doGoogle: CalEvent[] = (googleEvents ?? []).map((g) => ({
+      id: `g_${g.id}`,
+      title: g.title,
+      start: new Date(g.start),
+      end: new Date(g.end),
+      allDay: g.allDay,
+      google: true,
+    }));
+
+    return [...dosBlocos, ...doGoogle];
+  }, [blocos, monday, frenteById, googleEvents]);
 
   async function persistir(b: BlocoDTO, start: Date, end: Date) {
     const diaSemana = JS_TO_DIA[start.getDay()];
@@ -201,7 +215,7 @@ export function BlocosCalendario({
         timeslots={2}
         min={new Date(1970, 0, 1, 5, 0)}
         max={new Date(1970, 0, 1, 23, 30)}
-        draggableAccessor={() => true}
+        draggableAccessor={(event) => !event.google}
         resizable
         selectable
         onSelectSlot={({ start, end }) => {
@@ -210,11 +224,28 @@ export function BlocosCalendario({
           if (e.getTime() <= s.getTime()) e = new Date(s.getTime() + 60 * 60 * 1000);
           onCreateSlot({ diaSemana: JS_TO_DIA[s.getDay()], horaInicio: hhmm(s), horaFim: hhmm(e) });
         }}
-        onSelectEvent={(event) => onSelectBloco(event.bloco.id)}
-        onEventDrop={({ event, start, end }) => persistir(event.bloco, start as Date, end as Date)}
-        onEventResize={({ event, start, end }) => persistir(event.bloco, start as Date, end as Date)}
+        onSelectEvent={(event) => {
+          if (event.bloco) onSelectBloco(event.bloco.id);
+        }}
+        onEventDrop={({ event, start, end }) =>
+          event.bloco && persistir(event.bloco, start as Date, end as Date)
+        }
+        onEventResize={({ event, start, end }) =>
+          event.bloco && persistir(event.bloco, start as Date, end as Date)
+        }
         eventPropGetter={(event) => {
-          const cor = frenteById.get(event.bloco.frenteId)?.cor ?? '#3b82f6';
+          if (event.google) {
+            // Evento do Google = só leitura, visual discreto (listrado/cinza).
+            return {
+              style: {
+                backgroundColor: 'hsl(var(--muted))',
+                border: '1px dashed hsl(var(--muted-foreground) / 0.6)',
+                color: 'hsl(var(--muted-foreground))',
+                opacity: 0.9,
+              },
+            };
+          }
+          const cor = frenteById.get(event.bloco!.frenteId)?.cor ?? '#3b82f6';
           return { style: { backgroundColor: cor, borderColor: cor } };
         }}
           messages={{ week: 'Semana', day: 'Dia', today: 'Hoje', previous: 'Anterior', next: 'Próxima' }}
