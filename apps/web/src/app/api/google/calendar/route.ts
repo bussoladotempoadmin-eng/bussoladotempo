@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@bussola/db';
 import { getSessionUser } from '@/lib/workspace';
-import { isCalendarConnected, fetchGoogleEvents, debugCalendar } from '@/lib/google-calendar';
+import { isCalendarConnected, fetchGoogleEvents } from '@/lib/google-calendar';
 
 /**
  * GET /api/google/calendar?from=ISO&to=ISO
@@ -15,14 +15,6 @@ export async function GET(req: Request) {
   }
 
   const sp = new URL(req.url).searchParams;
-
-  // TEMPORÁRIO: ?debug=1 → diagnóstico (intervalo padrão: -7d a +21d).
-  if (sp.get('debug')) {
-    const dFrom = new Date(Date.now() - 7 * 86400000).toISOString();
-    const dTo = new Date(Date.now() + 21 * 86400000).toISOString();
-    const info = await debugCalendar(user.id, sp.get('from') ?? dFrom, sp.get('to') ?? dTo);
-    return NextResponse.json(info);
-  }
 
   const connected = await isCalendarConnected(user.id);
   if (!connected) {
