@@ -37,6 +37,7 @@ export function BlocosCalendario({
   setBlocos,
   frentes,
   mondayISO,
+  view,
   onSelectBloco,
   onCreateSlot,
   googleEvents,
@@ -45,6 +46,7 @@ export function BlocosCalendario({
   setBlocos: React.Dispatch<React.SetStateAction<BlocoDTO[]>>;
   frentes: FrenteOption[];
   mondayISO: string;
+  view: 'week' | 'day' | 'month';
   onSelectBloco: (id: string) => void;
   onCreateSlot: (slot: { diaSemana: DiaSemana; horaInicio: string; horaFim: string }) => void;
   googleEvents?: GoogleOverlay[];
@@ -64,7 +66,6 @@ export function BlocosCalendario({
     [monday],
   );
 
-  const [view, setView] = React.useState<'week' | 'day' | 'month'>('week');
   const [dayDate, setDayDate] = React.useState<Date>(() => {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -138,64 +139,27 @@ export function BlocosCalendario({
 
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-lg border border-border p-0.5 text-xs font-semibold">
-          <button
-            type="button"
-            onClick={() => setView('week')}
-            className={
-              view === 'week'
-                ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground'
-                : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'
-            }
-          >
-            Semana
-          </button>
-          <button
-            type="button"
-            onClick={() => setView('day')}
-            className={
-              view === 'day'
-                ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground'
-                : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'
-            }
-          >
-            Dia
-          </button>
-          <button
-            type="button"
-            onClick={() => setView('month')}
-            className={
-              view === 'month'
-                ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground'
-                : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'
-            }
-          >
-            Mês
-          </button>
+      {view === 'day' && (
+        <div className="mb-3 inline-flex flex-wrap gap-1">
+          {dias.map((d, i) => {
+            const ativo = d.getTime() === dayDate.getTime();
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setDayDate(d)}
+                className={
+                  ativo
+                    ? 'rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground'
+                    : 'rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-foreground'
+                }
+              >
+                {nomesDia[i]} {String(d.getDate()).padStart(2, '0')}
+              </button>
+            );
+          })}
         </div>
-        {view === 'day' && (
-          <div className="inline-flex flex-wrap gap-1">
-            {dias.map((d, i) => {
-              const ativo = d.getTime() === dayDate.getTime();
-              return (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setDayDate(d)}
-                  className={
-                    ativo
-                      ? 'rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground'
-                      : 'rounded-md border border-border px-2.5 py-1 text-xs font-semibold text-muted-foreground hover:text-foreground'
-                  }
-                >
-                  {nomesDia[i]} {String(d.getDate()).padStart(2, '0')}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
+      )}
 
       {view === 'month' ? (
         <MesOverview frentes={frentes} mondayISO={mondayISO} />

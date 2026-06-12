@@ -30,6 +30,7 @@ export function SemanaView({
 }) {
   const [blocos, setBlocos] = React.useState<BlocoDTO[]>(initialBlocos);
   const [view, setView] = React.useState<'lista' | 'calendario'>('lista');
+  const [calView, setCalView] = React.useState<'week' | 'day' | 'month'>('week');
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [createInitial, setCreateInitial] = React.useState<FormState | null>(null);
   const [createBusy, setCreateBusy] = React.useState(false);
@@ -112,88 +113,114 @@ export function SemanaView({
 
   return (
     <div className="space-y-4">
-      <div className="inline-flex rounded-lg border border-border p-0.5 text-sm font-semibold">
-        <button
-          type="button"
-          onClick={() => setView('lista')}
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors',
-            view === 'lista' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
-          )}
-        >
-          <List className="h-4 w-4" />
-          Lista
-        </button>
-        <button
-          type="button"
-          onClick={() => setView('calendario')}
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors',
-            view === 'calendario' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
-          )}
-        >
-          <CalendarDays className="h-4 w-4" />
-          Calendário
-        </button>
+      {/* Linha única: Lista | Calendário | Semana | Dia | Mês | Google Agenda */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="inline-flex rounded-lg border border-border p-0.5 text-sm font-semibold">
+          <button
+            type="button"
+            onClick={() => setView('lista')}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors',
+              view === 'lista' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <List className="h-4 w-4" />
+            Lista
+          </button>
+          <button
+            type="button"
+            onClick={() => setView('calendario')}
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors',
+              view === 'calendario' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            <CalendarDays className="h-4 w-4" />
+            Calendário
+          </button>
+        </div>
+
+        {view === 'calendario' && (
+          <>
+            <div className="inline-flex rounded-lg border border-border p-0.5 text-sm font-semibold">
+              {([
+                ['week', 'Semana'],
+                ['day', 'Dia'],
+                ['month', 'Mês'],
+              ] as const).map(([v, label]) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setCalView(v)}
+                  className={cn(
+                    'rounded-md px-3 py-1.5 transition-colors',
+                    calView === v ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Google Agenda */}
+            {googleConnected === false && (
+              <button
+                type="button"
+                onClick={conectarGoogle}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Link2 className="h-4 w-4" />
+                Conectar Google Agenda
+              </button>
+            )}
+            {googleConnected === true && (
+              <div className="inline-flex items-center gap-2 text-sm">
+                <button
+                  type="button"
+                  onClick={() => setShowGoogle((v) => !v)}
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold transition-colors',
+                    showGoogle
+                      ? 'border-border text-foreground'
+                      : 'border-border text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {showGoogle ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                  Google Agenda
+                  {googleEvents.length > 0 && (
+                    <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                      {googleEvents.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={desconectarGoogle}
+                  disabled={googleBusy}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive disabled:opacity-50"
+                >
+                  {googleBusy && <Loader2 className="h-3 w-3 animate-spin" />}
+                  desconectar
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {view === 'lista' ? (
         <BlocosManager semanaIso={semanaIso} blocos={blocos} setBlocos={setBlocos} frentes={frentes} />
       ) : (
-        <>
-          {/* Barra do Google Agenda */}
-          {googleConnected === false && (
-            <button
-              type="button"
-              onClick={conectarGoogle}
-              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <Link2 className="h-4 w-4" />
-              Conectar Google Agenda
-            </button>
-          )}
-          {googleConnected === true && (
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => setShowGoogle((v) => !v)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 font-semibold transition-colors',
-                  showGoogle
-                    ? 'border-border text-foreground'
-                    : 'border-border text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {showGoogle ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                Google Agenda
-                {googleEvents.length > 0 && (
-                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    {googleEvents.length}
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={desconectarGoogle}
-                disabled={googleBusy}
-                className="inline-flex items-center gap-1 text-muted-foreground hover:text-destructive disabled:opacity-50"
-              >
-                {googleBusy && <Loader2 className="h-3 w-3 animate-spin" />}
-                desconectar
-              </button>
-            </div>
-          )}
-
-          <BlocosCalendario
-            blocos={blocos}
-            setBlocos={setBlocos}
-            frentes={frentes}
-            mondayISO={mondayISO}
-            onSelectBloco={setSelectedId}
-            onCreateSlot={abrirCriacao}
-            googleEvents={showGoogle ? googleEvents : []}
-          />
-        </>
+        <BlocosCalendario
+          blocos={blocos}
+          setBlocos={setBlocos}
+          frentes={frentes}
+          mondayISO={mondayISO}
+          view={calView}
+          onSelectBloco={setSelectedId}
+          onCreateSlot={abrirCriacao}
+          googleEvents={showGoogle ? googleEvents : []}
+        />
       )}
 
       {selectedBloco && (
