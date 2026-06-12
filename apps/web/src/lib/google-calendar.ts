@@ -112,3 +112,44 @@ export async function fetchGoogleEvents(
     })
     .filter((e): e is GoogleEvent => e !== null);
 }
+
+/** TEMPORÁRIO — diagnóstico da conexão da agenda. Não expõe o token. */
+export async function debugCalendar(userId: string, fromISO: string, toISO: string) {
+  const acc = await getCalendarAccount(userId);
+  if (!acc) return { connected: false, reason: 'sem Account google-calendar' };
+
+  const now = Math.floor(Date.now() / 1000);
+  const info: Record<string, unknown> = {
+    connected: true,
+    hasAccessToken: Boolean(acc.access_token),
+    hasRefreshToken: Boolean(acc.refresh_token),
+    scope: acc.scope,
+    scopeTemCalendar: (acc.scope ?? '').includes('calendar'),
+    expiresAt: acc.expires_at,
+    expirado: acc.expires_at ? acc.expires_at <= now : null,
+    range: { fromISO, toISO },
+  };
+
+  const token = await getValidAccessToken(userId);
+  info.tokenValidoObtido = Boolean(token);
+  if (!token) return info;
+
+  const url = new URL('https://www.googleapis.com/calendar/v3/calendars/primary/events');
+  url.searchParams.set('timeMin', fromISO);
+  url.searchParams.set('timeMax', toISO);
+  url.searchParams.set('singleEvents', 'true');
+  url.searchParams.set('orderBy', 'startTime');
+  url.searchParams.set('maxResults', '250');
+
+  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  info.apiStatus = res.status;
+  const text = await res.text();
+  if (!res.ok) {
+    info.apiError = text.slice(0, 600);
+    return info;
+  }
+  const data = JSON.parse(text) as { items?: Array<{ summary?: string; start?: unknown }> };
+  info.rawItemCount = (data.items ?? []).length;
+  info.amostraTitulos = (data.items ?? []).slice(0, 6).map((i) => i.summary ?? '(sem título)');
+  return info;
+}
