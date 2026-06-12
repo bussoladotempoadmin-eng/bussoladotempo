@@ -19,6 +19,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { Compass, ArrowLeft } from 'lucide-react';
 import { RevisaoForm, type RevisaoData } from './revisao-form';
+import { InsightsIA } from './insights-ia';
 
 export const metadata = { title: 'Revisão · Bússola do Tempo' };
 
@@ -131,6 +132,10 @@ export default async function RevisaoPage({ params }: { params: { iso: string } 
         </p>
 
         <div className="mt-8">
+          <InsightsIA semanaIso={iso} temBlocos={blocos.length > 0} />
+        </div>
+
+        <div className="mt-6">
           <RevisaoForm data={data} />
         </div>
       </section>

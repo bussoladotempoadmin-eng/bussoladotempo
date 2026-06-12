@@ -258,3 +258,77 @@ export async function gerarAgendaIA(
 
   return proposta;
 }
+
+/**
+ * Analisa UMA semana (planejado × realizado + reflexões) e devolve insights
+ * acionáveis. Usado na Revisão semanal.
+ */
+export async function gerarInsightsSemana(
+  workspaceId: string,
+  semanaIso: string,
+): Promise<{ insights: string[] }> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new SemChaveIA();
+
+  const [frentes, semana] = await Promise.all([
+    prisma.frente.findMany({ where: { workspaceId }, orderBy: { ordem: 'asc' } }),
+    prisma.semanaPlano.findUnique({
+      where: { workspaceId_semanaIso: { workspaceId, semanaIso } },
+      include: {
+        blocos: { orderBy: [{ diaSemana: 'asc' }, { horaInicio: 'asc' }] },
+        revisao: true,
+      },
+    }),
+  ]);
+
+  if (!semana || semana.blocos.length === 0) {
+    return { insights: [] };
+  }
+  const frenteNome = new Map(frentes.map((f) => [f.id, f.nome]));
+
+  const linhas = semana.blocos
+    .map((b) => {
+      const fr = frenteNome.get(b.frenteId) ?? '?';
+      const real =
+        b.categoriaRealizada === b.categoriaPlanejada ? 'fez' : `virou ${b.categoriaRealizada}`;
+      return `  ${diaLabel(b.diaSemana)} ${b.horaInicio}-${b.horaFim} ${fr}: ${b.tarefa} (plan: ${b.categoriaPlanejada}, real: ${real})`;
+    })
+    .join('\n');
+  const rev = semana.revisao
+    ? `Reflexão: funcionou="${semana.revisao.retroFuncionou ?? '-'}" | não funcionou="${semana.revisao.retroNaoFuncionou ?? '-'}" | mudança="${semana.revisao.retroMudanca ?? '-'}" | sensação=${semana.revisao.sensacaoMedia ?? '-'}/5`
+    : 'Sem reflexão escrita.';
+
+  const client = new Anthropic({ apiKey });
+  const response = await client.messages.create({
+    model: MODELO,
+    max_tokens: 1500,
+    system:
+      'Você analisa a semana de um usuário da Bússola do Tempo (planejado × realizado por Frente × categoria IMPORTANTE/URGENTE/DISPERSO). Dê 3 a 5 insights curtos e ACIONÁVEIS, cada um citando um padrão concreto da semana (não genérico). Foque no que atrapalhou e no que dá pra ajustar. Responda SOMENTE chamando dar_insights.',
+    messages: [
+      {
+        role: 'user',
+        content: `Semana ${semanaIso} (${isoWeekRangeLabel(semanaIso)}):\n${linhas}\n${rev}\n\nDê os insights.`,
+      },
+    ],
+    tools: [
+      {
+        name: 'dar_insights',
+        description: 'Devolve os insights acionáveis da semana.',
+        input_schema: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            insights: { type: 'array', items: { type: 'string' } },
+          },
+          required: ['insights'],
+        },
+      },
+    ],
+    tool_choice: { type: 'tool', name: 'dar_insights' },
+  });
+
+  const bloco = response.content.find((b) => b.type === 'tool_use');
+  if (!bloco || bloco.type !== 'tool_use') return { insights: [] };
+  const out = bloco.input as { insights?: string[] };
+  return { insights: (out.insights ?? []).filter((s) => typeof s === 'string' && s.trim()) };
+}
