@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { List, CalendarDays, Eye, EyeOff, Link2, Loader2 } from 'lucide-react';
+import { List, CalendarDays, Eye, EyeOff, Link2, Loader2, UploadCloud } from 'lucide-react';
 import { signIn } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { blocoUpdateSchema } from '@/lib/schemas/bloco';
@@ -42,6 +42,8 @@ export function SemanaView({
   const [googleEvents, setGoogleEvents] = React.useState<GoogleOverlay[]>([]);
   const [showGoogle, setShowGoogle] = React.useState(true);
   const [googleBusy, setGoogleBusy] = React.useState(false);
+  const [syncBusy, setSyncBusy] = React.useState(false);
+  const [syncMsg, setSyncMsg] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (view !== 'calendario') return;
@@ -75,6 +77,27 @@ export function SemanaView({
     setGoogleBusy(false);
     setGoogleConnected(false);
     setGoogleEvents([]);
+  }
+
+  async function sincronizarGoogle() {
+    setSyncBusy(true);
+    setSyncMsg(null);
+    const res = await fetch('/api/google/calendar/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ semanaIso }),
+    });
+    setSyncBusy(false);
+    const d = await res.json().catch(() => null);
+    if (!res.ok) {
+      setSyncMsg(d?.error ?? 'Não consegui sincronizar.');
+      return;
+    }
+    const partes: string[] = [];
+    if (d.enviados) partes.push(`${d.enviados} enviado${d.enviados > 1 ? 's' : ''}`);
+    if (d.atualizados) partes.push(`${d.atualizados} atualizado${d.atualizados > 1 ? 's' : ''}`);
+    if (d.removidos) partes.push(`${d.removidos} removido${d.removidos > 1 ? 's' : ''}`);
+    setSyncMsg(partes.length ? `✓ ${partes.join(', ')} no Google` : '✓ Já estava tudo sincronizado');
   }
 
   const selectedBloco = selectedId ? blocos.find((b) => b.id === selectedId) ?? null : null;
@@ -195,6 +218,20 @@ export function SemanaView({
                 </button>
                 <button
                   type="button"
+                  onClick={sincronizarGoogle}
+                  disabled={syncBusy}
+                  title="Enviar os blocos desta semana pro seu Google Agenda"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 font-semibold text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+                >
+                  {syncBusy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <UploadCloud className="h-4 w-4" />
+                  )}
+                  Enviar pro Google
+                </button>
+                <button
+                  type="button"
                   onClick={desconectarGoogle}
                   disabled={googleBusy}
                   className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive disabled:opacity-50"
@@ -205,6 +242,9 @@ export function SemanaView({
               </div>
             )}
           </>
+        )}
+        {syncMsg && (
+          <span className="w-full text-xs text-muted-foreground">{syncMsg}</span>
         )}
       </div>
 

@@ -47,8 +47,9 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       allowDangerousEmailAccountLinking: true,
       authorization: {
         params: {
+          // calendar.events = ler E escrever eventos (Fase C lê, Fase 2 escreve).
           scope:
-            'openid email profile https://www.googleapis.com/auth/calendar.readonly',
+            'openid email profile https://www.googleapis.com/auth/calendar.events',
           access_type: 'offline', // garante refresh_token
           prompt: 'consent', // força tela de consentimento (pra vir o refresh_token)
         },

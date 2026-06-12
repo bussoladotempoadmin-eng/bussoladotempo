@@ -5,8 +5,13 @@
  * expira e busca os eventos de um intervalo.
  */
 import { prisma } from '@bussola/db';
+import { isoWeekMondayYMD } from './iso-week';
 
 const PROVIDER = 'google-calendar';
+const CAL = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+const OFFSET: Record<string, number> = { SEG: 0, TER: 1, QUA: 2, QUI: 3, SEX: 4, SAB: 5, DOM: 6 };
+// Marca eventos criados pela Bússola (pra não duplicar na leitura e pra limpar órfãos).
+const TAG = 'bussola';
 
 export type GoogleEvent = {
   id: string;
@@ -93,11 +98,14 @@ export async function fetchGoogleEvents(
       summary?: string;
       start?: { dateTime?: string; date?: string };
       end?: { dateTime?: string; date?: string };
+      extendedProperties?: { private?: Record<string, string> };
     }>;
   };
 
   return (data.items ?? [])
     .map((it): GoogleEvent | null => {
+      // Ignora os eventos que a própria Bússola criou (senão apareceriam 2x).
+      if (it.extendedProperties?.private?.[TAG]) return null;
       const startRaw = it.start?.dateTime ?? it.start?.date;
       const endRaw = it.end?.dateTime ?? it.end?.date;
       if (!startRaw || !endRaw) return null;
@@ -111,4 +119,119 @@ export async function fetchGoogleEvents(
       };
     })
     .filter((e): e is GoogleEvent => e !== null);
+}
+
+export class NaoConectado extends Error {
+  constructor() {
+    super('Google Agenda não conectado');
+    this.name = 'NaoConectado';
+  }
+}
+
+/** Data "YYYY-MM-DD" de um dia da semana ISO (segunda + offset), via UTC. */
+function dataDoDia(semanaIso: string, diaSemana: string): string {
+  const [y, m, d] = isoWeekMondayYMD(semanaIso).split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + (OFFSET[diaSemana] ?? 0)));
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${dt.getUTCFullYear()}-${p(dt.getUTCMonth() + 1)}-${p(dt.getUTCDate())}`;
+}
+
+/**
+ * Espelha os blocos de uma semana no Google Agenda (calendário principal).
+ * Idempotente: cria os novos, atualiza os que já têm externalEventId e remove
+ * do Google os eventos da Bússola cujo bloco não existe mais.
+ */
+export async function sincronizarSemana(
+  userId: string,
+  semanaIso: string,
+): Promise<{ enviados: number; atualizados: number; removidos: number }> {
+  const token = await getValidAccessToken(userId);
+  if (!token) throw new NaoConectado();
+
+  const workspace = await prisma.workspace.findFirst({ where: { userId } });
+  const tz = workspace?.timezone ?? 'America/Sao_Paulo';
+
+  const semana = workspace
+    ? await prisma.semanaPlano.findUnique({
+        where: { workspaceId_semanaIso: { workspaceId: workspace.id, semanaIso } },
+        include: {
+          blocos: { include: { frente: { select: { nome: true, icone: true } } } },
+        },
+      })
+    : null;
+  const blocos = semana?.blocos ?? [];
+
+  const auth = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  let enviados = 0;
+  let atualizados = 0;
+
+  for (const b of blocos) {
+    const dia = dataDoDia(semanaIso, b.diaSemana);
+    const body = {
+      summary: `${b.frente?.icone ? b.frente.icone + ' ' : ''}${b.tarefa}`,
+      description: 'Bloco da Bússola do Tempo',
+      start: { dateTime: `${dia}T${b.horaInicio}:00`, timeZone: tz },
+      end: { dateTime: `${dia}T${b.horaFim}:00`, timeZone: tz },
+      extendedProperties: { private: { [TAG]: 'bloco', blocoId: b.id } },
+    };
+
+    if (b.externalEventId) {
+      const res = await fetch(`${CAL}/${b.externalEventId}`, {
+        method: 'PATCH',
+        headers: auth,
+        body: JSON.stringify(body),
+      });
+      if (res.ok) atualizados++;
+      else if (res.status === 404) {
+        // Evento sumiu no Google: recria.
+        const novo = await fetch(CAL, { method: 'POST', headers: auth, body: JSON.stringify(body) });
+        if (novo.ok) {
+          const ev = (await novo.json()) as { id?: string };
+          if (ev.id) {
+            await prisma.bloco.update({ where: { id: b.id }, data: { externalEventId: ev.id } });
+            enviados++;
+          }
+        }
+      }
+    } else {
+      const res = await fetch(CAL, { method: 'POST', headers: auth, body: JSON.stringify(body) });
+      if (res.ok) {
+        const ev = (await res.json()) as { id?: string };
+        if (ev.id) {
+          await prisma.bloco.update({ where: { id: b.id }, data: { externalEventId: ev.id } });
+          enviados++;
+        }
+      }
+    }
+  }
+
+  // Limpa órfãos: eventos da Bússola nessa semana cujo bloco não existe mais.
+  let removidos = 0;
+  const idsAtuais = new Set(blocos.map((b) => b.id));
+  const from = new Date(`${dataDoDia(semanaIso, 'SEG')}T00:00:00Z`).toISOString();
+  const to = new Date(`${dataDoDia(semanaIso, 'DOM')}T23:59:59Z`).toISOString();
+  const listUrl = new URL(CAL);
+  listUrl.searchParams.set('timeMin', from);
+  listUrl.searchParams.set('timeMax', to);
+  listUrl.searchParams.set('singleEvents', 'true');
+  listUrl.searchParams.set('maxResults', '250');
+  listUrl.searchParams.set('privateExtendedProperty', `${TAG}=bloco`);
+  const lista = await fetch(listUrl, { headers: { Authorization: `Bearer ${token}` } });
+  if (lista.ok) {
+    const data = (await lista.json()) as {
+      items?: Array<{ id: string; extendedProperties?: { private?: Record<string, string> } }>;
+    };
+    for (const ev of data.items ?? []) {
+      const blocoId = ev.extendedProperties?.private?.blocoId;
+      if (!blocoId || !idsAtuais.has(blocoId)) {
+        const del = await fetch(`${CAL}/${ev.id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (del.ok || del.status === 410) removidos++;
+      }
+    }
+  }
+
+  return { enviados, atualizados, removidos };
 }
