@@ -332,3 +332,189 @@ export async function gerarInsightsSemana(
   const out = bloco.input as { insights?: string[] };
   return { insights: (out.insights ?? []).filter((s) => typeof s === 'string' && s.trim()) };
 }
+
+export type RevisarPlanejar = {
+  /** Insights sobre a semana que passou (retrospecto). */
+  analise: string[];
+  /** Proposta de agenda da PRÓXIMA semana. */
+  proposta: PropostaAgenda;
+  proximaIso: string;
+};
+
+/**
+ * Comando combinado do ritual semanal: numa única chamada de IA, analisa a
+ * semana que passou E propõe a próxima (aprendendo do retrospecto + histórico).
+ */
+export async function revisarEPlanejar(
+  workspaceId: string,
+  semanaIsoRevisada: string,
+  semanasHistorico = 4,
+): Promise<RevisarPlanejar> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new SemChaveIA();
+
+  const proximaIso = shiftIsoWeek(semanaIsoRevisada, 1);
+
+  const [workspace, frentes, compromissos] = await Promise.all([
+    prisma.workspace.findUnique({ where: { id: workspaceId } }),
+    prisma.frente.findMany({ where: { workspaceId, ativa: true }, orderBy: { ordem: 'asc' } }),
+    prisma.compromissoFixo.findMany({ where: { workspaceId } }),
+  ]);
+  if (!workspace) throw new Error('Workspace não encontrado');
+  if (frentes.length === 0) throw new Error('Crie ao menos uma frente primeiro');
+  const frenteNome = new Map(frentes.map((f) => [f.id, f.nome]));
+
+  // Histórico = a semana revisada + as anteriores (termina na revisada).
+  const isosHistorico = Array.from({ length: semanasHistorico }, (_, i) =>
+    shiftIsoWeek(semanaIsoRevisada, -i),
+  ).reverse();
+
+  const semanas = await prisma.semanaPlano.findMany({
+    where: { workspaceId, semanaIso: { in: isosHistorico } },
+    include: {
+      blocos: { orderBy: [{ diaSemana: 'asc' }, { horaInicio: 'asc' }] },
+      revisao: true,
+    },
+  });
+  const semanaPorIso = new Map(semanas.map((s) => [s.semanaIso, s]));
+  const fechamentos = await prisma.fechamentoDia.findMany({
+    where: { workspaceId },
+    orderBy: { data: 'desc' },
+    take: 14,
+  });
+
+  const linhasHistorico = isosHistorico.map((iso) => {
+    const s = semanaPorIso.get(iso);
+    const marca = iso === semanaIsoRevisada ? ' ← SEMANA A REVISAR' : '';
+    if (!s || s.blocos.length === 0) return `Semana ${iso}${marca}: sem dados.`;
+    const blocos = s.blocos
+      .map((b) => {
+        const fr = frenteNome.get(b.frenteId) ?? '?';
+        const real =
+          b.categoriaRealizada === b.categoriaPlanejada ? 'fez' : `virou ${b.categoriaRealizada}`;
+        return `  ${diaLabel(b.diaSemana)} ${b.horaInicio}-${b.horaFim} ${fr}: ${b.tarefa} (plan: ${b.categoriaPlanejada}, real: ${real})`;
+      })
+      .join('\n');
+    const rev = s.revisao
+      ? `\n  Reflexão: funcionou="${s.revisao.retroFuncionou ?? '-'}" | não="${s.revisao.retroNaoFuncionou ?? '-'}" | mudar="${s.revisao.retroMudanca ?? '-'}" | sensação=${s.revisao.sensacaoMedia ?? '-'}/5`
+      : '';
+    return `Semana ${iso}${marca}:\n${blocos}${rev}`;
+  });
+
+  const linhasFrentes = frentes
+    .map((f) => `  - ${f.nome} (id: ${f.id}) — orçamento ${f.orcamentoHoras}h/semana`)
+    .join('\n');
+  const linhasCompromissos = compromissos.length
+    ? compromissos
+        .map((c) => `  ${diaLabel(c.diaSemana)} ${c.horaInicio}-${c.horaFim}: ${c.descricao}`)
+        .join('\n')
+    : '  (nenhum)';
+  const linhasFechamento = fechamentos.length
+    ? fechamentos
+        .map((f) => `  ${f.data}: nota ${f.nota ?? '-'}/5 | bom="${f.destaque ?? '-'}" | melhorar="${f.aprendizado ?? '-'}"`)
+        .join('\n')
+    : '  (sem fechamentos)';
+
+  const idsFrentes = frentes.map((f) => f.id);
+
+  const system = [
+    'Você é o assistente da "Bússola do Tempo" (Frentes × IMPORTANTE/URGENTE/DISPERSO). É o ritual semanal: você faz DUAS coisas numa tacada.',
+    `1) ANÁLISE da semana ${semanaIsoRevisada} (a que passou): 3-5 insights curtos e ACIONÁVEIS, cada um citando um padrão concreto (planejado × realizado, reflexões). Nada genérico.`,
+    `2) PROPOSTA da semana ${proximaIso} (a próxima), aprendendo da análise e do histórico.`,
+    'Regras da proposta:',
+    `- Janela: acorda ${workspace.horaAcordar}, dorme ${workspace.horaDormir}; almoço ${workspace.horaAlmocoIni}-${workspace.horaAlmocoFim} (livre).`,
+    '- Mantenha compromissos fixos. Distribua perto do orçamento de cada frente.',
+    '- Baseie-se no REALIZADO (o que repete, repete). Proteja horários que funcionam; evite IMPORTANTE em horário que vira DISPERSO/URGENTE.',
+    '- Fins de semana livres salvo histórico. Pouco histórico = conservador. Use só os IDs de frente dados. HH:mm 24h. Sem sobreposição.',
+    'Responda SOMENTE chamando revisar_e_planejar.',
+  ].join('\n');
+
+  const userMsg = [
+    'FRENTES (use estes IDs):',
+    linhasFrentes,
+    '',
+    'COMPROMISSOS FIXOS:',
+    linhasCompromissos,
+    '',
+    'HISTÓRICO (a semana a revisar está marcada):',
+    ...linhasHistorico,
+    '',
+    'FECHAMENTOS RECENTES:',
+    linhasFechamento,
+    '',
+    `Analise a semana ${semanaIsoRevisada} e proponha a ${proximaIso}.`,
+  ].join('\n');
+
+  const client = new Anthropic({ apiKey });
+  const response = await client.messages.create({
+    model: MODELO,
+    max_tokens: 8000,
+    system,
+    messages: [{ role: 'user', content: userMsg }],
+    tools: [
+      {
+        name: 'revisar_e_planejar',
+        description: 'Devolve a análise da semana que passou e a proposta da próxima.',
+        input_schema: {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            analise: { type: 'array', items: { type: 'string' } },
+            resumoProxima: { type: 'string' },
+            blocosProxima: {
+              type: 'array',
+              items: {
+                type: 'object',
+                additionalProperties: false,
+                properties: {
+                  diaSemana: { type: 'string', enum: diaSemanaValues as unknown as string[] },
+                  horaInicio: { type: 'string' },
+                  horaFim: { type: 'string' },
+                  tarefa: { type: 'string' },
+                  frenteId: { type: 'string', enum: idsFrentes },
+                  categoriaPlanejada: { type: 'string', enum: categoriaValues as unknown as string[] },
+                },
+                required: ['diaSemana', 'horaInicio', 'horaFim', 'tarefa', 'frenteId', 'categoriaPlanejada'],
+              },
+            },
+          },
+          required: ['analise', 'resumoProxima', 'blocosProxima'],
+        },
+      },
+    ],
+    tool_choice: { type: 'tool', name: 'revisar_e_planejar' },
+  });
+
+  const bloco = response.content.find((b) => b.type === 'tool_use');
+  if (!bloco || bloco.type !== 'tool_use') throw new Error('A IA não devolveu o resultado.');
+  const out = bloco.input as {
+    analise?: string[];
+    resumoProxima?: string;
+    blocosProxima?: PropostaBloco[];
+  };
+
+  const idSet = new Set(idsFrentes);
+  const horaOk = (h: string) => /^\d{2}:\d{2}$/.test(h);
+  const blocos = (out.blocosProxima ?? []).filter(
+    (b) =>
+      idSet.has(b.frenteId) &&
+      horaOk(b.horaInicio) &&
+      horaOk(b.horaFim) &&
+      b.horaFim > b.horaInicio &&
+      diaSemanaValues.includes(b.diaSemana) &&
+      categoriaValues.includes(b.categoriaPlanejada),
+  );
+  const semanasComDados = semanas.filter((s) => s.blocos.length > 0).length;
+
+  return {
+    analise: (out.analise ?? []).filter((s) => typeof s === 'string' && s.trim()),
+    proposta: {
+      resumo: out.resumoProxima ?? '',
+      insights: [],
+      blocos,
+      semanasComDados,
+      poucoHistorico: semanasComDados < 2,
+    },
+    proximaIso,
+  };
+}
