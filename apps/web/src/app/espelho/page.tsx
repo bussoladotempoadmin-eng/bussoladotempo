@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { currentIsoWeek } from '@/lib/semana';
 
-// /espelho → redireciona pro espelho da semana atual
+// Espelho foi unificado com a Revisão — redireciona pra revisão da semana atual.
 export default function EspelhoIndex() {
-  redirect(`/espelho/${currentIsoWeek()}`);
+  redirect(`/revisao/${currentIsoWeek()}`);
 }

@@ -9,7 +9,7 @@ import {
   Loader2,
   CheckCircle2,
 } from 'lucide-react';
-import { categoriaLabel, type Categoria } from '@/lib/schemas/compromisso';
+import type { Categoria } from '@/lib/schemas/compromisso';
 import type { TipoInsight } from '@bussola/domain';
 
 export interface RevisaoData {
@@ -38,14 +38,7 @@ export interface RevisaoData {
   };
 }
 
-const insightClasses: Record<TipoInsight, string> = {
-  GOOD: 'border-emerald-500/30 bg-emerald-500/10',
-  WARN: 'border-amber-500/30 bg-amber-500/10',
-  TIP: 'border-sky-500/30 bg-sky-500/10',
-  NEUTRAL: 'border-border bg-card',
-};
-
-const PASSOS = ['Espelho', 'Desvios & Coach', 'Retrospectiva', 'Próxima semana'];
+const PASSOS = ['Retrospectiva', 'Próxima semana'];
 
 export function RevisaoForm({ data }: { data: RevisaoData }) {
   const [step, setStep] = React.useState(0);
@@ -63,10 +56,6 @@ export function RevisaoForm({ data }: { data: RevisaoData }) {
     data.initial.prioridadesProxima[1] ?? '',
     data.initial.prioridadesProxima[2] ?? '',
   ]);
-
-  function pct(f: number) {
-    return `${Math.round(f * 100)}%`;
-  }
 
   async function salvar(fechar: boolean) {
     setBusy(true);
@@ -145,65 +134,8 @@ export function RevisaoForm({ data }: { data: RevisaoData }) {
       )}
 
       <div className="rounded-2xl border border-border bg-card p-6">
-        {/* Passo 1 — Espelho */}
+        {/* Passo 1 — Retrospectiva */}
         {step === 0 && (
-          <div>
-            <h2 className="text-lg font-bold">Como foi a semana que passou</h2>
-            {data.resumo.totalGeral === 0 ? (
-              <p className="mt-3 text-sm text-muted-foreground">
-                Sem blocos registrados nesta semana. Você ainda pode escrever a
-                retrospectiva, mas não há espelho pra mostrar.
-              </p>
-            ) : (
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Stat label="Total" valor={`${data.resumo.totalGeral.toLocaleString('pt-BR')}h`} />
-                <Stat label="🎯 Importante" valor={pct(data.resumo.importante)} />
-                <Stat label="🔥 Urgente" valor={pct(data.resumo.urgente)} />
-                <Stat label="💨 Disperso" valor={pct(data.resumo.disperso)} />
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Passo 2 — Desvios + insights */}
-        {step === 1 && (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-lg font-bold">Maiores desvios</h2>
-              {data.desvios.length === 0 ? (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Nenhum bloco desviou do planejado. 👏
-                </p>
-              ) : (
-                <ul className="mt-3 space-y-2">
-                  {data.desvios.map((d, i) => (
-                    <li key={i} className="rounded-lg border border-border p-3 text-sm">
-                      <p className="font-semibold">{d.tarefa}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {d.frenteIcone} {d.frenteNome} · {categoriaLabel[d.planejada]} →{' '}
-                        {categoriaLabel[d.realizada]} · {d.horas.toLocaleString('pt-BR')}h
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div>
-              <h2 className="text-lg font-bold">Coach Gentil</h2>
-              <div className="mt-3 space-y-2">
-                {data.insights.map((ins, i) => (
-                  <div key={i} className={`rounded-lg border p-3 ${insightClasses[ins.tipo]}`}>
-                    <p className="text-sm font-bold">{ins.titulo}</p>
-                    <p className="mt-0.5 text-sm text-muted-foreground">{ins.texto}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Passo 3 — Retrospectiva */}
-        {step === 2 && (
           <div className="space-y-4">
             <h2 className="text-lg font-bold">Retrospectiva</h2>
             <Campo label="O que funcionou?" value={funcionou} onChange={setFuncionou} className={textareaClass} />
@@ -231,8 +163,8 @@ export function RevisaoForm({ data }: { data: RevisaoData }) {
           </div>
         )}
 
-        {/* Passo 4 — Próxima semana */}
-        {step === 3 && (
+        {/* Passo 2 — Próxima semana */}
+        {step === 1 && (
           <div className="space-y-4">
             <h2 className="text-lg font-bold">Preparar {data.proximaIso}</h2>
             <p className="text-xs text-muted-foreground">{data.proximaRangeLabel}</p>
@@ -303,15 +235,6 @@ export function RevisaoForm({ data }: { data: RevisaoData }) {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function Stat({ label, valor }: { label: string; valor: string }) {
-  return (
-    <div className="rounded-xl border border-border p-4">
-      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-1 text-2xl font-extrabold">{valor}</p>
     </div>
   );
 }

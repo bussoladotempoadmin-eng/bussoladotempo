@@ -17,9 +17,10 @@ import {
 } from '@bussola/domain';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
-import { Compass, ArrowLeft } from 'lucide-react';
+import { Compass, ArrowLeft, ChevronLeft, ChevronRight, Pencil } from 'lucide-react';
 import { RevisaoForm, type RevisaoData } from './revisao-form';
-import { InsightsIA } from './insights-ia';
+import { EspelhoPainel } from './espelho-painel';
+import { RitualIA } from './ritual-ia';
 
 export const metadata = { title: 'Revisão · Bússola do Tempo' };
 
@@ -117,7 +118,7 @@ export default async function RevisaoPage({ params }: { params: { iso: string } 
         </div>
       </header>
 
-      <section className="container max-w-2xl py-10">
+      <section className="container max-w-4xl py-10">
         <Link
           href="/"
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -126,27 +127,59 @@ export default async function RevisaoPage({ params }: { params: { iso: string } 
           Voltar
         </Link>
 
-        <h1 className="text-3xl font-extrabold tracking-tight">Revisão da semana</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {iso} · {data.rangeLabel}
-        </p>
-        <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-          O fechamento da semana: você reflete sobre o que rolou e já planeja a próxima.
-          Os números crus da semana ficam no{' '}
-          <Link
-            href={`/espelho/${iso}`}
-            className="font-medium text-primary underline-offset-2 hover:underline"
-          >
-            Espelho
-          </Link>
-          .
-        </p>
-
-        <div className="mt-8">
-          <InsightsIA semanaIso={iso} temBlocos={blocos.length > 0} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight">Revisão da semana</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {iso} · {data.rangeLabel}
+            </p>
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+              O ritual da semana num lugar só: veja os números, deixe a IA revisar e
+              planejar a próxima, e feche a semana.
+            </p>
+          </div>
+          <div className="flex items-center gap-1">
+            <Link
+              href={`/revisao/${shiftIsoWeek(iso, -1)}`}
+              className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Anterior
+            </Link>
+            <Link
+              href={`/revisao/${shiftIsoWeek(iso, 1)}`}
+              className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted"
+            >
+              Próxima
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href={`/semana/${iso}`}
+              className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
+            >
+              <Pencil className="h-4 w-4" />
+              Editar blocos
+            </Link>
+          </div>
         </div>
 
-        <div className="mt-6">
+        {/* 📊 Espelho — números (intacto) + Coach Gentil */}
+        <div className="mt-8">
+          <EspelhoPainel espelho={espelho} insights={insights} frentes={frentes} />
+        </div>
+
+        {/* ✨ Comando combinado da IA */}
+        {blocos.length > 0 && (
+          <div className="mt-8">
+            <RitualIA semanaIso={iso} frentes={frentes} />
+          </div>
+        )}
+
+        {/* ✍️ Fechar a semana (retrospectiva + próxima) */}
+        <div className="mt-8">
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+            Fechar a semana
+          </h2>
           <RevisaoForm data={data} />
         </div>
       </section>
