@@ -2,10 +2,12 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Sparkles, Loader2, X, Lightbulb, Check, Calendar } from 'lucide-react';
+import { Sparkles, Loader2, X, Lightbulb, Check, Calendar, Pencil, Plus } from 'lucide-react';
 import { shiftIsoWeek } from '@/lib/iso-week';
+import { BlocoForm, type FormState, type FrenteOption } from '../../semana/[iso]/blocos-manager';
+import type { DiaSemana, Categoria } from '@/lib/schemas/compromisso';
 
-type Frente = { id: string; nome: string; icone: string; cor: string };
+type Frente = FrenteOption;
 type PropostaBloco = {
   diaSemana: string;
   horaInicio: string;
@@ -14,6 +16,29 @@ type PropostaBloco = {
   frenteId: string;
   categoriaPlanejada: string;
 };
+
+function propParaForm(b: PropostaBloco): FormState {
+  return {
+    diaSemana: b.diaSemana as DiaSemana,
+    horaInicio: b.horaInicio,
+    horaFim: b.horaFim,
+    tarefa: b.tarefa,
+    frenteId: b.frenteId,
+    categoriaPlanejada: b.categoriaPlanejada as Categoria,
+    categoriaRealizada: b.categoriaPlanejada as Categoria,
+  };
+}
+
+function formParaProp(f: FormState): PropostaBloco {
+  return {
+    diaSemana: f.diaSemana,
+    horaInicio: f.horaInicio,
+    horaFim: f.horaFim,
+    tarefa: f.tarefa,
+    frenteId: f.frenteId,
+    categoriaPlanejada: f.categoriaPlanejada,
+  };
+}
 type Proposta = {
   resumo: string;
   blocos: PropostaBloco[];
@@ -47,6 +72,30 @@ export function RitualIA({ semanaIso, frentes }: { semanaIso: string; frentes: F
   const [repetir, setRepetir] = React.useState(1);
   const [aplicando, setAplicando] = React.useState(false);
   const [aplicado, setAplicado] = React.useState<{ criadas: string[]; puladas: string[] } | null>(null);
+  // null = fechado; { idx: número } = editando aquele bloco; { idx: null } = adicionando.
+  const [editando, setEditando] = React.useState<{ idx: number | null } | null>(null);
+
+  function salvarBloco(form: FormState) {
+    const novo = formParaProp(form);
+    setBlocos((prev) => {
+      if (editando?.idx == null) return [...prev, novo];
+      return prev.map((b, i) => (i === editando.idx ? novo : b));
+    });
+    setEditando(null);
+  }
+
+  const formInicial: FormState =
+    editando?.idx != null && blocos[editando.idx]
+      ? propParaForm(blocos[editando.idx])
+      : {
+          diaSemana: 'SEG',
+          horaInicio: '09:00',
+          horaFim: '10:00',
+          tarefa: '',
+          frenteId: frentes[0]?.id ?? '',
+          categoriaPlanejada: 'IMPORTANTE',
+          categoriaRealizada: 'IMPORTANTE',
+        };
 
   async function gerar() {
     setLoading(true);
@@ -189,7 +238,7 @@ export function RitualIA({ semanaIso, frentes }: { semanaIso: string; frentes: F
                           return (
                             <div
                               key={idx}
-                              className="group relative rounded-lg px-2.5 py-1.5 pr-7"
+                              className="group relative rounded-lg px-2.5 py-1.5 pr-12"
                               style={{
                                 backgroundColor: f ? `${f.cor}1f` : undefined,
                                 borderLeft: `3px solid ${f?.cor ?? '#999'}`,
@@ -202,6 +251,14 @@ export function RitualIA({ semanaIso, frentes }: { semanaIso: string; frentes: F
                                 {f ? `${f.icone} ` : ''}
                                 {b.tarefa}
                               </p>
+                              <button
+                                type="button"
+                                onClick={() => setEditando({ idx })}
+                                className="absolute right-6 top-1 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                                aria-label="Editar"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
                               <button
                                 type="button"
                                 onClick={() => setBlocos((prev) => prev.filter((_, i) => i !== idx))}
@@ -218,6 +275,15 @@ export function RitualIA({ semanaIso, frentes }: { semanaIso: string; frentes: F
                   );
                 })}
               </div>
+
+              <button
+                type="button"
+                onClick={() => setEditando({ idx: null })}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Adicionar bloco
+              </button>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-muted-foreground">Aplicar em:</span>
@@ -277,6 +343,26 @@ export function RitualIA({ semanaIso, frentes }: { semanaIso: string; frentes: F
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {editando && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center"
+          onClick={() => setEditando(null)}
+        >
+          <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <h3 className="mb-2 px-1 text-sm font-bold text-white">
+              {editando.idx == null ? 'Adicionar bloco' : 'Editar bloco'}
+            </h3>
+            <BlocoForm
+              initial={formInicial}
+              frentes={frentes}
+              busy={false}
+              onSubmit={salvarBloco}
+              onCancel={() => setEditando(null)}
+            />
+          </div>
         </div>
       )}
     </div>
