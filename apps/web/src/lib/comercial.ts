@@ -1,7 +1,8 @@
 /**
  * Camada de acesso do módulo Comercial (pago/ligável).
- * Modelo: Organizacao(comercialAtivo) → Unidade(cidade) → AcaoComercial.
- * Permissão: dono da org (diretor) vê tudo; coordenador vê só a unidade dele.
+ * Modelo: Organizacao(comercialAtivo) = EMPRESA → Unidade(cidade) → AcaoComercial.
+ * Multi-empresa: um usuário pode ser dono de várias empresas (frentes diferentes).
+ * Permissão: dono da empresa (diretor) vê tudo; coordenador vê só a unidade dele.
  * Isolado do core (agenda pessoal). Sem reflexão pessoal aqui — é setor.
  */
 import { prisma, type StatusAcao } from '@bussola/db';
@@ -42,77 +43,74 @@ export type UnidadeInfo = {
   ativa: boolean;
 };
 
+export type EmpresaInfo = { id: string; nome: string; ehDono: boolean };
+
 export type EscopoComercial = {
   org: { id: string; nome: string };
   ehDono: boolean;
   unidades: UnidadeInfo[];
 };
 
-// ---- Ativação / org ----
+// ---- Empresas (organizações com comercial ativo) ----
 
-export async function getOrgComercialDono(userId: string) {
-  return prisma.organizacao.findFirst({
-    where: { ownerId: userId },
+/** Todas as empresas que o usuário acessa (dono OU coordenador), do mais antigo ao recente. */
+export async function getEmpresasAcessiveis(userId: string): Promise<EmpresaInfo[]> {
+  const donas = await prisma.organizacao.findMany({
+    where: { ownerId: userId, comercialAtivo: true },
     orderBy: { createdAt: 'asc' },
-    select: { id: true, nome: true, comercialAtivo: true },
+    select: { id: true, nome: true },
   });
+  const coord = await prisma.unidade.findMany({
+    where: { coordenadorId: userId, organizacao: { comercialAtivo: true } },
+    orderBy: { createdAt: 'asc' },
+    select: { organizacao: { select: { id: true, nome: true } } },
+  });
+
+  const mapa = new Map<string, EmpresaInfo>();
+  for (const o of donas) mapa.set(o.id, { id: o.id, nome: o.nome, ehDono: true });
+  for (const u of coord) {
+    if (!mapa.has(u.organizacao.id)) {
+      mapa.set(u.organizacao.id, { id: u.organizacao.id, nome: u.organizacao.nome, ehDono: false });
+    }
+  }
+  return Array.from(mapa.values());
 }
 
-/** Liga o módulo: cria a org se não existir e marca comercialAtivo. Semeia tipos padrão. */
-export async function ativarComercial(userId: string, nomeOrg?: string) {
-  let org = await getOrgComercialDono(userId);
-  if (!org) {
-    const nome = (nomeOrg ?? '').trim() || 'Minha empresa';
-    const criada = await prisma.organizacao.create({
-      data: { nome, ownerId: userId, comercialAtivo: true },
-      select: { id: true, nome: true, comercialAtivo: true },
-    });
-    org = criada;
-  } else if (!org.comercialAtivo) {
-    await prisma.organizacao.update({ where: { id: org.id }, data: { comercialAtivo: true } });
-  }
-  // Semeia tipos padrão (idempotente via @@unique).
+/** Resolve qual empresa usar: a preferida (cookie) se acessível, senão a primeira. */
+export async function resolverEmpresaId(userId: string, preferido?: string): Promise<string | null> {
+  const empresas = await getEmpresasAcessiveis(userId);
+  if (preferido && empresas.some((e) => e.id === preferido)) return preferido;
+  return empresas[0]?.id ?? null;
+}
+
+/** Cria uma NOVA empresa (org com comercial ativo) e semeia os tipos padrão. */
+export async function criarEmpresa(userId: string, nome: string): Promise<{ id: string; nome: string }> {
+  const nomeLimpo = nome.trim() || 'Nova empresa';
+  const org = await prisma.organizacao.create({
+    data: { nome: nomeLimpo, ownerId: userId, comercialAtivo: true },
+    select: { id: true, nome: true },
+  });
   await prisma.tipoAcaoComercial.createMany({
-    data: TIPOS_PADRAO.map((nome) => ({ organizacaoId: org!.id, nome })),
+    data: TIPOS_PADRAO.map((n) => ({ organizacaoId: org.id, nome: n })),
     skipDuplicates: true,
   });
   return org;
 }
 
-/** Escopo de leitura do usuário no módulo (ou null se sem acesso). */
-export async function getEscopoComercial(userId: string): Promise<EscopoComercial | null> {
-  // Dono com módulo ativo → vê todas as unidades.
-  const dono = await getOrgComercialDono(userId);
-  if (dono?.comercialAtivo) {
-    const unidades = await prisma.unidade.findMany({
-      where: { organizacaoId: dono.id },
-      orderBy: { createdAt: 'asc' },
-      include: { coordenador: { select: { name: true, email: true } } },
-    });
-    return {
-      org: { id: dono.id, nome: dono.nome },
-      ehDono: true,
-      unidades: unidades.map(mapUnidade),
-    };
-  }
+type Papel = 'dono' | 'coordenador' | null;
 
-  // Coordenador de alguma unidade (de uma org com módulo ativo).
-  const unidadesCoord = await prisma.unidade.findMany({
-    where: { coordenadorId: userId, organizacao: { comercialAtivo: true } },
-    orderBy: { createdAt: 'asc' },
-    include: {
-      coordenador: { select: { name: true, email: true } },
-      organizacao: { select: { id: true, nome: true } },
-    },
+async function papelNaOrg(userId: string, orgId: string): Promise<Papel> {
+  const org = await prisma.organizacao.findFirst({
+    where: { id: orgId, comercialAtivo: true },
+    select: { ownerId: true },
   });
-  if (unidadesCoord.length > 0) {
-    return {
-      org: { id: unidadesCoord[0].organizacao.id, nome: unidadesCoord[0].organizacao.nome },
-      ehDono: false,
-      unidades: unidadesCoord.map(mapUnidade),
-    };
-  }
-  return null;
+  if (!org) return null;
+  if (org.ownerId === userId) return 'dono';
+  const coord = await prisma.unidade.findFirst({
+    where: { organizacaoId: orgId, coordenadorId: userId },
+    select: { id: true },
+  });
+  return coord ? 'coordenador' : null;
 }
 
 function mapUnidade(u: {
@@ -131,27 +129,62 @@ function mapUnidade(u: {
   };
 }
 
-/** IDs de unidades que o usuário pode ver/editar. */
-async function unidadeIdsVisiveis(userId: string): Promise<{ orgId: string; ids: string[] } | null> {
-  const esc = await getEscopoComercial(userId);
-  if (!esc) return null;
-  return { orgId: esc.org.id, ids: esc.unidades.map((u) => u.id) };
+/** Escopo de uma empresa específica (ou null se sem acesso). */
+export async function getEscopoComercial(
+  userId: string,
+  orgId: string,
+): Promise<EscopoComercial | null> {
+  const papel = await papelNaOrg(userId, orgId);
+  if (!papel) return null;
+  const org = await prisma.organizacao.findUnique({ where: { id: orgId }, select: { id: true, nome: true } });
+  if (!org) return null;
+
+  const where =
+    papel === 'dono'
+      ? { organizacaoId: orgId }
+      : { organizacaoId: orgId, coordenadorId: userId };
+  const unidades = await prisma.unidade.findMany({
+    where,
+    orderBy: { createdAt: 'asc' },
+    include: { coordenador: { select: { name: true, email: true } } },
+  });
+
+  return { org, ehDono: papel === 'dono', unidades: unidades.map(mapUnidade) };
 }
 
+/** IDs de unidades acessíveis numa empresa (dono = todas; coordenador = as suas). */
+async function idsDaOrg(userId: string, orgId: string): Promise<string[]> {
+  const papel = await papelNaOrg(userId, orgId);
+  if (!papel) return [];
+  const where =
+    papel === 'dono' ? { organizacaoId: orgId } : { organizacaoId: orgId, coordenadorId: userId };
+  const us = await prisma.unidade.findMany({ where, select: { id: true } });
+  return us.map((u) => u.id);
+}
+
+/** Pode ver/editar esta unidade? (em qualquer empresa que ele acesse) */
 async function podeAcessarUnidade(userId: string, unidadeId: string): Promise<boolean> {
-  const v = await unidadeIdsVisiveis(userId);
-  return Boolean(v && v.ids.includes(unidadeId));
+  const u = await prisma.unidade.findUnique({
+    where: { id: unidadeId },
+    select: { coordenadorId: true, organizacao: { select: { ownerId: true, comercialAtivo: true } } },
+  });
+  if (!u || !u.organizacao.comercialAtivo) return false;
+  return u.organizacao.ownerId === userId || u.coordenadorId === userId;
+}
+
+async function ehDonoDaOrg(userId: string, orgId: string): Promise<boolean> {
+  return (await papelNaOrg(userId, orgId)) === 'dono';
 }
 
 // ---- Unidades (cadastro — só dono) ----
 
 export async function criarUnidade(
   userId: string,
+  orgId: string,
   nome: string,
   coordenadorEmail?: string,
 ): Promise<{ ok: boolean; erro?: string }> {
-  const dono = await getOrgComercialDono(userId);
-  if (!dono?.comercialAtivo) return { ok: false, erro: 'Ative o módulo Comercial primeiro.' };
+  if (!(await ehDonoDaOrg(userId, orgId))) return { ok: false, erro: 'Sem permissão nesta empresa.' };
   const nomeLimpo = nome.trim();
   if (!nomeLimpo) return { ok: false, erro: 'Dê um nome à unidade.' };
 
@@ -162,39 +195,40 @@ export async function criarUnidade(
     if (!u) return { ok: false, erro: 'O coordenador precisa ter entrado no app pelo menos uma vez.' };
     coordenadorId = u.id;
   }
-  await prisma.unidade.create({
-    data: { organizacaoId: dono.id, nome: nomeLimpo, coordenadorId },
-  });
+  await prisma.unidade.create({ data: { organizacaoId: orgId, nome: nomeLimpo, coordenadorId } });
   return { ok: true };
 }
 
 export async function removerUnidade(userId: string, unidadeId: string): Promise<boolean> {
-  const dono = await getOrgComercialDono(userId);
-  if (!dono) return false;
-  const res = await prisma.unidade.deleteMany({
-    where: { id: unidadeId, organizacaoId: dono.id },
+  const u = await prisma.unidade.findUnique({
+    where: { id: unidadeId },
+    select: { organizacao: { select: { ownerId: true } } },
   });
-  return res.count > 0;
+  if (!u || u.organizacao.ownerId !== userId) return false;
+  await prisma.unidade.delete({ where: { id: unidadeId } });
+  return true;
 }
 
 // ---- Tipos de ação (cadastro — só dono) ----
 
 export async function listarTipos(orgId: string): Promise<{ id: string; nome: string }[]> {
-  const rows = await prisma.tipoAcaoComercial.findMany({
+  return prisma.tipoAcaoComercial.findMany({
     where: { organizacaoId: orgId, ativo: true },
     orderBy: { nome: 'asc' },
     select: { id: true, nome: true },
   });
-  return rows;
 }
 
-export async function criarTipo(userId: string, nome: string): Promise<{ ok: boolean; erro?: string }> {
-  const dono = await getOrgComercialDono(userId);
-  if (!dono?.comercialAtivo) return { ok: false, erro: 'Sem acesso.' };
+export async function criarTipo(
+  userId: string,
+  orgId: string,
+  nome: string,
+): Promise<{ ok: boolean; erro?: string }> {
+  if (!(await ehDonoDaOrg(userId, orgId))) return { ok: false, erro: 'Sem permissão.' };
   const n = nome.trim();
   if (!n) return { ok: false, erro: 'Digite o nome do tipo.' };
   try {
-    await prisma.tipoAcaoComercial.create({ data: { organizacaoId: dono.id, nome: n } });
+    await prisma.tipoAcaoComercial.create({ data: { organizacaoId: orgId, nome: n } });
   } catch {
     return { ok: false, erro: 'Esse tipo já existe.' };
   }
@@ -202,12 +236,13 @@ export async function criarTipo(userId: string, nome: string): Promise<{ ok: boo
 }
 
 export async function removerTipo(userId: string, tipoId: string): Promise<boolean> {
-  const dono = await getOrgComercialDono(userId);
-  if (!dono) return false;
-  const res = await prisma.tipoAcaoComercial.deleteMany({
-    where: { id: tipoId, organizacaoId: dono.id },
+  const t = await prisma.tipoAcaoComercial.findUnique({
+    where: { id: tipoId },
+    select: { organizacao: { select: { ownerId: true } } },
   });
-  return res.count > 0;
+  if (!t || t.organizacao.ownerId !== userId) return false;
+  await prisma.tipoAcaoComercial.delete({ where: { id: tipoId } });
+  return true;
 }
 
 // ---- Ações ----
@@ -375,7 +410,7 @@ export async function removerAcao(userId: string, acaoId: string): Promise<boole
   return true;
 }
 
-// ---- Listagem + agregações ----
+// ---- Listagem + agregações (escopadas por empresa) ----
 
 export type AcaoListItem = {
   id: string;
@@ -397,22 +432,18 @@ export type AcaoListItem = {
 
 type Filtro = { unidadeId?: string; de?: string; ate?: string; status?: StatusAcao };
 
-async function buscarAcoes(userId: string, filtro: Filtro) {
-  const v = await unidadeIdsVisiveis(userId);
-  if (!v || v.ids.length === 0) return [];
+async function buscarAcoes(userId: string, orgId: string, filtro: Filtro) {
+  const visiveis = await idsDaOrg(userId, orgId);
+  if (visiveis.length === 0) return [];
   const ids =
-    filtro.unidadeId && v.ids.includes(filtro.unidadeId) ? [filtro.unidadeId] : v.ids;
+    filtro.unidadeId && visiveis.includes(filtro.unidadeId) ? [filtro.unidadeId] : visiveis;
 
   const where: Record<string, unknown> = { unidadeId: { in: ids } };
   if (filtro.status) where.status = filtro.status;
   const de = filtro.de ? parseDia(filtro.de) : null;
   const ate = filtro.ate ? parseDia(filtro.ate) : null;
   if (de || ate) {
-    // Ação cai no período se o intervalo dela cruza [de, ate].
-    where.AND = [
-      ate ? { dataInicio: { lte: ate } } : {},
-      de ? { dataFim: { gte: de } } : {},
-    ];
+    where.AND = [ate ? { dataInicio: { lte: ate } } : {}, de ? { dataFim: { gte: de } } : {}];
   }
   return prisma.acaoComercial.findMany({
     where,
@@ -425,8 +456,12 @@ function iso(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
-export async function listarAcoes(userId: string, filtro: Filtro = {}): Promise<AcaoListItem[]> {
-  const rows = await buscarAcoes(userId, filtro);
+export async function listarAcoes(
+  userId: string,
+  orgId: string,
+  filtro: Filtro = {},
+): Promise<AcaoListItem[]> {
+  const rows = await buscarAcoes(userId, orgId, filtro);
   return rows.map((a) => ({
     id: a.id,
     unidadeId: a.unidadeId,
@@ -458,8 +493,12 @@ export type PainelComercial = {
   porTipo: { tipo: string; leads: number; gasto: number; custoPorLead: number | null }[];
 };
 
-export async function getPainelComercial(userId: string, filtro: Filtro = {}): Promise<PainelComercial> {
-  const rows = await buscarAcoes(userId, filtro);
+export async function getPainelComercial(
+  userId: string,
+  orgId: string,
+  filtro: Filtro = {},
+): Promise<PainelComercial> {
+  const rows = await buscarAcoes(userId, orgId, filtro);
   const exec = rows.filter((a) => a.status === 'FINALIZADO');
   const totalLeads = rows.reduce((s, a) => s + (a.resultadoQtd ?? 0), 0);
   const totalSolicitado = rows.reduce((s, a) => s + (a.valorSolicitado ?? 0), 0);

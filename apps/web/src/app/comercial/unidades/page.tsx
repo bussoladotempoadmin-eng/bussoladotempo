@@ -2,9 +2,9 @@ import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { authOptions } from '@/lib/auth';
 import { getSessionUser } from '@/lib/workspace';
-import { getEscopoComercial } from '@/lib/comercial';
 import { ComercialShell } from '../comercial-shell';
 import { UnidadesView } from './unidades-view';
+import { carregarComercial } from '../contexto';
 
 export const metadata = { title: 'Unidades · Comercial' };
 
@@ -13,16 +13,17 @@ export default async function UnidadesPage() {
   if (!session?.user) redirect('/login?callbackUrl=/comercial/unidades');
   const user = await getSessionUser();
   if (!user) redirect('/login');
-  const escopo = await getEscopoComercial(user.id);
-  if (!escopo) redirect('/comercial');
+  const ctx = await carregarComercial(user.id);
+  if (!ctx) redirect('/comercial');
+  const { empresas, orgId, escopo } = ctx;
 
   return (
-    <ComercialShell orgNome={escopo.org.nome}>
-      <h1 className="text-2xl font-extrabold tracking-tight">Unidades</h1>
+    <ComercialShell empresas={empresas} empresaAtualId={orgId}>
+      <h1 className="text-2xl font-extrabold tracking-tight">Unidades · {escopo.org.nome}</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        As cidades / unidades do seu setor comercial.
+        As cidades / unidades desta empresa.
       </p>
-      <UnidadesView inicial={escopo.unidades} ehDono={escopo.ehDono} />
+      <UnidadesView inicial={escopo.unidades} ehDono={escopo.ehDono} orgId={orgId} />
     </ComercialShell>
   );
 }

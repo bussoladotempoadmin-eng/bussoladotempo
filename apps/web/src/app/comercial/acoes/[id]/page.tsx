@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { authOptions } from '@/lib/auth';
 import { getSessionUser } from '@/lib/workspace';
-import { getAcao, getEscopoComercial, listarTipos, OBJETIVOS, RESULTADOS } from '@/lib/comercial';
+import { getAcao, listarTipos, OBJETIVOS, RESULTADOS } from '@/lib/comercial';
 import { ComercialShell } from '../../comercial-shell';
 import { ResultadoForm } from './resultado-form';
 import { AcaoForm } from '../acao-form';
+import { carregarComercial } from '../../contexto';
 import { fmtMoney, fmtPeriodo } from '../../fmt';
 
 export const metadata = { title: 'Ação · Comercial' };
@@ -21,15 +22,16 @@ export default async function AcaoDetailPage({ params }: { params: { id: string 
   if (!session?.user) redirect(`/login?callbackUrl=/comercial/acoes/${params.id}`);
   const user = await getSessionUser();
   if (!user) redirect('/login');
-  const escopo = await getEscopoComercial(user.id);
-  if (!escopo) redirect('/comercial');
+  const ctx = await carregarComercial(user.id);
+  if (!ctx) redirect('/comercial');
+  const { empresas, orgId, escopo } = ctx;
 
   const a = await getAcao(user.id, params.id);
   if (!a) redirect('/comercial/acoes');
-  const tipos = await listarTipos(escopo.org.id);
+  const tipos = await listarTipos(orgId);
 
   return (
-    <ComercialShell orgNome={escopo.org.nome}>
+    <ComercialShell empresas={empresas} empresaAtualId={orgId}>
       <Link
         href="/comercial/acoes"
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

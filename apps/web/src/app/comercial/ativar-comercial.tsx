@@ -11,7 +11,7 @@ export function AtivarComercial() {
 
   async function ativar() {
     setBusy(true);
-    const r = await fetch('/api/comercial/ativar', {
+    const r = await fetch('/api/comercial/empresa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome }),

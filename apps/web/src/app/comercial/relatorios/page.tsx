@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { Download } from 'lucide-react';
 import { authOptions } from '@/lib/auth';
 import { getSessionUser } from '@/lib/workspace';
-import { getEscopoComercial, listarAcoes, STATUS_LABEL } from '@/lib/comercial';
+import { listarAcoes, STATUS_LABEL } from '@/lib/comercial';
 import { ComercialShell } from '../comercial-shell';
 import { DateFilter } from '../date-filter';
+import { carregarComercial } from '../contexto';
 import { fmtMoney, fmtNum, fmtPeriodo, mesCorrente } from '../fmt';
 
 export const metadata = { title: 'Relatórios · Comercial' };
@@ -20,15 +21,16 @@ export default async function RelatoriosPage({
   if (!session?.user) redirect('/login?callbackUrl=/comercial/relatorios');
   const user = await getSessionUser();
   if (!user) redirect('/login');
-  const escopo = await getEscopoComercial(user.id);
-  if (!escopo) redirect('/comercial');
+  const ctx = await carregarComercial(user.id);
+  if (!ctx) redirect('/comercial');
+  const { empresas, orgId } = ctx;
 
   const def = mesCorrente();
   const de = searchParams.de || def.de;
   const ate = searchParams.ate || def.ate;
   const tipo = searchParams.tipo === 'resultados' ? 'resultados' : 'verba';
 
-  const acoes = await listarAcoes(user.id, { de, ate });
+  const acoes = await listarAcoes(user.id, orgId, { de, ate });
 
   const totSolic = acoes.reduce((s, a) => s + (a.valorSolicitado ?? 0), 0);
   const totGasto = acoes.reduce((s, a) => s + (a.valorGasto ?? 0), 0);
@@ -47,7 +49,7 @@ export default async function RelatoriosPage({
   );
 
   return (
-    <ComercialShell orgNome={escopo.org.nome}>
+    <ComercialShell empresas={empresas} empresaAtualId={orgId}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="text-2xl font-extrabold tracking-tight">Relatórios</h1>
         <DateFilter de={de} ate={ate} extras={{ tipo }} />

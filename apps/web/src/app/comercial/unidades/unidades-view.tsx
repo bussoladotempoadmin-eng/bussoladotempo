@@ -5,7 +5,15 @@ import { useRouter } from 'next/navigation';
 import { Building2, Plus, Trash2, Loader2 } from 'lucide-react';
 import type { UnidadeInfo } from '@/lib/comercial';
 
-export function UnidadesView({ inicial, ehDono }: { inicial: UnidadeInfo[]; ehDono: boolean }) {
+export function UnidadesView({
+  inicial,
+  ehDono,
+  orgId,
+}: {
+  inicial: UnidadeInfo[];
+  ehDono: boolean;
+  orgId: string;
+}) {
   const router = useRouter();
   const [nome, setNome] = React.useState('');
   const [email, setEmail] = React.useState('');
@@ -19,7 +27,7 @@ export function UnidadesView({ inicial, ehDono }: { inicial: UnidadeInfo[]; ehDo
     const r = await fetch('/api/comercial/unidades', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome, coordenadorEmail: email || undefined }),
+      body: JSON.stringify({ orgId, nome, coordenadorEmail: email || undefined }),
     });
     setBusy(false);
     if (!r.ok) {

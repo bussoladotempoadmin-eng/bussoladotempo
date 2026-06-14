@@ -1,5 +1,7 @@
+import { cookies } from 'next/headers';
 import { getSessionUser } from '@/lib/workspace';
-import { listarAcoes, STATUS_LABEL } from '@/lib/comercial';
+import { listarAcoes, resolverEmpresaId, STATUS_LABEL } from '@/lib/comercial';
+import { COOKIE_EMPRESA } from '@/app/comercial/contexto';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +21,9 @@ export async function GET(req: Request) {
   const ate = url.searchParams.get('ate') || undefined;
   const tipo = url.searchParams.get('tipo') === 'resultados' ? 'resultados' : 'verba';
 
-  const acoes = await listarAcoes(user.id, { de, ate });
+  const orgId = await resolverEmpresaId(user.id, cookies().get(COOKIE_EMPRESA)?.value);
+  if (!orgId) return new Response('Sem empresa', { status: 404 });
+  const acoes = await listarAcoes(user.id, orgId, { de, ate });
 
   let header: string[];
   let linhas: string[][];

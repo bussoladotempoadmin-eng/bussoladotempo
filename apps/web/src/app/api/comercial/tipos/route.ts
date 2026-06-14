@@ -9,8 +9,9 @@ export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
   const body = await req.json().catch(() => null);
+  const orgId = typeof body?.orgId === 'string' ? body.orgId : '';
   const nome = typeof body?.nome === 'string' ? body.nome : '';
-  const r = await criarTipo(user.id, nome);
+  const r = await criarTipo(user.id, orgId, nome);
   if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
   return NextResponse.json({ ok: true });
 }

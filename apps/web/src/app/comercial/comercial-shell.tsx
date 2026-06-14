@@ -3,13 +3,17 @@ import { Compass } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { ComercialNav } from './comercial-nav';
+import { EmpresaSelector } from './empresa-selector';
+import type { EmpresaInfo } from '@/lib/comercial';
 
-/** Casca padrão das telas do módulo Comercial (header + abas). */
+/** Casca padrão das telas do módulo Comercial (header + seletor de empresa + abas). */
 export function ComercialShell({
-  orgNome,
+  empresas,
+  empresaAtualId,
   children,
 }: {
-  orgNome: string;
+  empresas: EmpresaInfo[];
+  empresaAtualId: string;
   children: React.ReactNode;
 }) {
   return (
@@ -22,15 +26,13 @@ export function ComercialShell({
           </span>
         </Link>
         <div className="flex items-center gap-2">
+          <EmpresaSelector empresas={empresas} atualId={empresaAtualId} />
           <ThemeToggle />
           <UserMenu />
         </div>
       </header>
 
       <div className="container">
-        <p className="mb-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          {orgNome}
-        </p>
         <ComercialNav />
       </div>
 

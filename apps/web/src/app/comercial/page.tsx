@@ -3,13 +3,14 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { getSessionUser } from '@/lib/workspace';
-import { getEscopoComercial, getPainelComercial } from '@/lib/comercial';
+import { getPainelComercial } from '@/lib/comercial';
 import { Compass } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { ComercialShell } from './comercial-shell';
 import { AtivarComercial } from './ativar-comercial';
 import { DateFilter } from './date-filter';
+import { carregarComercial } from './contexto';
 import { fmtMoney, fmtNum, mesCorrente } from './fmt';
 
 export const metadata = { title: 'Comercial · Bússola do Tempo' };
@@ -24,8 +25,8 @@ export default async function ComercialPage({
   const user = await getSessionUser();
   if (!user) redirect('/login?callbackUrl=/comercial');
 
-  const escopo = await getEscopoComercial(user.id);
-  if (!escopo) {
+  const ctx = await carregarComercial(user.id);
+  if (!ctx) {
     return (
       <main className="min-h-screen">
         <header className="container flex items-center justify-between py-5">
@@ -45,22 +46,23 @@ export default async function ComercialPage({
     );
   }
 
+  const { empresas, orgId, escopo } = ctx;
   const def = mesCorrente();
   const de = searchParams.de || def.de;
   const ate = searchParams.ate || def.ate;
-  const p = await getPainelComercial(user.id, { de, ate });
+  const p = await getPainelComercial(user.id, orgId, { de, ate });
 
   const maxLeads = Math.max(1, ...p.porUnidade.map((u) => u.leads));
   const tiposComLead = p.porTipo.filter((t) => t.custoPorLead !== null);
   const maxCPL = Math.max(1, ...tiposComLead.map((t) => t.custoPorLead ?? 0));
 
   return (
-    <ComercialShell orgNome={escopo.org.nome}>
+    <ComercialShell empresas={empresas} empresaAtualId={orgId}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Painel comercial</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight">Painel · {escopo.org.nome}</h1>
           <p className="text-sm text-muted-foreground">
-            {escopo.ehDono ? `Rede · ${escopo.unidades.length} unidade(s)` : 'Sua unidade'}
+            {escopo.ehDono ? `${escopo.unidades.length} unidade(s)` : 'Sua unidade'}
           </p>
         </div>
         <DateFilter de={de} ate={ate} />

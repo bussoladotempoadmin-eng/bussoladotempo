@@ -9,9 +9,10 @@ export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
   const body = await req.json().catch(() => null);
+  const orgId = typeof body?.orgId === 'string' ? body.orgId : '';
   const nome = typeof body?.nome === 'string' ? body.nome : '';
   const coord = typeof body?.coordenadorEmail === 'string' ? body.coordenadorEmail : undefined;
-  const r = await criarUnidade(user.id, nome, coord);
+  const r = await criarUnidade(user.id, orgId, nome, coord);
   if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
   return NextResponse.json({ ok: true });
 }

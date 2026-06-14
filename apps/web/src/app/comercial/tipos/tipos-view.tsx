@@ -7,9 +7,11 @@ import { Plus, X, Loader2 } from 'lucide-react';
 export function TiposView({
   inicial,
   ehDono,
+  orgId,
 }: {
   inicial: { id: string; nome: string }[];
   ehDono: boolean;
+  orgId: string;
 }) {
   const router = useRouter();
   const [nome, setNome] = React.useState('');
@@ -23,7 +25,7 @@ export function TiposView({
     const r = await fetch('/api/comercial/tipos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nome }),
+      body: JSON.stringify({ orgId, nome }),
     });
     setBusy(false);
     if (!r.ok) {

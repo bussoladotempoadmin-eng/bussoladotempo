@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { authOptions } from '@/lib/auth';
 import { getSessionUser } from '@/lib/workspace';
-import { getEscopoComercial, listarAcoes, STATUS_LABEL } from '@/lib/comercial';
+import { listarAcoes, STATUS_LABEL } from '@/lib/comercial';
 import type { StatusAcao } from '@bussola/db';
 import { ComercialShell } from '../comercial-shell';
 import { AcoesTable } from './acoes-table';
+import { carregarComercial } from '../contexto';
 import { mesCorrente } from '../fmt';
 
 export const metadata = { title: 'Ações · Comercial' };
@@ -23,8 +24,9 @@ export default async function AcoesPage({
   if (!session?.user) redirect('/login?callbackUrl=/comercial/acoes');
   const user = await getSessionUser();
   if (!user) redirect('/login');
-  const escopo = await getEscopoComercial(user.id);
-  if (!escopo) redirect('/comercial');
+  const ctx = await carregarComercial(user.id);
+  if (!ctx) redirect('/comercial');
+  const { empresas, orgId, escopo } = ctx;
 
   const def = mesCorrente();
   const de = searchParams.de || def.de;
@@ -34,7 +36,7 @@ export default async function AcoesPage({
     | StatusAcao
     | '';
 
-  const acoes = await listarAcoes(user.id, {
+  const acoes = await listarAcoes(user.id, orgId, {
     de,
     ate,
     unidadeId: unidade || undefined,
@@ -44,7 +46,7 @@ export default async function AcoesPage({
   const sel = 'rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold outline-none';
 
   return (
-    <ComercialShell orgNome={escopo.org.nome}>
+    <ComercialShell empresas={empresas} empresaAtualId={orgId}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-extrabold tracking-tight">Ações comerciais</h1>
         <Link
