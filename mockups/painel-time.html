@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup — Painel do Time · Bússola do Tempo</title>
+<style>
+  :root{
+    --bg:#0a0e16; --card:#121826; --card2:#0f1521; --border:#1e2940;
+    --text:#e7ecf5; --muted:#8a97b0; --muted2:#5f6b85;
+    --primary:#3b82f6; --primary-soft:#1d2b46;
+    --imp:#34d399; --urg:#fb923c; --disp:#7c8aa6;
+    --warn:#fbbf24; --bad:#f87171; --good:#34d399;
+    --radius:16px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+    font-size:14px;line-height:1.45}
+  a{color:inherit;text-decoration:none}
+  .container{max-width:1080px;margin:0 auto;padding:0 20px}
+  .mock-banner{background:var(--primary-soft);color:#bcd3ff;text-align:center;
+    font-size:12px;font-weight:600;padding:7px;letter-spacing:.3px}
+  header{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+  .logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px}
+  .logo .dot{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#22d3ee);display:inline-block}
+  .pill{background:var(--card);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:12px;color:var(--muted)}
+
+  h1{font-size:26px;font-weight:800;margin:6px 0 2px}
+  .sub{color:var(--muted);font-size:13px}
+  .row{display:flex;gap:8px;align-items:center}
+  .week-nav{display:flex;gap:6px}
+  .btn{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 12px;
+    font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn.ghost{background:transparent}
+
+  .grid-top{display:grid;grid-template-columns:1.1fr 1.6fr;gap:16px;margin-top:18px}
+  @media(max-width:780px){.grid-top{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+  .label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted2)}
+  .big{font-size:30px;font-weight:800;margin-top:6px}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:4px}
+  .stat{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px}
+  .stat .n{font-size:20px;font-weight:800;margin-top:2px}
+  .imp{color:var(--imp)} .urg{color:var(--urg)} .disp{color:var(--disp)}
+
+  .bar{height:12px;border-radius:999px;overflow:hidden;display:flex;margin-top:10px;background:#0c121e}
+  .bar > span{display:block;height:100%}
+  .legend{display:flex;gap:16px;margin-top:10px;font-size:12px;color:var(--muted)}
+  .legend i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:6px}
+
+  .ai{background:linear-gradient(180deg,#101a30,#0e1424);border:1px solid #24365c;border-radius:var(--radius);padding:18px;margin-top:16px}
+  .ai h3{margin:0 0 8px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .ai ul{margin:6px 0 0;padding-left:18px}
+  .ai li{margin:5px 0;color:#cdd8ee}
+  .tag{font-size:10px;font-weight:700;background:#22d3ee22;color:#7fdcef;border-radius:999px;padding:2px 8px}
+
+  .section-title{display:flex;align-items:center;justify-content:space-between;margin:26px 0 12px}
+  .section-title h2{font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted2);margin:0}
+
+  table{width:100%;border-collapse:separate;border-spacing:0;background:var(--card);
+    border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  th,td{padding:13px 14px;text-align:left;font-size:13px}
+  thead th{background:#0e1421;color:var(--muted2);font-size:11px;text-transform:uppercase;letter-spacing:.6px}
+  tbody tr{border-top:1px solid var(--border)}
+  tbody tr:hover{background:#0f1726}
+  .who{display:flex;align-items:center;gap:10px}
+  .av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:13px;color:#fff;flex:0 0 auto}
+  .name{font-weight:700} .meta{color:var(--muted);font-size:11px}
+  .mini-bar{height:8px;border-radius:999px;overflow:hidden;display:flex;width:130px;background:#0c121e}
+  .mini-bar span{height:100%}
+  .chip{font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+  .chip.ok{background:#10331f;color:#5bd99a} .chip.warn{background:#3a2e10;color:#facc4a}
+  .chip.bad{background:#3a1717;color:#fb8d8d}
+  .acts{display:flex;gap:6px;justify-content:flex-end}
+  .ico-btn{background:transparent;border:1px solid var(--border);border-radius:8px;padding:5px 9px;
+    font-size:12px;color:var(--muted);cursor:pointer}
+  .ico-btn:hover{color:var(--text);border-color:var(--primary)}
+
+  .privacy{display:flex;align-items:flex-start;gap:10px;background:#0f1521;border:1px dashed var(--border);
+    border-radius:12px;padding:14px;margin-top:18px;color:var(--muted);font-size:12.5px}
+  .privacy b{color:var(--text)}
+  footer{color:var(--muted2);font-size:12px;text-align:center;padding:28px 0}
+  .num{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+  <div class="mock-banner">PROTÓTIPO VISUAL — dados fictícios, só pra você ver o conceito (nada funcional ainda)</div>
+
+  <div class="container">
+    <header>
+      <div class="logo"><span class="dot"></span> Bússola do Tempo</div>
+      <div class="row">
+        <span class="pill">🌙 Modo escuro</span>
+        <span class="pill">Lucas — Diretor</span>
+      </div>
+    </header>
+
+    <div class="row" style="justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px">
+      <div>
+        <div class="label">Painel do time</div>
+        <h1>Equipe — Doctum</h1>
+        <div class="sub">Semana 2026-W25 · 15/06 – 21/06 · 7 líderes</div>
+      </div>
+      <div class="week-nav">
+        <button class="btn">‹ Anterior</button>
+        <button class="btn">Próxima ›</button>
+        <button class="btn primary">Esta semana</button>
+      </div>
+    </div>
+
+    <!-- Resumo do time -->
+    <div class="grid-top">
+      <div class="card">
+        <div class="label">Horas registradas (time)</div>
+        <div class="big num">246<span style="font-size:18px;color:var(--muted)">h</span></div>
+        <div class="meta" style="color:var(--muted);margin-top:2px">média 35h por líder · 6 de 7 registraram a semana</div>
+        <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-top:14px">
+          <div class="stat"><div class="label">Importante</div><div class="n imp">57%</div></div>
+          <div class="stat"><div class="label">Urgente</div><div class="n urg">24%</div></div>
+          <div class="stat"><div class="label">Disperso</div><div class="n disp">19%</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="label">Pra onde foi o tempo do time</div>
+        <div class="bar" style="margin-top:14px">
+          <span class="num" style="width:57%;background:var(--imp)"></span>
+          <span style="width:24%;background:var(--urg)"></span>
+          <span style="width:19%;background:var(--disp)"></span>
+        </div>
+        <div class="legend">
+          <span><i style="background:var(--imp)"></i>Importante 140h</span>
+          <span><i style="background:var(--urg)"></i>Urgente 59h</span>
+          <span><i style="background:var(--disp)"></i>Disperso 47h</span>
+        </div>
+        <div class="label" style="margin-top:18px">Maiores blocos da semana (time)</div>
+        <div style="margin-top:10px;display:grid;gap:8px">
+          <div class="row" style="justify-content:space-between"><span>📞 Análise de ligações</span><span class="num meta">71h</span></div>
+          <div class="row" style="justify-content:space-between"><span>👥 Alinhamento com equipe</span><span class="num meta">52h</span></div>
+          <div class="row" style="justify-content:space-between"><span>📊 Relatórios</span><span class="num meta">44h</span></div>
+          <div class="row" style="justify-content:space-between"><span>🎓 Treinamento</span><span class="num meta">31h</span></div>
+          <div class="row" style="justify-content:space-between"><span>🚶 Tempo de corredor</span><span class="num meta" style="color:var(--urg)">28h</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Análise IA do time -->
+    <div class="ai">
+      <h3>✨ Análise do time pela IA <span class="tag">PREMIUM</span></h3>
+      <ul>
+        <li><b>3 líderes acima de 25% em Disperso</b> (Rafael, Marina, Diego). "Tempo de corredor" soma <b>28h</b> no time — vale checar se está virando dispersão que não gera venda.</li>
+        <li><b>Patrícia em modo "apagar incêndio":</b> 40% da semana em Urgente. Quando o urgente cresce, sobra menos tempo pra prospecção — possível impacto na comissão do time dela.</li>
+        <li><b>Bruno e Tiago são os mais alinhados</b> (≈68% Importante). Pode valer entender o que eles fazem diferente e levar pro resto.</li>
+      </ul>
+    </div>
+
+    <!-- Lista dos líderes -->
+    <div class="section-title">
+      <h2>Líderes da equipe</h2>
+      <span class="meta">clique num líder pra ver o Espelho dele</span>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Líder</th><th>Horas</th><th>Distribuição (Imp / Urg / Disp)</th><th>Foco principal</th><th>Status</th><th style="text-align:right">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 1 -->
+        <tr>
+          <td><div class="who"><div class="av" style="background:#2563eb">CM</div><div><div class="name">Carla Mendes</div><div class="meta">41h registradas</div></div></div></td>
+          <td class="num">41h</td>
+          <td><div class="mini-bar"><span style="width:62%;background:var(--imp)"></span><span style="width:23%;background:var(--urg)"></span><span style="width:15%;background:var(--disp)"></span></div></td>
+          <td>📞 Análise de ligações</td>
+          <td><span class="chip ok">saudável</span></td>
+          <td><div class="acts"><button class="ico-btn">ver</button><button class="ico-btn">sugerir</button></div></td>
+        </tr>
+        <!-- 2 -->
+        <tr>
+          <td><div class="who"><div class="av" style="background:#dc2626">RL</div><div><div class="name">Rafael Lima</div><div class="meta">38h registradas</div></div></div></td>
+          <td class="num">38h</td>
+          <td><div class="mini-bar"><span style="width:40%;background:var(--imp)"></span><span style="width:25%;background:var(--urg)"></span><span style="width:35%;background:var(--disp)"></span></div></td>
+          <td>🚶 Tempo de corredor</td>
+          <td><span class="chip warn">muito disperso</span></td>
+          <td><div class="acts"><button class="ico-btn">ver</button><button class="ico-btn">sugerir</button></div></td>
+        </tr>
+        <!-- 3 -->
+        <tr>
+          <td><div class="who"><div class="av" style="background:#059669">BC</div><div><div class="name">Bruno Costa</div><div class="meta">44h registradas</div></div></div></td>
+          <td class="num">44h</td>
+          <td><div class="mini-bar"><span style="width:70%;background:var(--imp)"></span><span style="width:20%;background:var(--urg)"></span><span style="width:10%;background:var(--disp)"></span></div></td>
+          <td>👥 Alinhamento com equipe</td>
+          <td><span class="chip ok">saudável</span></td>
+          <td><div class="acts"><button class="ico-btn">ver</button><button class="ico-btn">sugerir</button></div></td>
+        </tr>
+        <!-- 4 -->
+        <tr>
+          <td><div class="who"><div class="av" style="background:#7c3aed">PS</div><div><div class="name">Patrícia Souza</div><div class="meta">30h registradas</div></div></div></td>
+          <td class="num">30h</td>
+          <td><div class="mini-bar"><span style="width:48%;background:var(--imp)"></span><span style="width:40%;background:var(--urg)"></span><span style="width:12%;background:var(--disp)"></span></div></td>
+          <td>📊 Relatórios</td>
+          <td><span class="chip warn">muita urgência</span></td>
+          <td><div class="acts"><button class="ico-btn">ver</button><button class="ico-btn">sugerir</button></div></td>
+        </tr>
+        <!-- 5 -->
+        <tr>
+          <td><div class="who"><div class="av" style="background:#4b5563">DA</div><div><div class="name">Diego Alves</div><div class="meta">12h registradas</div></div></div></td>
+          <td class="num">12h</td>
+          <td><div class="mini-bar"><span style="width:35%;background:var(--imp)"></span><span style="width:20%;background:var(--urg)"></span><span style="width:45%;background:var(--disp)"></span></div></td>
+          <td>—</td>
+          <td><span class="chip bad">pouco registro</span></td>
+          <td><div class="acts"><button class="ico-btn">ver</button><button class="ico-btn">cobrar</button></div></td>
+        </tr>
+        <!-- 6 -->
+        <tr>
+          <td><div class="who"><div class="av" style="background:#db2777">MR</div><div><div class="name">Marina Rocha</div><div class="meta">39h registradas</div></div></div></td>
+          <td class="num">39h</td>
+          <td><div class="mini-bar"><span style="width:55%;background:var(--imp)"></span><span style="width:18%;background:var(--urg)"></span><span style="width:27%;background:var(--disp)"></span></div></td>
+          <td>🗓️ Reuniões</td>
+          <td><span class="chip warn">atenção</span></td>
+          <td><div class="acts"><button class="ico-btn">ver</button><button class="ico-btn">sugerir</button></div></td>
+        </tr>
+        <!-- 7 -->
+        <tr>
+          <td><div class="who"><div class="av" style="background:#0891b2">TN</div><div><div class="name">Tiago Nunes</div><div class="meta">42h registradas</div></div></div></td>
+          <td class="num">42h</td>
+          <td><div class="mini-bar"><span style="width:66%;background:var(--imp)"></span><span style="width:22%;background:var(--urg)"></span><span style="width:12%;background:var(--disp)"></span></div></td>
+          <td>📞 Análise de ligações</td>
+          <td><span class="chip ok">saudável</span></td>
+          <td><div class="acts"><button class="ico-btn">ver</button><button class="ico-btn">sugerir</button></div></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="legend" style="margin-top:12px">
+      <span><i style="background:var(--imp)"></i>Importante</span>
+      <span><i style="background:var(--urg)"></i>Urgente</span>
+      <span><i style="background:var(--disp)"></i>Disperso</span>
+    </div>
+
+    <!-- Fronteira de privacidade -->
+    <div class="privacy">
+      <span style="font-size:18px">🔒</span>
+      <div>
+        <b>Você vê o tempo, não a intimidade.</b> Como diretor, você enxerga <b>onde as horas foram</b> e a
+        distribuição de cada líder. As <b>reflexões pessoais</b> (o "o que não funcionou", o "como me senti")
+        ficam <b>privadas</b> de cada um — é isso que mantém o registro honesto. E você <b>orienta</b> ("sugerir"),
+        não edita a agenda deles.
+      </div>
+    </div>
+
+    <footer>Mockup conceitual · Bússola do Tempo · Painel do Time (modelo coach)</footer>
+  </div>
+</body>
+</html>

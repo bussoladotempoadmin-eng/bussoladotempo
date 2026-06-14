@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentWorkspace } from '@/lib/workspace';
 import { isIsoWeek } from '@/lib/semana';
-import { revisarEPlanejar, SemChaveIA } from '@/lib/ai-agenda';
+import { revisarEPlanejarComCache, SemChaveIA } from '@/lib/ai-agenda';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const r = await revisarEPlanejar(workspace.id, semanaIso);
+    const r = await revisarEPlanejarComCache(workspace.id, semanaIso, Boolean(body?.force));
     return NextResponse.json(r);
   } catch (e) {
     if (e instanceof SemChaveIA) {

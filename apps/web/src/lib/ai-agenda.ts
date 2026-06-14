@@ -518,3 +518,64 @@ export async function revisarEPlanejar(
     proximaIso,
   };
 }
+
+// ---- Cache do ritual (guarda o resultado da IA; ver de novo é grátis) ----
+// Reaproveita o modelo Insight (que não é escrito em nenhum outro lugar).
+const CACHE_TITULO = 'ritual-ia';
+
+export async function lerRitualCache(
+  workspaceId: string,
+  semanaIso: string,
+): Promise<RevisarPlanejar | null> {
+  const semana = await prisma.semanaPlano.findUnique({
+    where: { workspaceId_semanaIso: { workspaceId, semanaIso } },
+    select: { id: true },
+  });
+  if (!semana) return null;
+  const row = await prisma.insight.findFirst({
+    where: { semanaPlanoId: semana.id, titulo: CACHE_TITULO },
+    orderBy: { geradoEm: 'desc' },
+  });
+  if (!row) return null;
+  try {
+    return JSON.parse(row.texto) as RevisarPlanejar;
+  } catch {
+    return null;
+  }
+}
+
+async function salvarRitualCache(
+  workspaceId: string,
+  semanaIso: string,
+  result: RevisarPlanejar,
+): Promise<void> {
+  const semana = await prisma.semanaPlano.findUnique({
+    where: { workspaceId_semanaIso: { workspaceId, semanaIso } },
+    select: { id: true },
+  });
+  if (!semana) return;
+  await prisma.insight.deleteMany({
+    where: { semanaPlanoId: semana.id, titulo: CACHE_TITULO },
+  });
+  await prisma.insight.create({
+    data: { semanaPlanoId: semana.id, tipo: 'NEUTRAL', titulo: CACHE_TITULO, texto: JSON.stringify(result) },
+  });
+}
+
+/**
+ * Comando combinado COM cache: se já existe resultado guardado e `force` é
+ * falso, devolve o cache (grátis, sem chamar a IA). Senão gera e guarda.
+ */
+export async function revisarEPlanejarComCache(
+  workspaceId: string,
+  semanaIso: string,
+  force = false,
+): Promise<RevisarPlanejar & { cacheado: boolean }> {
+  if (!force) {
+    const cache = await lerRitualCache(workspaceId, semanaIso);
+    if (cache) return { ...cache, cacheado: true };
+  }
+  const result = await revisarEPlanejar(workspaceId, semanaIso);
+  await salvarRitualCache(workspaceId, semanaIso, result);
+  return { ...result, cacheado: false };
+}

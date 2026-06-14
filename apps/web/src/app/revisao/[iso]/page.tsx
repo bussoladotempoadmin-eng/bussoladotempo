@@ -21,6 +21,7 @@ import { Compass, ArrowLeft, ChevronLeft, ChevronRight, Pencil } from 'lucide-re
 import { RevisaoForm, type RevisaoData } from './revisao-form';
 import { EspelhoPainel } from './espelho-painel';
 import { RitualIA } from './ritual-ia';
+import { lerRitualCache } from '@/lib/ai-agenda';
 
 export const metadata = { title: 'Revisão · Bússola do Tempo' };
 
@@ -49,6 +50,9 @@ export default async function RevisaoPage({ params }: { params: { iso: string } 
   const blocos = semana
     ? await prisma.bloco.findMany({ where: { semanaPlanoId: semana.id } })
     : [];
+
+  // Cache do ritual de IA (se já gerou, mostra na hora, sem re-gastar crédito).
+  const ritualInicial = blocos.length > 0 ? await lerRitualCache(workspace.id, iso) : null;
 
   const espelho = calcEspelho(
     blocos.map(
@@ -171,7 +175,7 @@ export default async function RevisaoPage({ params }: { params: { iso: string } 
         {/* ✨ Comando combinado da IA */}
         {blocos.length > 0 && (
           <div className="mt-8">
-            <RitualIA semanaIso={iso} frentes={frentes} />
+            <RitualIA semanaIso={iso} frentes={frentes} inicial={ritualInicial} />
           </div>
         )}
 

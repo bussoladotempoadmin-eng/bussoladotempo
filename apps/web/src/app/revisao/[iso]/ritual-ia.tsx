@@ -62,13 +62,21 @@ function toMin(hhmm: string): number {
   return h * 60 + m;
 }
 
-export function RitualIA({ semanaIso, frentes }: { semanaIso: string; frentes: Frente[] }) {
+export function RitualIA({
+  semanaIso,
+  frentes,
+  inicial,
+}: {
+  semanaIso: string;
+  frentes: Frente[];
+  inicial?: Resultado | null;
+}) {
   const frenteById = React.useMemo(() => new Map(frentes.map((f) => [f.id, f])), [frentes]);
 
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [res, setRes] = React.useState<Resultado | null>(null);
-  const [blocos, setBlocos] = React.useState<PropostaBloco[]>([]);
+  const [res, setRes] = React.useState<Resultado | null>(inicial ?? null);
+  const [blocos, setBlocos] = React.useState<PropostaBloco[]>(inicial?.proposta.blocos ?? []);
   const [repetir, setRepetir] = React.useState(1);
   const [aplicando, setAplicando] = React.useState(false);
   const [aplicado, setAplicado] = React.useState<{ criadas: string[]; puladas: string[] } | null>(null);
@@ -97,16 +105,15 @@ export function RitualIA({ semanaIso, frentes }: { semanaIso: string; frentes: F
           categoriaRealizada: 'IMPORTANTE',
         };
 
-  async function gerar() {
+  async function gerar(force: boolean) {
     setLoading(true);
     setError(null);
-    setRes(null);
     setAplicado(null);
     try {
       const r = await fetch('/api/agenda-ia/semana', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ semanaIso }),
+        body: JSON.stringify({ semanaIso, force }),
       });
       if (!r.ok) {
         const d = await r.json().catch(() => null);
@@ -120,6 +127,18 @@ export function RitualIA({ semanaIso, frentes }: { semanaIso: string; frentes: F
       setError('Falha de conexão.');
     } finally {
       setLoading(false);
+    }
+  }
+
+  function gerarClick() {
+    // Sem resultado ainda → gera (pega cache se houver). Com resultado → regenera
+    // (gasta crédito), pedindo confirmação.
+    if (res) {
+      if (!window.confirm('Gerar de novo usa créditos da IA e substitui o resultado guardado. Continuar?'))
+        return;
+      gerar(true);
+    } else {
+      gerar(false);
     }
   }
 
@@ -162,7 +181,7 @@ export function RitualIA({ semanaIso, frentes }: { semanaIso: string; frentes: F
         </div>
         <button
           type="button"
-          onClick={gerar}
+          onClick={gerarClick}
           disabled={loading}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-md disabled:opacity-60"
         >
@@ -173,6 +192,11 @@ export function RitualIA({ semanaIso, frentes }: { semanaIso: string; frentes: F
       <p className="mt-1 text-xs text-muted-foreground">
         Num comando só: a IA analisa esta semana e propõe a próxima, aprendendo do que rolou.
       </p>
+      {res && !loading && (
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          ✓ Resultado guardado — reabrir esta tela não gasta crédito.
+        </p>
+      )}
 
       {loading && (
         <p className="mt-3 text-sm text-muted-foreground">
