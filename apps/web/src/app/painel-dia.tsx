@@ -4,7 +4,6 @@ import * as React from 'react';
 import Link from 'next/link';
 import {
   CalendarDays,
-  LayoutGrid,
   ClipboardCheck,
   Compass,
   Check,
@@ -15,6 +14,7 @@ import {
   ListChecks,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { isoWeekLabel } from '@/lib/iso-week';
 import {
   diaSemanaLabel,
   categoriaLabel,
@@ -156,7 +156,7 @@ export function PainelDia({
       <h1 className="text-3xl font-extrabold tracking-tight">
         {diaHoje ? diaSemanaLabel[diaHoje] : 'Seu dia'}
       </h1>
-      <p className="mt-1 text-sm text-muted-foreground">Semana {semanaIso}</p>
+      <p className="mt-1 text-sm text-muted-foreground">Semana de {isoWeekLabel(semanaIso)}</p>
 
       {prioridadeBlocos.length > 0 ? (
         <div className="mt-6">
@@ -294,9 +294,8 @@ export function PainelDia({
         )}
       </div>
 
-      <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-8 grid grid-cols-3 gap-3">
         <QuickAction href={`/semana/${semanaIso}`} icon={<CalendarDays className="h-5 w-5" />} label="Semana" />
-        <QuickAction href={`/espelho/${semanaIso}`} icon={<LayoutGrid className="h-5 w-5" />} label="Espelho" />
         <QuickAction href={`/revisao/${semanaIso}`} icon={<ClipboardCheck className="h-5 w-5" />} label="Revisão" />
         <QuickAction href="/frentes" icon={<Compass className="h-5 w-5" />} label="Frentes" />
       </div>

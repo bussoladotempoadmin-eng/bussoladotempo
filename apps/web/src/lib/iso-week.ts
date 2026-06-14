@@ -64,3 +64,19 @@ export function isoWeekRangeLabel(iso: string): string {
 export function isIsoWeek(value: string): boolean {
   return /^\d{4}-W\d{2}$/.test(value);
 }
+
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+/** Rótulo amigável da semana pro usuário: "8–14 jun" ou "29 jun–5 jul". */
+export function isoWeekLabel(iso: string): string {
+  const [year, week] = iso.split('-W').map(Number);
+  const monday = mondayOfIsoWeek(year, week);
+  const sunday = new Date(monday);
+  sunday.setUTCDate(monday.getUTCDate() + 6);
+  const d1 = monday.getUTCDate();
+  const m1 = monday.getUTCMonth();
+  const d2 = sunday.getUTCDate();
+  const m2 = sunday.getUTCMonth();
+  if (m1 === m2) return `${d1}–${d2} ${MESES[m1]}`;
+  return `${d1} ${MESES[m1]}–${d2} ${MESES[m2]}`;
+}

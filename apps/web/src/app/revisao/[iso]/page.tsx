@@ -9,6 +9,7 @@ import {
   currentIsoWeek,
   shiftIsoWeek,
   isoWeekRangeLabel,
+  isoWeekLabel,
 } from '@/lib/semana';
 import {
   calcEspelho,
@@ -135,7 +136,7 @@ export default async function RevisaoPage({ params }: { params: { iso: string } 
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">Revisão da semana</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {iso} · {data.rangeLabel}
+              Semana de {isoWeekLabel(iso)} · {data.rangeLabel}
             </p>
             <p className="mt-2 max-w-xl text-sm text-muted-foreground">
               O ritual da semana num lugar só: veja os números, deixe a IA revisar e

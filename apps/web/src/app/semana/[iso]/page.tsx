@@ -10,6 +10,7 @@ import {
   currentIsoWeek,
   shiftIsoWeek,
   isoWeekRangeLabel,
+  isoWeekLabel,
   isoWeekMonday,
 } from '@/lib/semana';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -103,7 +104,9 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">Semana {iso}</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight">
+              Semana de {isoWeekLabel(iso)}
+            </h1>
             <p className="mt-1 text-sm text-muted-foreground">{isoWeekRangeLabel(iso)}</p>
           </div>
           <div className="flex items-center gap-1">

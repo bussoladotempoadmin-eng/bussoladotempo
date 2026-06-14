@@ -12,6 +12,7 @@ export {
   isoWeekMondayYMD,
   shiftIsoWeek,
   isoWeekRangeLabel,
+  isoWeekLabel,
   isIsoWeek,
 } from './iso-week';
 

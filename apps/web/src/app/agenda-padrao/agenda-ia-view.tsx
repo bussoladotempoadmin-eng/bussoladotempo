@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Sparkles, Loader2, X, Lightbulb, Check } from 'lucide-react';
+import { isoWeekLabel } from '@/lib/iso-week';
 
 type Frente = { id: string; nome: string; icone: string; cor: string };
 type PropostaBloco = {
@@ -148,7 +149,7 @@ export function AgendaIAView({
         >
           {semanas.map((s) => (
             <option key={s.iso} value={s.iso}>
-              {s.iso} · {s.label}
+              Semana de {isoWeekLabel(s.iso)}
             </option>
           ))}
         </select>
@@ -298,13 +299,13 @@ export function AgendaIAView({
           >
             {aplicando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
             {repetir === 1
-              ? `Confirmar e salvar em ${alvo}`
+              ? `Confirmar e salvar em ${isoWeekLabel(alvo)}`
               : `Confirmar e repetir nas próximas ${isosAlvo().length} semanas`}
           </button>
           {repetir === 4 && (
             <p className="text-xs text-muted-foreground">
-              Mesmo padrão aplicado a {isosAlvo().join(', ')}. Semanas que já têm blocos são
-              puladas (não sobrescreve sem você confirmar).
+              Mesmo padrão aplicado a {isosAlvo().map(isoWeekLabel).join(', ')}. Semanas que já
+              têm blocos são puladas (não sobrescreve sem você confirmar).
             </p>
           )}
         </div>
@@ -316,20 +317,21 @@ export function AgendaIAView({
             <span className="font-medium text-emerald-700 dark:text-emerald-400">
               ✓ Agenda criada em {aplicado.criadas.length}{' '}
               {aplicado.criadas.length === 1 ? 'semana' : 'semanas'}
-              {aplicado.criadas.length > 0 && `: ${aplicado.criadas.join(', ')}`}
+              {aplicado.criadas.length > 0 &&
+                `: ${aplicado.criadas.map(isoWeekLabel).join(', ')}`}
             </span>
             {aplicado.criadas[0] && (
               <Link
                 href={`/semana/${aplicado.criadas[0]}`}
                 className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
               >
-                Abrir {aplicado.criadas[0]}
+                Abrir {isoWeekLabel(aplicado.criadas[0])}
               </Link>
             )}
           </div>
           {aplicado.puladas.length > 0 && (
             <p className="text-xs text-muted-foreground">
-              Puladas (já tinham blocos): {aplicado.puladas.join(', ')}
+              Puladas (já tinham blocos): {aplicado.puladas.map(isoWeekLabel).join(', ')}
             </p>
           )}
         </div>
