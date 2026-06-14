@@ -25,7 +25,7 @@ type MagicLinkParams = {
 };
 
 export async function sendMagicLinkEmail({ to, magicLink }: MagicLinkParams) {
-  const from = process.env.EMAIL_FROM ?? 'Bússola do Tempo <onboarding@resend.dev>';
+  const from = process.env.EMAIL_FROM ?? 'Bússola do Tempo <contato@bussoladotempo.com.br>';
   const resend = getResend();
 
   const { error } = await resend.emails.send({
