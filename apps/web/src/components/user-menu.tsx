@@ -12,6 +12,7 @@ import {
   CalendarRange,
   CalendarDays,
   ClipboardCheck,
+  Users,
   Moon,
   Settings,
 } from 'lucide-react';
@@ -113,6 +114,14 @@ export function UserMenu({ className }: { className?: string }) {
             >
               <ClipboardCheck className="h-4 w-4" />
               Revisão da semana
+            </Link>
+            <Link
+              href="/time"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+            >
+              <Users className="h-4 w-4" />
+              Meu time
             </Link>
             <Link
               href="/noite"
