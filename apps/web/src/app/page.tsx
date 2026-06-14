@@ -8,6 +8,8 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { Compass, Construction } from 'lucide-react';
 import { PainelDia, type PainelBloco, type PainelFrente } from './painel-dia';
+import { NudgeBanner } from './nudge-banner';
+import { nudgeRevisao } from '@/lib/nudge-revisao';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -67,6 +69,8 @@ export default async function Home() {
   const prioridades = [semana?.prioridade1, semana?.prioridade2, semana?.prioridade3].filter(
     (p): p is string => Boolean(p),
   );
+  const nudge = workspace ? await nudgeRevisao(workspace.id) : null;
+
   const frenteMap = new Map(frentes.map((f) => [f.id, f]));
   const prioridadeBlocos = blocos
     .filter((b) => b.prioridadeSemana != null)
@@ -91,6 +95,12 @@ export default async function Home() {
           <UserMenu />
         </div>
       </header>
+
+      {nudge && (
+        <div className="container mb-2">
+          <NudgeBanner nudge={nudge} />
+        </div>
+      )}
 
       <PainelDia
         nome={session.user.name ?? ''}
