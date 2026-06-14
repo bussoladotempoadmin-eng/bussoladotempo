@@ -71,6 +71,8 @@ Legenda: 👤 = ação do Lucas · 🤖 = eu construo · ✅ = feito
 - [ ] 🤖 Política de privacidade + home pública
 - [ ] 👤 Verificação OAuth do Google (tira o aviso "app não verificado")
 - [ ] 👤 Resend com domínio (e-mail pra qualquer usuário)
+- [ ] 🤖 Cadastro + login por **e-mail e senha** (criptografada) + "esqueci a senha"
+      — convivendo com Google e link mágico; melhora o onboarding do time
 - [ ] 🤖+👤 Planos + cobrança (per-seat pro time)
 
 ## FASE 6 — Notificações (Camada 2 — "avisa com app fechado")
