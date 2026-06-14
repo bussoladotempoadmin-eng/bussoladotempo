@@ -146,7 +146,11 @@ export default async function PainelTimePage({
               {painel.membros.map((m) => {
                 const st = statusDe(m);
                 return (
-                  <li key={m.membroId} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                  <li key={m.membroId}>
+                    <Link
+                      href={`/time/membro/${m.userId}?semana=${iso}`}
+                      className="flex flex-wrap items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
+                    >
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
                       {m.nome.charAt(0).toUpperCase()}
                     </div>
@@ -167,6 +171,7 @@ export default async function PainelTimePage({
                     <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${st.cls}`}>
                       {st.txt}
                     </span>
+                    </Link>
                   </li>
                 );
               })}
