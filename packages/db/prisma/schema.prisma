@@ -74,6 +74,7 @@ model User {
   name          String?
   emailVerified DateTime?
   image         String?
+  senhaHash     String? // login por e-mail/senha (null = só Google/link mágico)
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -86,6 +87,20 @@ model User {
   sugestoesRecebidas Sugestao[] @relation("SugPara")
   pushSubscriptions  PushSubscription[]
   unidadesCoord      Unidade[]  @relation("UnidadeCoord")
+  resetTokens        PasswordResetToken[]
+}
+
+// Token de "esqueci a senha" — uso único, com validade curta.
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // Inscrição Web Push (um device/navegador por linha). Lembretes do ritual semanal.

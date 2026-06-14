@@ -9,8 +9,10 @@ import type { NextAuthOptions } from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import EmailProvider from 'next-auth/providers/email';
 import GoogleProvider from 'next-auth/providers/google';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '@bussola/db';
 import { sendMagicLinkEmail } from './email';
+import { verificarSenha } from './senha';
 
 const providers: NextAuthOptions['providers'] = [
   EmailProvider({
@@ -18,6 +20,25 @@ const providers: NextAuthOptions['providers'] = [
     maxAge: 24 * 60 * 60, // link vale 24h
     async sendVerificationRequest({ identifier, url }) {
       await sendMagicLinkEmail({ to: identifier, magicLink: url });
+    },
+  }),
+  // Login por e-mail + senha.
+  CredentialsProvider({
+    id: 'credentials',
+    name: 'E-mail e senha',
+    credentials: {
+      email: { label: 'E-mail', type: 'email' },
+      senha: { label: 'Senha', type: 'password' },
+    },
+    async authorize(credentials) {
+      const email = credentials?.email?.toLowerCase().trim();
+      const senha = credentials?.senha;
+      if (!email || !senha) return null;
+      const user = await prisma.user.findUnique({ where: { email } });
+      if (!user?.senhaHash) return null;
+      const ok = await verificarSenha(senha, user.senhaHash);
+      if (!ok) return null;
+      return { id: user.id, name: user.name, email: user.email, image: user.image };
     },
   }),
 ];

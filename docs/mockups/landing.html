@@ -3,135 +3,139 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Bússola do Tempo — Landing (mockup)</title>
+<title>Bússola do Tempo — Landing (mockup v2)</title>
 <style>
   :root {
-    --bg: #ffffff;
-    --fg: #0f172a;
-    --card: #ffffff;
-    --muted: #64748b;
-    --border: #e2e8f0;
-    --primary: #2563eb;
-    --primary-fg: #ffffff;
-    --soft: #f1f5f9;
+    --bg: #ffffff; --fg: #0f172a; --card: #ffffff; --muted: #64748b;
+    --border: #e2e8f0; --primary: #2563eb; --primary-fg: #ffffff; --soft: #f1f5f9;
     --importante: #10b981; --importante-soft: rgba(16,185,129,.13);
     --urgente: #ef4444;    --urgente-soft: rgba(239,68,68,.13);
     --disperso: #94a3b8;   --disperso-soft: rgba(148,163,184,.16);
-    --doctum: #3b82f6; --tribo: #f97316; --bruna: #a855f7; --cuidaja: #22c55e;
+    --f1: #3b82f6; --f2: #f97316; --f3: #a855f7; --f4: #22c55e;
     --shadow: 0 1px 3px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.05);
   }
   [data-theme="dark"] {
-    --bg: #070d1c;
-    --fg: #f1f5f9;
-    --card: #0d1526;
-    --muted: #94a3b8;
-    --border: #1e293b;
-    --primary: #3b82f6;
-    --primary-fg: #0b1120;
-    --soft: #111c30;
+    --bg: #070d1c; --fg: #f1f5f9; --card: #0d1526; --muted: #94a3b8;
+    --border: #1e293b; --primary: #3b82f6; --primary-fg: #0b1120; --soft: #111c30;
     --shadow: 0 1px 3px rgba(0,0,0,.4), 0 12px 32px rgba(0,0,0,.35);
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
-  body {
-    margin: 0; background: var(--bg); color: var(--fg);
+  body { margin: 0; background: var(--bg); color: var(--fg); line-height: 1.55;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased; line-height: 1.55;
-  }
+    -webkit-font-smoothing: antialiased; }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer;
+  .btn { display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer;
     font-weight: 700; font-size: 15px; border-radius: 999px; padding: 14px 26px;
-    text-decoration: none; transition: transform .12s ease, box-shadow .12s ease;
-  }
+    text-decoration: none; transition: transform .12s ease, box-shadow .12s ease; }
   .btn:hover { transform: translateY(-1px); }
   .btn-primary { background: var(--primary); color: var(--primary-fg); box-shadow: var(--shadow); }
   .btn-ghost { background: transparent; color: var(--fg); border: 1px solid var(--border); }
-  .chip {
-    display: inline-flex; align-items: center; gap: 8px; border-radius: 999px;
-    padding: 7px 16px; font-size: 14px; font-weight: 700;
-  }
-  .eyebrow {
-    font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase;
-    color: var(--muted);
-  }
+  .btn-sm { padding: 9px 18px; font-size: 13px; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px;
+    padding: 7px 16px; font-size: 14px; font-weight: 700; }
+  .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
   h1, h2, h3 { line-height: 1.15; letter-spacing: -.02em; margin: 0; }
   .accent { color: var(--primary); }
   .muted { color: var(--muted); }
   section { padding: 64px 0; }
   .glow { position: relative; overflow: hidden; }
-  .glow::before, .glow::after {
-    content: ""; position: absolute; width: 460px; height: 460px; border-radius: 999px;
-    filter: blur(80px); opacity: .5; z-index: 0; pointer-events: none;
-  }
-  .glow::before { background: var(--doctum); top: -220px; left: -180px; }
-  .glow::after  { background: var(--tribo); bottom: -260px; right: -180px; }
+  .glow::before, .glow::after { content: ""; position: absolute; width: 460px; height: 460px;
+    border-radius: 999px; filter: blur(80px); opacity: .5; z-index: 0; pointer-events: none; }
+  .glow::before { background: var(--f1); top: -220px; left: -180px; }
+  .glow::after  { background: var(--f2); bottom: -260px; right: -180px; }
   .glow .wrap { position: relative; z-index: 1; }
+  .center { text-align: center; }
+  .sec-head { text-align: center; margin-bottom: 30px; }
+  .sec-head h2 { font-size: clamp(26px, 4vw, 38px); font-weight: 800; margin-top: 12px; }
+  .sec-head p { color: var(--muted); max-width: 580px; margin: 14px auto 0; font-size: 16px; }
 
   /* HEADER */
-  header.nav { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+  header.nav { position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(10px); }
   .nav-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
   .logo { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 18px; }
-  .logo .disc { width: 26px; height: 26px; border-radius: 50%; background: conic-gradient(from 0deg, var(--primary), var(--importante), var(--urgente), var(--primary)); display: grid; place-items: center; color: #fff; font-size: 14px; }
+  .logo .disc { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 14px;
+    background: conic-gradient(from 0deg, var(--primary), var(--importante), var(--urgente), var(--primary)); }
   .nav-actions { display: flex; align-items: center; gap: 10px; }
   .icon-btn { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--border); background: var(--card); cursor: pointer; font-size: 16px; }
 
   /* HERO */
   .hero { text-align: center; padding-top: 56px; }
-  .hero h1 { font-size: clamp(34px, 6vw, 60px); font-weight: 800; max-width: 760px; margin: 18px auto 0; }
-  .hero p.sub { font-size: clamp(16px, 2.4vw, 20px); color: var(--muted); max-width: 600px; margin: 20px auto 0; }
+  .hero h1 { font-size: clamp(34px, 6vw, 60px); font-weight: 800; max-width: 780px; margin: 18px auto 0; }
+  .hero p.sub { font-size: clamp(16px, 2.4vw, 20px); color: var(--muted); max-width: 620px; margin: 20px auto 0; }
   .hero .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 30px; }
   .cat-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 34px; }
 
-  /* GENERIC GRID */
+  /* GRID + CARDS */
   .grid { display: grid; gap: 18px; }
   .g3 { grid-template-columns: repeat(3, 1fr); }
   .g2 { grid-template-columns: repeat(2, 1fr); }
-  .card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 18px;
-    padding: 24px; box-shadow: var(--shadow);
-  }
+  .g4 { grid-template-columns: repeat(4, 1fr); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 24px; box-shadow: var(--shadow); }
   .card h3 { font-size: 18px; margin-bottom: 6px; }
   .card p { margin: 0; color: var(--muted); font-size: 15px; }
   .ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; margin-bottom: 14px; }
 
   /* DOR */
-  .dor { text-align: center; }
-  .dor h2 { font-size: clamp(24px, 4vw, 36px); font-weight: 800; max-width: 720px; margin: 0 auto; }
+  .dor h2 { font-size: clamp(24px, 4vw, 36px); font-weight: 800; max-width: 740px; margin: 0 auto; }
   .dor h2 .strike { color: var(--muted); }
 
-  /* ESPELHO */
-  .espelho-card { padding: 0; overflow: hidden; }
-  .espelho-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px; }
-  .espelho-head .week { font-size: 13px; color: var(--muted); font-weight: 600; }
-  .espelho-body { padding: 14px 22px 22px; }
-  .frente-row { padding: 14px 0; border-bottom: 1px dashed var(--border); }
+  /* ESPELHO + IA lado a lado */
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; }
+  .panel { background: var(--card); border: 1px solid var(--border); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 6px; }
+  .panel-title { font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 8px; }
+  .panel-sub { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .panel-body { padding: 16px 20px 20px; }
+  .frente-row { padding: 12px 0; border-bottom: 1px dashed var(--border); }
   .frente-row:last-child { border-bottom: none; }
-  .frente-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  .frente-name { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 15px; }
+  .frente-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 7px; }
+  .frente-name { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: 14px; }
   .dot { width: 11px; height: 11px; border-radius: 50%; }
-  .frente-hours { font-size: 13px; color: var(--muted); font-weight: 600; }
-  .bar { display: flex; height: 16px; border-radius: 8px; overflow: hidden; background: var(--soft); }
+  .frente-hours { font-size: 12px; color: var(--muted); font-weight: 600; }
+  .bar { display: flex; height: 15px; border-radius: 8px; overflow: hidden; background: var(--soft); }
   .bar span { display: block; height: 100%; }
-  .legend { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; margin-top: 18px; font-size: 13px; color: var(--muted); }
-  .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
-  .insight {
-    margin-top: 18px; background: var(--importante-soft); border: 1px solid color-mix(in srgb, var(--importante) 30%, transparent);
-    border-radius: 14px; padding: 16px 18px; font-size: 15px; display: flex; gap: 12px; align-items: flex-start;
-  }
-  .insight b { color: var(--fg); }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 16px; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
 
-  /* PASSOS */
+  /* Cartão da IA */
+  .ai-resumo { background: var(--soft); border-radius: 12px; padding: 12px 14px; font-size: 13px; color: var(--fg); margin-bottom: 14px; display: flex; gap: 10px; }
+  .ai-block { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px dashed var(--border); font-size: 13px; }
+  .ai-block:last-of-type { border-bottom: none; }
+  .ai-day { font-weight: 800; width: 34px; color: var(--muted); font-size: 12px; }
+  .ai-time { color: var(--muted); width: 86px; font-variant-numeric: tabular-nums; font-size: 12px; }
+  .ai-task { flex: 1; font-weight: 600; }
+  .pill { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+  .pill-i { background: var(--importante-soft); color: var(--importante); }
+  .pill-u { background: var(--urgente-soft); color: var(--urgente); }
+  .pill-d { background: var(--disperso-soft); color: var(--disperso); }
+  .ai-actions { display: flex; gap: 10px; margin-top: 16px; }
+
+  /* COACH */
+  .coach-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .coach { border-radius: 16px; padding: 20px; border: 1px solid var(--border); background: var(--card); box-shadow: var(--shadow); }
+  .coach .tag { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+  .coach h4 { margin: 8px 0 6px; font-size: 16px; }
+  .coach p { margin: 0; font-size: 14px; color: var(--muted); }
+  .coach.good { border-top: 3px solid var(--importante); }
+  .coach.good .tag { color: var(--importante); }
+  .coach.warn { border-top: 3px solid var(--urgente); }
+  .coach.warn .tag { color: var(--urgente); }
+  .coach.tip  { border-top: 3px solid var(--primary); }
+  .coach.tip .tag { color: var(--primary); }
+
+  /* CICLO */
   .step-num { width: 34px; height: 34px; border-radius: 50%; background: var(--primary); color: var(--primary-fg); display: grid; place-items: center; font-weight: 800; margin-bottom: 14px; }
 
-  /* PRA QUEM */
+  /* QUEM + TIME */
   .quem { background: var(--soft); border-radius: 24px; padding: 40px 28px; text-align: center; }
-  .quem ul { list-style: none; padding: 0; margin: 22px auto 0; max-width: 620px; display: grid; gap: 10px; text-align: left; }
+  .quem ul { list-style: none; padding: 0; margin: 22px auto 0; max-width: 640px; display: grid; gap: 10px; text-align: left; }
   .quem li { display: flex; gap: 10px; align-items: flex-start; font-size: 15px; }
   .quem li .ok { color: var(--importante); font-weight: 800; }
+  .team-note { margin-top: 18px; font-size: 14px; color: var(--muted); }
 
   /* CTA FINAL */
-  .final { text-align: center; }
   .final h2 { font-size: clamp(26px, 4.5vw, 42px); font-weight: 800; max-width: 640px; margin: 0 auto; }
 
   /* FOOTER */
@@ -140,11 +144,11 @@
   .foot-links { display: flex; gap: 18px; flex-wrap: wrap; }
   .foot-links a { color: var(--muted); text-decoration: none; }
   .foot-links a:hover { color: var(--fg); }
-
   .note { max-width: 1080px; margin: 0 auto; padding: 10px 20px; font-size: 12px; color: var(--muted); opacity: .8; text-align: center; }
 
-  @media (max-width: 760px) {
-    .g3, .g2 { grid-template-columns: 1fr; }
+  @media (max-width: 860px) {
+    .duo { grid-template-columns: 1fr; }
+    .g4, .g3, .g2, .coach-grid { grid-template-columns: 1fr; }
     section { padding: 48px 0; }
   }
 </style>
@@ -157,7 +161,7 @@
     <div class="logo"><span class="disc">🧭</span> Bússola do Tempo</div>
     <div class="nav-actions">
       <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Alternar tema">🌙</button>
-      <a href="#entrar" class="btn btn-ghost" style="padding:10px 20px;font-size:14px;">Entrar</a>
+      <a href="#entrar" class="btn btn-ghost btn-sm">Entrar</a>
     </div>
   </div>
 </header>
@@ -167,10 +171,10 @@
   <div class="wrap">
     <span class="eyebrow">Sua semana, sem ilusão</span>
     <h1>Onde seu tempo <span class="accent">realmente foi</span>?</h1>
-    <p class="sub">A Bússola cruza suas frentes de trabalho com 3 categorias — Importante, Urgente e Disperso — e mostra, com números, como sua semana se distribuiu de verdade.</p>
+    <p class="sub">A Bússola cruza suas frentes de trabalho com 3 categorias — Importante, Urgente e Disperso. Mostra a verdade da sua semana <b>e</b> deixa uma IA montar a próxima pra você.</p>
     <div class="cta">
       <a href="#entrar" class="btn btn-primary">Começar grátis →</a>
-      <a href="#espelho" class="btn btn-ghost">Ver o Espelho</a>
+      <a href="#ia" class="btn btn-ghost">Ver a IA em ação</a>
     </div>
     <div class="cat-row">
       <span class="chip" style="background:var(--importante-soft);color:var(--importante)">🎯 Importante</span>
@@ -181,11 +185,11 @@
 </section>
 
 <!-- 3. A DOR -->
-<section class="dor">
+<section class="dor center">
   <div class="wrap">
     <span class="eyebrow">O problema</span>
     <h2 style="margin-top:14px">Todo app te ajuda a <span class="strike">planejar</span>.<br/>Quase nenhum te mostra a <span class="accent">verdade do que aconteceu</span>.</h2>
-    <p class="muted" style="max-width:600px;margin:18px auto 0">Você fecha a semana exausto, mas sem saber para onde o tempo escorreu. Reuniões? Apagar incêndio? O que mesmo moveu seu negócio?</p>
+    <p class="muted" style="max-width:600px;margin:18px auto 0">Você fecha a semana exausto, mas sem saber para onde o tempo escorreu. Reunião? Apagar incêndio? O que mesmo moveu seu negócio?</p>
   </div>
 </section>
 
@@ -212,113 +216,137 @@
   </div>
 </section>
 
-<!-- 5. O ESPELHO -->
-<section id="espelho" class="glow">
+<!-- 5. O ESPELHO + 6. A IA (lado a lado: o retrato e a ação) -->
+<section id="ia" class="glow">
   <div class="wrap">
-    <div style="text-align:center;margin-bottom:28px">
-      <span class="eyebrow">A killer feature</span>
-      <h2 style="font-size:clamp(26px,4vw,38px);font-weight:800;margin-top:12px">O Espelho</h2>
-      <p class="muted" style="max-width:560px;margin:14px auto 0">A matriz <b>Frente × Categoria</b> que nenhum outro app cruza. Cada frente, quebrada em Importante, Urgente e Disperso — em horas reais.</p>
+    <div class="sec-head">
+      <span class="eyebrow">O coração do produto</span>
+      <h2>Veja a verdade. Depois deixe a IA agir.</h2>
+      <p>De um lado, o <b>Espelho</b> mostra como sua semana realmente se distribuiu. Do outro, a <b>IA</b> aprende com esse histórico e monta a próxima — você só ajusta e aprova.</p>
     </div>
 
-    <div class="card espelho-card">
-      <div class="espelho-head">
-        <div style="font-weight:800;font-size:16px">📊 Seu espelho da semana</div>
-        <div class="week">Semana 24 · 09–15 jun · 47h registradas</div>
+    <div class="duo">
+      <!-- ESPELHO -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">📊 O Espelho da semana</div>
+          <div class="panel-sub">47h registradas</div>
+        </div>
+        <div class="panel-body">
+          <div class="frente-row">
+            <div class="frente-top"><div class="frente-name"><span class="dot" style="background:var(--f1)"></span> Empresa</div><div class="frente-hours">18h</div></div>
+            <div class="bar"><span style="width:33%;background:var(--importante)"></span><span style="width:50%;background:var(--urgente)"></span><span style="width:17%;background:var(--disperso)"></span></div>
+          </div>
+          <div class="frente-row">
+            <div class="frente-top"><div class="frente-name"><span class="dot" style="background:var(--f2)"></span> Negócio próprio</div><div class="frente-hours">14h</div></div>
+            <div class="bar"><span style="width:64%;background:var(--importante)"></span><span style="width:21%;background:var(--urgente)"></span><span style="width:15%;background:var(--disperso)"></span></div>
+          </div>
+          <div class="frente-row">
+            <div class="frente-top"><div class="frente-name"><span class="dot" style="background:var(--f3)"></span> Cliente A</div><div class="frente-hours">8h</div></div>
+            <div class="bar"><span style="width:25%;background:var(--importante)"></span><span style="width:30%;background:var(--urgente)"></span><span style="width:45%;background:var(--disperso)"></span></div>
+          </div>
+          <div class="frente-row">
+            <div class="frente-top"><div class="frente-name"><span class="dot" style="background:var(--f4)"></span> Cliente B</div><div class="frente-hours">7h</div></div>
+            <div class="bar"><span style="width:40%;background:var(--importante)"></span><span style="width:45%;background:var(--urgente)"></span><span style="width:15%;background:var(--disperso)"></span></div>
+          </div>
+          <div class="legend">
+            <span><i style="background:var(--importante)"></i>Importante · 43%</span>
+            <span><i style="background:var(--urgente)"></i>Urgente · 38%</span>
+            <span><i style="background:var(--disperso)"></i>Disperso · 19%</span>
+          </div>
+        </div>
       </div>
-      <div class="espelho-body">
-        <!-- Doctum -->
-        <div class="frente-row">
-          <div class="frente-top">
-            <div class="frente-name"><span class="dot" style="background:var(--doctum)"></span> Doctum</div>
-            <div class="frente-hours">18h</div>
-          </div>
-          <div class="bar">
-            <span style="width:33%;background:var(--importante)"></span>
-            <span style="width:50%;background:var(--urgente)"></span>
-            <span style="width:17%;background:var(--disperso)"></span>
-          </div>
-        </div>
-        <!-- Tribo -->
-        <div class="frente-row">
-          <div class="frente-top">
-            <div class="frente-name"><span class="dot" style="background:var(--tribo)"></span> Tribo de Vendas</div>
-            <div class="frente-hours">14h</div>
-          </div>
-          <div class="bar">
-            <span style="width:64%;background:var(--importante)"></span>
-            <span style="width:21%;background:var(--urgente)"></span>
-            <span style="width:15%;background:var(--disperso)"></span>
-          </div>
-        </div>
-        <!-- Bruna -->
-        <div class="frente-row">
-          <div class="frente-top">
-            <div class="frente-name"><span class="dot" style="background:var(--bruna)"></span> Dra. Bruna</div>
-            <div class="frente-hours">8h</div>
-          </div>
-          <div class="bar">
-            <span style="width:25%;background:var(--importante)"></span>
-            <span style="width:30%;background:var(--urgente)"></span>
-            <span style="width:45%;background:var(--disperso)"></span>
-          </div>
-        </div>
-        <!-- CuidaJA -->
-        <div class="frente-row">
-          <div class="frente-top">
-            <div class="frente-name"><span class="dot" style="background:var(--cuidaja)"></span> CuidaJA</div>
-            <div class="frente-hours">7h</div>
-          </div>
-          <div class="bar">
-            <span style="width:40%;background:var(--importante)"></span>
-            <span style="width:45%;background:var(--urgente)"></span>
-            <span style="width:15%;background:var(--disperso)"></span>
-          </div>
-        </div>
 
-        <div class="legend">
-          <span><i style="background:var(--importante)"></i>Importante · 43%</span>
-          <span><i style="background:var(--urgente)"></i>Urgente · 38%</span>
-          <span><i style="background:var(--disperso)"></i>Disperso · 19%</span>
+      <!-- IA -->
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">✨ Proposta da IA · próxima semana</div>
+          <div class="panel-sub">aprende do seu histórico</div>
         </div>
+        <div class="panel-body">
+          <div class="ai-resumo">
+            <span>💡</span>
+            <span>“Sua <b>Empresa</b> vira Disperso depois das 17h em 3 das 4 últimas semanas. Movi o trabalho importante dela pra manhã e blindei 2 blocos de foco.”</span>
+          </div>
+          <div class="ai-block"><span class="ai-day">Seg</span><span class="ai-time">08:00–10:00</span><span class="ai-task">Empresa · planejamento</span><span class="pill pill-i">Importante</span></div>
+          <div class="ai-block"><span class="ai-day">Ter</span><span class="ai-time">09:00–11:00</span><span class="ai-task">Negócio próprio · produto</span><span class="pill pill-i">Importante</span></div>
+          <div class="ai-block"><span class="ai-day">Qua</span><span class="ai-time">14:00–15:00</span><span class="ai-task">Cliente A · alinhamento</span><span class="pill pill-u">Urgente</span></div>
+          <div class="ai-block"><span class="ai-day">Sex</span><span class="ai-time">16:00–17:00</span><span class="ai-task">Cliente B · follow-up</span><span class="pill pill-u">Urgente</span></div>
+          <div class="ai-actions">
+            <a href="#" class="btn btn-primary btn-sm">✓ Aprovar semana</a>
+            <a href="#" class="btn btn-ghost btn-sm">Ajustar blocos</a>
+          </div>
+        </div>
+      </div>
+    </div>
 
-        <div class="insight">
-          <span style="font-size:18px">💬</span>
-          <div><b>Coach gentil:</b> Doctum levou metade da semana em Urgente — apagando incêndio, não construindo. Na Dra. Bruna, 45% foi Disperso. Quer proteger 2h de Importante na próxima segunda?</div>
-        </div>
+    <p class="center muted" style="margin-top:20px;font-size:14px;max-width:680px;margin-left:auto;margin-right:auto">
+      Nenhum outro app cruza <b>Frente × Categoria</b> — e nenhum aprende com o que <b>de fato</b> aconteceu pra montar sua próxima semana. A Bússola faz as duas coisas.
+    </p>
+  </div>
+</section>
+
+<!-- 7. O COACH GENTIL -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">A voz da Bússola</span>
+      <h2>O Coach Gentil</h2>
+      <p>Insights em linguagem humana que leem seu espelho e sugerem um próximo passo concreto. Sem culpa, sem moralismo — como um amigo que te ajuda a recolocar.</p>
+    </div>
+    <div class="coach-grid">
+      <div class="coach good">
+        <div class="tag">✅ Boa semana</div>
+        <h4>Você viveu em Importante</h4>
+        <p>52% da sua semana foi Importante — estratégia venceu reatividade. Mantenha o ritmo.</p>
+      </div>
+      <div class="coach warn">
+        <div class="tag">🔥 Atenção</div>
+        <h4>Semana de bombeiro</h4>
+        <p>50% Urgente. Você reagiu mais do que decidiu. Escolha 1 fonte recorrente de urgência e ataque a causa, não o sintoma.</p>
+      </div>
+      <div class="coach tip">
+        <div class="tag">💨 Dica</div>
+        <h4>Disperso alto numa frente</h4>
+        <p>45% de Cliente A foi Disperso. Essa frente pede uma faxina: o que dá pra cortar sem perder resultado?</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 6. COMO FUNCIONA -->
+<!-- 8. O CICLO -->
 <section>
   <div class="wrap">
-    <div style="text-align:center;margin-bottom:28px">
+    <div class="sec-head">
       <span class="eyebrow">Simples de viver</span>
-      <h2 style="font-size:clamp(24px,4vw,34px);font-weight:800;margin-top:12px">Como funciona</h2>
+      <h2>O ciclo da semana</h2>
     </div>
-    <div class="grid g3">
+    <div class="grid g4">
       <div class="card">
         <div class="step-num">1</div>
-        <h3>Planeje a semana</h3>
-        <p>Monte seus blocos por frente. Cada bloco já nasce com uma categoria sugerida.</p>
+        <h3>A IA propõe</h3>
+        <p>Ela monta sua semana a partir do que funcionou antes. Você edita e aprova.</p>
       </div>
       <div class="card">
         <div class="step-num">2</div>
-        <h3>Viva e marque</h3>
-        <p>Durante a semana, um toque confirma o que realmente foi: Importante, Urgente ou Disperso.</p>
+        <h3>Você vive e marca</h3>
+        <p>Um toque ao fim de cada bloco confirma o que de fato foi: Importante, Urgente ou Disperso.</p>
       </div>
       <div class="card">
         <div class="step-num">3</div>
-        <h3>Veja o Espelho</h3>
-        <p>No fim da semana, a matriz revela a verdade — e o coach sugere o próximo passo.</p>
+        <h3>O Espelho revela</h3>
+        <p>No fim da semana, a matriz mostra planejado × realizado — a verdade em números.</p>
+      </div>
+      <div class="card">
+        <div class="step-num">4</div>
+        <h3>Revisar &amp; Planejar</h3>
+        <p>Num clique, a IA analisa a semana e já propõe a próxima. O ciclo recomeça mais afiado.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 7. PRA QUEM É -->
+<!-- 9. PRA QUEM É + TIME -->
 <section>
   <div class="wrap">
     <div class="quem">
@@ -329,12 +357,13 @@
         <li><span class="ok">✓</span> Quem sente que trabalha muito, mas não sabe onde o tempo foi parar</li>
         <li><span class="ok">✓</span> Quem cansou de app de tarefa e quer enxergar o todo, não só a lista</li>
       </ul>
+      <p class="team-note">👥 Tem equipe? No <b>módulo de Time</b>, o gestor vê a distribuição do time e sugere — nunca manda na agenda do outro. Reflexões pessoais ficam sempre privadas.</p>
     </div>
   </div>
 </section>
 
-<!-- 8. CTA FINAL -->
-<section id="entrar" class="final glow">
+<!-- 10. CTA FINAL -->
+<section id="entrar" class="final center glow">
   <div class="wrap">
     <span class="eyebrow">Comece hoje</span>
     <h2 style="margin-top:14px">Pare de adivinhar.<br/>Comece a <span class="accent">ver</span> onde seu tempo vai.</h2>
@@ -346,7 +375,7 @@
   </div>
 </section>
 
-<!-- 9. FOOTER -->
+<!-- 11. FOOTER -->
 <footer>
   <div class="wrap foot-row">
     <div class="logo" style="font-size:15px"><span class="disc" style="width:22px;height:22px;font-size:12px">🧭</span> Bússola do Tempo</div>
@@ -355,11 +384,11 @@
       <a href="#">Termos de Uso</a>
       <a href="#">Contato</a>
     </div>
-    <div>© 2026 · feito por Lucas Silveira</div>
+    <div>© 2026 · Bússola do Tempo</div>
   </div>
 </footer>
 
-<p class="note">Mockup estático — só para visualizar a estrutura e o visual. Textos, números e prints são placeholders.</p>
+<p class="note">Mockup estático — só para visualizar a estrutura e o visual. Nomes de frente (Empresa, Cliente A…), números e textos são exemplos.</p>
 
 <script>
   function toggleTheme() {

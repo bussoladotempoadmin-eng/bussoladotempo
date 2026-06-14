@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { signIn, getProviders } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
-import { Compass, Mail, Loader2 } from 'lucide-react';
+import { Compass, Mail, Lock, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
@@ -12,7 +12,9 @@ export default function LoginPage() {
   const errorParam = searchParams.get('error');
 
   const [email, setEmail] = React.useState('');
+  const [senha, setSenha] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
+  const [linkBusy, setLinkBusy] = React.useState(false);
   const [hasGoogle, setHasGoogle] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(
     errorParam ? mapError(errorParam) : null,
@@ -24,19 +26,37 @@ export default function LoginPage() {
       .catch(() => {});
   }, []);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function entrarComSenha(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
     setSubmitting(true);
-    const result = await signIn('email', { email, callbackUrl, redirect: false });
+    const result = await signIn('credentials', { email, senha, callbackUrl, redirect: false });
     setSubmitting(false);
+    if (result?.error) {
+      setErrorMsg('E-mail ou senha incorretos.');
+    } else {
+      window.location.href = callbackUrl;
+    }
+  }
 
+  async function enviarLinkMagico() {
+    if (!email) {
+      setErrorMsg('Digite seu e-mail pra receber o link.');
+      return;
+    }
+    setErrorMsg(null);
+    setLinkBusy(true);
+    const result = await signIn('email', { email, callbackUrl, redirect: false });
+    setLinkBusy(false);
     if (result?.error) {
       setErrorMsg(mapError(result.error));
-    } else if (result?.url) {
+    } else {
       window.location.href = '/auth/verify';
     }
   }
+
+  const inp =
+    'w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-3 text-sm outline-none transition-colors focus:border-primary';
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
@@ -53,7 +73,7 @@ export default function LoginPage() {
 
         <h1 className="text-2xl font-extrabold tracking-tight">Entrar na sua conta</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Entre com o Google ou receba um link mágico no email. Sem senha.
+          Com e-mail e senha, Google, ou um link mágico no e-mail.
         </p>
 
         {hasGoogle && (
@@ -74,10 +94,10 @@ export default function LoginPage() {
           </>
         )}
 
-        <form onSubmit={handleSubmit} className={hasGoogle ? 'space-y-4' : 'mt-6 space-y-4'}>
+        <form onSubmit={entrarComSenha} className={hasGoogle ? 'space-y-4' : 'mt-6 space-y-4'}>
           <div>
             <label htmlFor="email" className="mb-1.5 block text-sm font-semibold">
-              Seu email
+              E-mail
             </label>
             <div className="relative">
               <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -90,7 +110,30 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full rounded-lg border border-border bg-background py-2.5 pl-10 pr-3 text-sm outline-none transition-colors focus:border-primary"
+                className={inp}
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label htmlFor="senha" className="text-sm font-semibold">
+                Senha
+              </label>
+              <Link href="/esqueci-senha" className="text-xs font-semibold text-primary hover:underline">
+                Esqueci a senha
+              </Link>
+            </div>
+            <div className="relative">
+              <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                id="senha"
+                type="password"
+                autoComplete="current-password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                placeholder="sua senha"
+                className={inp}
               />
             </div>
           </div>
@@ -103,22 +146,34 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={submitting || !email}
+            disabled={submitting || !email || !senha}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-md disabled:opacity-50"
           >
-            {submitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              'Enviar link mágico'
-            )}
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Entrar
           </button>
         </form>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          Ao entrar, você concorda com os termos de uso da Bússola do Tempo.
+        <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
+          sem senha?
+          <span className="h-px flex-1 bg-border" />
+        </div>
+        <button
+          type="button"
+          onClick={enviarLinkMagico}
+          disabled={linkBusy}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-semibold transition-all hover:bg-muted disabled:opacity-50"
+        >
+          {linkBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+          Receber link mágico por e-mail
+        </button>
+
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Não tem conta?{' '}
+          <Link href="/cadastro" className="font-semibold text-primary hover:underline">
+            Criar conta
+          </Link>
         </p>
       </div>
     </main>
@@ -150,10 +205,11 @@ function GoogleIcon({ className }: { className?: string }) {
 
 function mapError(code: string): string {
   const map: Record<string, string> = {
-    EmailSignin: 'Não conseguimos enviar o email. Tente de novo em alguns segundos.',
+    EmailSignin: 'Não conseguimos enviar o e-mail. Tente de novo em alguns segundos.',
+    CredentialsSignin: 'E-mail ou senha incorretos.',
     OAuthSignin: 'Falha ao iniciar login com o Google.',
     OAuthCallback: 'Falha ao voltar do Google. Tenta de novo.',
-    OAuthAccountNotLinked: 'Esse email já entrou por outro método. Use o mesmo de antes.',
+    OAuthAccountNotLinked: 'Esse e-mail já entrou por outro método. Use o mesmo de antes.',
     Verification: 'O link expirou ou já foi usado. Pede um novo.',
     AccessDenied: 'Você não tem acesso a essa conta.',
     Default: 'Algo deu errado. Tenta de novo.',
