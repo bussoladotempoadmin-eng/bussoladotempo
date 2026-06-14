@@ -10,6 +10,8 @@ import { Compass, Construction } from 'lucide-react';
 import { PainelDia, type PainelBloco, type PainelFrente } from './painel-dia';
 import { NudgeBanner } from './nudge-banner';
 import { nudgeRevisao } from '@/lib/nudge-revisao';
+import { SugestoesGestor } from './sugestoes-gestor';
+import { sugestoesPendentes } from '@/lib/equipe';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -70,6 +72,7 @@ export default async function Home() {
     (p): p is string => Boolean(p),
   );
   const nudge = workspace ? await nudgeRevisao(workspace.id) : null;
+  const sugestoes = await sugestoesPendentes(session.user.id);
 
   const frenteMap = new Map(frentes.map((f) => [f.id, f]));
   const prioridadeBlocos = blocos
@@ -95,6 +98,12 @@ export default async function Home() {
           <UserMenu />
         </div>
       </header>
+
+      {sugestoes.length > 0 && (
+        <div className="container mb-2">
+          <SugestoesGestor inicial={sugestoes} />
+        </div>
+      )}
 
       {nudge && (
         <div className="container mb-2">

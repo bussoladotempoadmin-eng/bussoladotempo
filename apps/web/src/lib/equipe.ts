@@ -172,3 +172,50 @@ export async function podeVerMembro(userId: string, membroUserId: string): Promi
   if (!escopo) return false;
   return escopo.membros.some((m) => m.userId === membroUserId);
 }
+
+// ---- Sugestões (coach: gestor sugere, membro aceita/dispensa) ----
+
+export type SugestaoRecebida = { id: string; texto: string; deNome: string; createdAt: string };
+
+/** O gestor cria uma sugestão pra um membro do seu galho. */
+export async function criarSugestao(
+  deUserId: string,
+  paraUserId: string,
+  texto: string,
+): Promise<{ ok: boolean; erro?: string }> {
+  const t = texto.trim();
+  if (!t) return { ok: false, erro: 'Escreva a sugestão.' };
+  if (!(await podeVerMembro(deUserId, paraUserId)) || deUserId === paraUserId) {
+    return { ok: false, erro: 'Você só pode sugerir pra alguém do seu time.' };
+  }
+  await prisma.sugestao.create({ data: { deUserId, paraUserId, texto: t } });
+  return { ok: true };
+}
+
+/** Sugestões PENDENTES que o usuário recebeu (pra mostrar na home dele). */
+export async function sugestoesPendentes(userId: string): Promise<SugestaoRecebida[]> {
+  const rows = await prisma.sugestao.findMany({
+    where: { paraUserId: userId, status: 'PENDENTE' },
+    orderBy: { createdAt: 'desc' },
+    include: { de: { select: { name: true, email: true } } },
+  });
+  return rows.map((s) => ({
+    id: s.id,
+    texto: s.texto,
+    deNome: s.de.name?.trim() || s.de.email,
+    createdAt: s.createdAt.toISOString(),
+  }));
+}
+
+/** O membro responde (aceita/dispensa) uma sugestão que recebeu. */
+export async function responderSugestao(
+  userId: string,
+  sugestaoId: string,
+  status: 'ACEITA' | 'DISPENSADA',
+): Promise<boolean> {
+  const res = await prisma.sugestao.updateMany({
+    where: { id: sugestaoId, paraUserId: userId },
+    data: { status },
+  });
+  return res.count > 0;
+}

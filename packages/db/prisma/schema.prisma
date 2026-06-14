@@ -82,6 +82,8 @@ model User {
   workspaces    Workspace[]
   orgsCriadas   Organizacao[]  @relation("OrgOwner")
   equipes       MembroEquipe[]
+  sugestoesEnviadas  Sugestao[] @relation("SugDe")
+  sugestoesRecebidas Sugestao[] @relation("SugPara")
 }
 
 model Account {
@@ -311,6 +313,29 @@ model Organizacao {
   membros MembroEquipe[]
 
   @@index([ownerId])
+}
+
+enum StatusSugestao {
+  PENDENTE
+  ACEITA
+  DISPENSADA
+}
+
+// Coach: o gestor sugere algo a um membro; o membro vê e aceita/dispensa.
+// NÃO altera a agenda do membro (coach, não comando).
+model Sugestao {
+  id         String         @id @default(cuid())
+  deUserId   String // gestor que sugeriu
+  paraUserId String // membro que recebe
+  texto      String         @db.Text
+  status     StatusSugestao @default(PENDENTE)
+  createdAt  DateTime       @default(now())
+
+  de   User @relation("SugDe", fields: [deUserId], references: [id], onDelete: Cascade)
+  para User @relation("SugPara", fields: [paraUserId], references: [id], onDelete: Cascade)
+
+  @@index([paraUserId])
+  @@index([deUserId])
 }
 
 model MembroEquipe {

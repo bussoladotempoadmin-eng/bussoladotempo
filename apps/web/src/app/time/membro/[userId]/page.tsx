@@ -11,6 +11,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { Compass, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { EspelhoPainel } from '@/app/revisao/[iso]/espelho-painel';
+import { SugerirForm } from './sugerir-form';
 
 export const metadata = { title: 'Membro · Bússola do Tempo' };
 
@@ -121,6 +122,10 @@ export default async function MembroPage({
               <ChevronRight className="h-4 w-4" />
             </Link>
           </div>
+        </div>
+
+        <div className="mt-6">
+          <SugerirForm paraUserId={params.userId} primeiroNome={nome.split(' ')[0]} />
         </div>
 
         <div className="mt-8">
