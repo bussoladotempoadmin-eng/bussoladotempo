@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Building2, Plus, Trash2, Loader2 } from 'lucide-react';
 import type { UnidadeInfo } from '@/lib/comercial';
+import { useToast } from '@/components/toast';
 
 export function UnidadesView({
   inicial,
@@ -15,6 +16,7 @@ export function UnidadesView({
   orgId: string;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [nome, setNome] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [busy, setBusy] = React.useState(false);
@@ -37,6 +39,7 @@ export function UnidadesView({
     }
     setNome('');
     setEmail('');
+    toast('Unidade adicionada');
     router.refresh();
   }
 
@@ -47,6 +50,7 @@ export function UnidadesView({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
+    toast('Unidade removida');
     router.refresh();
   }
 

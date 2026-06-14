@@ -26,6 +26,7 @@ import {
   type Categoria,
 } from '@/lib/schemas/compromisso';
 import { blocoUpdateSchema } from '@/lib/schemas/bloco';
+import { useToast } from '@/components/toast';
 
 export type FrenteOption = { id: string; nome: string; icone: string; cor: string };
 
@@ -89,6 +90,7 @@ export function BlocosManager({
   setBlocos: React.Dispatch<React.SetStateAction<BlocoDTO[]>>;
   frentes: FrenteOption[];
 }) {
+  const { toast } = useToast();
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [adding, setAdding] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -156,6 +158,7 @@ export function BlocosManager({
     const novo: BlocoDTO = await res.json();
     setBlocos((prev) => [...prev, { ...novo, subtarefas: [] }]);
     setAdding(false);
+    toast('Bloco criado');
   }
 
   async function handleUpdate(id: string, form: FormState) {
@@ -179,6 +182,7 @@ export function BlocosManager({
       prev.map((b) => (b.id === id ? { ...atualizado, subtarefas: b.subtarefas } : b)),
     );
     setEditingId(null);
+    toast('Bloco salvo');
   }
 
   async function handleDelete(b: BlocoDTO) {
@@ -190,6 +194,7 @@ export function BlocosManager({
       return;
     }
     setBlocos((prev) => prev.filter((x) => x.id !== b.id));
+    toast('Bloco excluído');
   }
 
   async function handleTogglePrioridade(b: BlocoDTO) {

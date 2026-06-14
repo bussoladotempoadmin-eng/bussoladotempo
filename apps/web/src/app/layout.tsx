@@ -5,6 +5,8 @@ import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SessionProvider } from '@/components/session-provider';
 import { PwaRegister } from '@/components/pwa-register';
+import { ToastProvider } from '@/components/toast';
+import { BottomNav } from '@/components/bottom-nav';
 import { authOptions } from '@/lib/auth';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -42,7 +44,10 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <ToastProvider>
+              {children}
+              <BottomNav />
+            </ToastProvider>
             <PwaRegister />
           </ThemeProvider>
         </SessionProvider>

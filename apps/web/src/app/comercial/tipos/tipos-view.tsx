@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, X, Loader2 } from 'lucide-react';
+import { useToast } from '@/components/toast';
 
 export function TiposView({
   inicial,
@@ -14,6 +15,7 @@ export function TiposView({
   orgId: string;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [nome, setNome] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [erro, setErro] = React.useState<string | null>(null);
@@ -34,6 +36,7 @@ export function TiposView({
       return;
     }
     setNome('');
+    toast('Tipo adicionado');
     router.refresh();
   }
 
@@ -43,6 +46,7 @@ export function TiposView({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     });
+    toast('Tipo removido');
     router.refresh();
   }
 

@@ -67,6 +67,14 @@ export default async function RelatoriosPage({
         </a>
       </div>
 
+      {acoes.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-border bg-card/50 p-8 text-center">
+          <p className="font-semibold">Nenhuma ação no período.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Ajuste as datas ou registre ações pra gerar o relatório.
+          </p>
+        </div>
+      ) : (
       <div className="mt-4 overflow-x-auto rounded-2xl border border-border bg-card">
         {tipo === 'verba' ? (
           <table className="w-full text-sm">
@@ -146,6 +154,7 @@ export default async function RelatoriosPage({
           </table>
         )}
       </div>
+      )}
       <p className="mt-3 text-xs text-muted-foreground">
         O CSV sai com o recorte do período e do relatório selecionado — abre direto no Excel.
       </p>

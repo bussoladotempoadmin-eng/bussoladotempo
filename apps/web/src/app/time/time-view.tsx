@@ -4,8 +4,10 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Users, Loader2, Plus, Trash2, Crown, BarChart3 } from 'lucide-react';
 import type { TimeGestor, MembroInfo } from '@/lib/equipe';
+import { useToast } from '@/components/toast';
 
 export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
+  const { toast } = useToast();
   const [org, setOrg] = React.useState(inicial?.org ?? null);
   const [membros, setMembros] = React.useState<MembroInfo[]>(inicial?.membros ?? []);
 
@@ -62,6 +64,7 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
       return;
     }
     setEmail('');
+    toast('Pessoa adicionada ao time');
     await recarregar();
   }
 
@@ -71,6 +74,7 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
     await fetch(`/api/equipe/membros?id=${membroId}`, { method: 'DELETE' });
     setRemovendo(null);
     setMembros((prev) => prev.filter((m) => m.membroId !== membroId));
+    toast('Pessoa removida');
   }
 
   // Ainda não tem time → criar

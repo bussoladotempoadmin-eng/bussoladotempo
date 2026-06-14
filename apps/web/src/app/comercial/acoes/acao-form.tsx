@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, Check } from 'lucide-react';
+import { useToast } from '@/components/toast';
 
 type Opt = { id: string; nome: string };
 
@@ -35,6 +36,7 @@ export function AcaoForm({
   inicial?: Partial<AcaoFormData>;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [f, setF] = React.useState<AcaoFormData>({
     unidadeId: inicial?.unidadeId ?? unidades[0]?.id ?? '',
     tipo: inicial?.tipo ?? tipos[0]?.nome ?? '',
@@ -77,6 +79,7 @@ export function AcaoForm({
       setErro(d?.error ?? 'Não consegui salvar.');
       return;
     }
+    toast(acaoId ? 'Ação atualizada' : 'Ação criada');
     router.push('/comercial/acoes');
     router.refresh();
   }

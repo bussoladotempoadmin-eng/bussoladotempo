@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Check, Loader2 } from 'lucide-react';
 import { workspaceSchema, timezones } from '@/lib/schemas/workspace';
+import { useToast } from '@/components/toast';
 
 export type WorkspaceDTO = {
   nome: string;
@@ -15,6 +16,7 @@ export type WorkspaceDTO = {
 };
 
 export function ConfiguracoesForm({ initial }: { initial: WorkspaceDTO }) {
+  const { toast } = useToast();
   const [form, setForm] = React.useState<WorkspaceDTO>(initial);
   const [busy, setBusy] = React.useState(false);
   const [salvo, setSalvo] = React.useState(false);
@@ -45,6 +47,7 @@ export function ConfiguracoesForm({ initial }: { initial: WorkspaceDTO }) {
       return;
     }
     setSalvo(true);
+    toast('Configurações salvas');
   }
 
   const field = 'w-full rounded-lg border border-border bg-background px-3 py-2 text-sm';

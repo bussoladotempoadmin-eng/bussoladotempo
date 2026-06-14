@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CalendarClock, ArrowRightLeft, PenLine, Loader2, X } from 'lucide-react';
 import type { AcaoListItem } from '@/lib/comercial';
+import { useToast } from '@/components/toast';
 import { fmtMoney, fmtNum, fmtPeriodo } from '../fmt';
 
 const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
@@ -128,6 +129,9 @@ function Shell({ title, children, onClose }: { title: string; children: React.Re
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={onClose}>
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className="w-full max-w-md rounded-t-2xl border border-border bg-card p-5 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
@@ -147,6 +151,7 @@ const INP = 'w-full rounded-lg border border-border bg-background px-3 py-2.5 te
 
 function ReagendarModal({ acao, onClose }: { acao: AcaoListItem; onClose: () => void }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [ini, setIni] = React.useState(acao.dataInicio);
   const [fim, setFim] = React.useState(acao.dataFim);
   const [busy, setBusy] = React.useState(false);
@@ -159,6 +164,7 @@ function ReagendarModal({ acao, onClose }: { acao: AcaoListItem; onClose: () => 
       body: JSON.stringify({ acao: 'reagendar', dataInicio: ini, dataFim: fim || ini }),
     });
     onClose();
+    toast('Ação reagendada');
     router.refresh();
   }
 
@@ -198,6 +204,7 @@ function RealocarModal({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [unidadeId, setUnidadeId] = React.useState(acao.unidadeId);
   const [resp, setResp] = React.useState(acao.responsaveis);
   const [busy, setBusy] = React.useState(false);
@@ -210,6 +217,7 @@ function RealocarModal({
       body: JSON.stringify({ acao: 'realocar', unidadeId, responsaveis: resp }),
     });
     onClose();
+    toast('Ação realocada');
     router.refresh();
   }
 

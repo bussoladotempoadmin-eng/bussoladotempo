@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Check } from 'lucide-react';
 import type { StatusAcao } from '@bussola/db';
+import { useToast } from '@/components/toast';
 import { fmtMoney } from '../../fmt';
 
 const INP = 'w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary';
@@ -33,6 +34,7 @@ export function ResultadoForm({
   };
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [status, setStatus] = React.useState<StatusAcao>(inicial.status);
   const [resultado, setResultado] = React.useState(inicial.resultado ?? resultados[0]);
   const [qtd, setQtd] = React.useState(inicial.resultadoQtd?.toString() ?? '');
@@ -62,7 +64,10 @@ export function ResultadoForm({
     setBusy(false);
     if (r.ok) {
       setOk(true);
+      toast('Resultado registrado');
       router.refresh();
+    } else {
+      toast('Não consegui salvar', 'erro');
     }
   }
 

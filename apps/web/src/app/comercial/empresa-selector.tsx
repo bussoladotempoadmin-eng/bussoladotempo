@@ -4,9 +4,11 @@ import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Building, Plus, Check, Loader2, X } from 'lucide-react';
 import type { EmpresaInfo } from '@/lib/comercial';
+import { useToast } from '@/components/toast';
 
 export function EmpresaSelector({ empresas, atualId }: { empresas: EmpresaInfo[]; atualId: string }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
   const [criando, setCriando] = React.useState(false);
   const [nome, setNome] = React.useState('');
@@ -40,6 +42,7 @@ export function EmpresaSelector({ empresas, atualId }: { empresas: EmpresaInfo[]
     setCriando(false);
     setOpen(false);
     setBusy(false);
+    toast('Empresa criada');
     router.push('/comercial');
     router.refresh();
   }
