@@ -130,18 +130,6 @@ export function RitualIA({
     }
   }
 
-  function gerarClick() {
-    // Sem resultado ainda → gera (pega cache se houver). Com resultado → regenera
-    // (gasta crédito), pedindo confirmação.
-    if (res) {
-      if (!window.confirm('Gerar de novo usa créditos da IA e substitui o resultado guardado. Continuar?'))
-        return;
-      gerar(true);
-    } else {
-      gerar(false);
-    }
-  }
-
   function isosAlvo(proximaIso: string): string[] {
     return Array.from({ length: repetir }, (_, i) => shiftIsoWeek(proximaIso, i));
   }
@@ -179,22 +167,31 @@ export function RitualIA({
           <Sparkles className="h-5 w-5 text-primary" />
           <h2 className="text-base font-bold">Revisar & Planejar com a IA</h2>
         </div>
-        <button
-          type="button"
-          onClick={gerarClick}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-md disabled:opacity-60"
-        >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {res ? 'Gerar de novo' : 'Revisar & Planejar'}
-        </button>
+        {!res && (
+          <button
+            type="button"
+            onClick={() => gerar(false)}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-md disabled:opacity-60"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            Revisar & Planejar
+          </button>
+        )}
+        {res && !loading && (
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+            <Check className="h-3.5 w-3.5" />
+            Gerado nesta semana
+          </span>
+        )}
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
         Num comando só: a IA analisa esta semana e propõe a próxima, aprendendo do que rolou.
       </p>
       {res && !loading && (
         <p className="mt-1 text-[11px] text-muted-foreground">
-          ✓ Resultado guardado — reabrir esta tela não gasta crédito.
+          ✓ Resultado guardado — reabrir não gasta crédito. A IA fica disponível de novo na
+          próxima semana.
         </p>
       )}
 
