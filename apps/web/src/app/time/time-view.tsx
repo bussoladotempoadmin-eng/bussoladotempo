@@ -1,7 +1,8 @@
 'use client';
 
 import * as React from 'react';
-import { Users, Loader2, Plus, Trash2, Crown } from 'lucide-react';
+import Link from 'next/link';
+import { Users, Loader2, Plus, Trash2, Crown, BarChart3 } from 'lucide-react';
 import type { TimeGestor, MembroInfo } from '@/lib/equipe';
 
 export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
@@ -107,12 +108,19 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
   // Já tem time → gerenciar membros
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Users className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-bold">{org.nome}</h2>
         <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
           {membros.length} {membros.length === 1 ? 'membro' : 'membros'}
         </span>
+        <Link
+          href="/time/painel"
+          className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground"
+        >
+          <BarChart3 className="h-4 w-4" />
+          Ver painel do time
+        </Link>
       </div>
 
       {/* Adicionar membro */}
