@@ -12,6 +12,7 @@ export type MembroInfo = {
   nome: string;
   email: string;
   papel: 'GESTOR' | 'MEMBRO';
+  chefeId: string | null; // a quem reporta (null = reporta ao diretor/dono)
 };
 
 export type TimeGestor = {
@@ -44,6 +45,7 @@ export async function getTimeGestor(userId: string): Promise<TimeGestor | null> 
       nome: m.user.name?.trim() || m.user.email,
       email: m.user.email,
       papel: m.papel,
+      chefeId: m.chefeId,
     })),
   };
 }
@@ -61,6 +63,7 @@ export async function criarOrganizacao(userId: string, nome: string) {
 export async function adicionarMembroPorEmail(
   gestorId: string,
   email: string,
+  chefeId?: string | null,
 ): Promise<{ ok: boolean; erro?: string }> {
   const org = await getOrgDoGestor(gestorId);
   if (!org) return { ok: false, erro: 'Crie seu time primeiro.' };
@@ -78,9 +81,21 @@ export async function adicionarMembroPorEmail(
   if (alvo.id === gestorId) {
     return { ok: false, erro: 'Você é o gestor — não precisa se adicionar como membro.' };
   }
+
+  // O "chefe" (se informado) precisa ser um membro do mesmo time.
+  let chefe: string | null = null;
+  if (chefeId) {
+    const c = await prisma.membroEquipe.findFirst({
+      where: { id: chefeId, organizacaoId: org.id },
+      select: { id: true },
+    });
+    if (!c) return { ok: false, erro: 'Chefe inválido.' };
+    chefe = c.id;
+  }
+
   try {
     await prisma.membroEquipe.create({
-      data: { organizacaoId: org.id, userId: alvo.id, papel: 'MEMBRO' },
+      data: { organizacaoId: org.id, userId: alvo.id, papel: 'MEMBRO', chefeId: chefe },
     });
   } catch {
     return { ok: false, erro: 'Essa pessoa já está no time.' };
@@ -97,13 +112,63 @@ export async function removerMembro(gestorId: string, membroId: string): Promise
   return res.count > 0;
 }
 
-/** O gestor pode ver o workspace deste membro? (checagem de permissão) */
-export async function gestorPodeVerMembro(gestorId: string, membroUserId: string): Promise<boolean> {
-  const org = await getOrgDoGestor(gestorId);
-  if (!org) return false;
-  const m = await prisma.membroEquipe.findFirst({
-    where: { organizacaoId: org.id, userId: membroUserId },
-    select: { id: true },
+/** Membros abaixo de `raizMembroId` na árvore (recursivo, só pra baixo). */
+function descendentes(raizMembroId: string, todos: MembroInfo[]): MembroInfo[] {
+  const filhosPor = new Map<string, MembroInfo[]>();
+  for (const m of todos) {
+    if (!m.chefeId) continue;
+    const arr = filhosPor.get(m.chefeId) ?? [];
+    arr.push(m);
+    filhosPor.set(m.chefeId, arr);
+  }
+  const out: MembroInfo[] = [];
+  const fila = [...(filhosPor.get(raizMembroId) ?? [])];
+  while (fila.length) {
+    const m = fila.shift() as MembroInfo;
+    out.push(m);
+    fila.push(...(filhosPor.get(m.membroId) ?? []));
+  }
+  return out;
+}
+
+/**
+ * Conjunto de membros que `userId` pode VER (seu galho pra baixo).
+ * Diretor (dono) vê todos; gerente vê seu subtree; líder vê ninguém abaixo.
+ */
+export async function escopoVisivel(
+  userId: string,
+): Promise<{ org: { id: string; nome: string }; ehDono: boolean; membros: MembroInfo[] } | null> {
+  const orgDono = await getOrgDoGestor(userId);
+  if (orgDono) {
+    const time = await getTimeGestor(userId);
+    return { org: orgDono, ehDono: true, membros: time?.membros ?? [] };
+  }
+
+  const vinculo = await prisma.membroEquipe.findFirst({
+    where: { userId },
+    select: { id: true, organizacaoId: true, organizacao: { select: { id: true, nome: true } } },
   });
-  return m !== null;
+  if (!vinculo) return null;
+
+  const todos = await prisma.membroEquipe.findMany({
+    where: { organizacaoId: vinculo.organizacaoId },
+    include: { user: { select: { name: true, email: true } } },
+  });
+  const info: MembroInfo[] = todos.map((m) => ({
+    membroId: m.id,
+    userId: m.userId,
+    nome: m.user.name?.trim() || m.user.email,
+    email: m.user.email,
+    papel: m.papel,
+    chefeId: m.chefeId,
+  }));
+  return { org: vinculo.organizacao, ehDono: false, membros: descendentes(vinculo.id, info) };
+}
+
+/** O usuário pode ver o workspace deste membro? (respeita a árvore) */
+export async function podeVerMembro(userId: string, membroUserId: string): Promise<boolean> {
+  if (userId === membroUserId) return true;
+  const escopo = await escopoVisivel(userId);
+  if (!escopo) return false;
+  return escopo.membros.some((m) => m.userId === membroUserId);
 }

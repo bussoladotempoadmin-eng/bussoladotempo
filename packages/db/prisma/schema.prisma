@@ -318,12 +318,18 @@ model MembroEquipe {
   organizacaoId String
   userId        String
   papel         PapelEquipe @default(MEMBRO)
+  // Hierarquia: a quem este membro reporta (outro MembroEquipe).
+  // null = reporta direto ao dono (diretor) da organização.
+  chefeId       String?
   createdAt     DateTime    @default(now())
 
-  organizacao Organizacao @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizacao  Organizacao    @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chefe        MembroEquipe?  @relation("Hierarquia", fields: [chefeId], references: [id], onDelete: SetNull)
+  subordinados MembroEquipe[] @relation("Hierarquia")
 
   @@unique([organizacaoId, userId])
   @@index([organizacaoId])
   @@index([userId])
+  @@index([chefeId])
 }

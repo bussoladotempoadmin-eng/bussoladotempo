@@ -10,10 +10,11 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
   const body = await req.json().catch(() => null);
   const email = typeof body?.email === 'string' ? body.email : '';
+  const chefeId = typeof body?.chefeId === 'string' && body.chefeId ? body.chefeId : null;
   if (!email.includes('@')) {
     return NextResponse.json({ error: 'E-mail inválido' }, { status: 400 });
   }
-  const r = await adicionarMembroPorEmail(user.id, email);
+  const r = await adicionarMembroPorEmail(user.id, email, chefeId);
   if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
   return NextResponse.json({ ok: true });
 }

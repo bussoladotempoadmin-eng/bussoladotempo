@@ -12,9 +12,15 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
   const [criando, setCriando] = React.useState(false);
 
   const [email, setEmail] = React.useState('');
+  const [chefeSel, setChefeSel] = React.useState(''); // '' = reporta ao diretor (você)
   const [addBusy, setAddBusy] = React.useState(false);
   const [erro, setErro] = React.useState<string | null>(null);
   const [removendo, setRemovendo] = React.useState<string | null>(null);
+
+  const nomePorId = React.useMemo(
+    () => new Map(membros.map((m) => [m.membroId, m.nome])),
+    [membros],
+  );
 
   async function recarregar() {
     const r = await fetch('/api/equipe');
@@ -46,7 +52,7 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
     const r = await fetch('/api/equipe/membros', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, chefeId: chefeSel || null }),
     });
     setAddBusy(false);
     if (!r.ok) {
@@ -116,14 +122,29 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
           A pessoa precisa ter entrado no app (login) ao menos uma vez. Aí você adiciona pelo
           e-mail dela.
         </p>
-        <form onSubmit={adicionar} className="mt-3 flex flex-wrap gap-2">
+        <form onSubmit={adicionar} className="mt-3 flex flex-wrap items-center gap-2">
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="email@dapessoa.com"
-            className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            className="min-w-[12rem] flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
           />
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <span>reporta a</span>
+            <select
+              value={chefeSel}
+              onChange={(e) => setChefeSel(e.target.value)}
+              className="rounded-lg border border-border bg-background px-2 py-2 text-sm text-foreground"
+            >
+              <option value="">Você (Diretor)</option>
+              {membros.map((m) => (
+                <option key={m.membroId} value={m.membroId}>
+                  {m.nome}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             type="submit"
             disabled={addBusy || !email}
@@ -157,7 +178,12 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
                   {m.nome}
                   {m.papel === 'GESTOR' && <Crown className="h-3.5 w-3.5 text-amber-500" />}
                 </p>
-                <p className="truncate text-xs text-muted-foreground">{m.email}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {m.email} · reporta a{' '}
+                  <span className="font-medium">
+                    {m.chefeId ? (nomePorId.get(m.chefeId) ?? '—') : 'Você (Diretor)'}
+                  </span>
+                </p>
               </div>
               <button
                 type="button"
