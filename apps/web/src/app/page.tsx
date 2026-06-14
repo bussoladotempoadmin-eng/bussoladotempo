@@ -12,6 +12,7 @@ import { NudgeBanner } from './nudge-banner';
 import { nudgeRevisao } from '@/lib/nudge-revisao';
 import { SugestoesGestor } from './sugestoes-gestor';
 import { sugestoesPendentes } from '@/lib/equipe';
+import { AtivarLembretes } from '@/components/ativar-lembretes';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -110,6 +111,10 @@ export default async function Home() {
           <NudgeBanner nudge={nudge} />
         </div>
       )}
+
+      <div className="container mb-2">
+        <AtivarLembretes />
+      </div>
 
       <PainelDia
         nome={session.user.name ?? ''}

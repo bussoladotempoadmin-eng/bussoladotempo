@@ -84,6 +84,21 @@ model User {
   equipes       MembroEquipe[]
   sugestoesEnviadas  Sugestao[] @relation("SugDe")
   sugestoesRecebidas Sugestao[] @relation("SugPara")
+  pushSubscriptions  PushSubscription[]
+}
+
+// Inscrição Web Push (um device/navegador por linha). Lembretes do ritual semanal.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Account {

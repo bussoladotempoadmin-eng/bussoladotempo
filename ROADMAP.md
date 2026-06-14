@@ -71,14 +71,17 @@ Legenda: 👤 = ação do Lucas · 🤖 = eu construo · ✅ = feito
 - [ ] 🤖 Política de privacidade + home pública
 - [ ] 👤 Verificação OAuth do Google (tira o aviso "app não verificado")
 - [ ] 👤 Resend com domínio (e-mail pra qualquer usuário)
+- [ ] 🤖 Trocar `VAPID_SUBJECT` (hoje `mailto:lucas.ctga.silveira@gmail.com`) pelo
+      e-mail do domínio próprio assim que ele estiver verificado
 - [ ] 🤖 Cadastro + login por **e-mail e senha** (criptografada) + "esqueci a senha"
       — convivendo com Google e link mágico; melhora o onboarding do time
 - [ ] 🤖+👤 Planos + cobrança (per-seat pro time)
 
 ## FASE 6 — Notificações (Camada 2 — "avisa com app fechado")
-- [ ] 🤖 Push (Vercel Cron + VAPID + permissão)
+- [x] 🤖 Push (Vercel Cron + VAPID + permissão) — feito antes da Fase 5
+      (falta: aplicar migration, envs na Vercel, trocar VAPID_SUBJECT na Fase 5)
 - [ ] 🤖 E-mail (depois do domínio) — lembretes sex/dom/segunda
-- [ ] Liga em cima da lógica de janela já feita na Fase 1
+- [x] Liga em cima da lógica de janela já feita na Fase 1
 
 ---
 
