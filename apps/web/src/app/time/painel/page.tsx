@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { authOptions } from '@/lib/auth';
 import { getSessionUser } from '@/lib/workspace';
 import { getPainelTime, type ResumoMembro } from '@/lib/painel-time';
+import { lerTimeIACache } from '@/lib/team-ia';
 import { currentIsoWeek, shiftIsoWeek, isoWeekLabel, isIsoWeek } from '@/lib/semana';
+import { TimeIAView } from './time-ia-view';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { Compass, ArrowLeft, ChevronLeft, ChevronRight, Users, Settings2 } from 'lucide-react';
@@ -33,6 +35,8 @@ export default async function PainelTimePage({
   const user = await getSessionUser();
   const iso = searchParams.semana && isIsoWeek(searchParams.semana) ? searchParams.semana : currentIsoWeek();
   const painel = user ? await getPainelTime(user.id, iso) : null;
+  const iaInicial =
+    user && painel && painel.membros.length > 0 ? await lerTimeIACache(user.id, iso) : null;
 
   return (
     <main className="min-h-screen">
@@ -127,6 +131,11 @@ export default async function PainelTimePage({
                   <span>💨 Disperso {pct(painel.agregado.pDisperso)}</span>
                 </div>
               </div>
+            </div>
+
+            {/* Análise da IA do time */}
+            <div className="mt-6">
+              <TimeIAView semana={iso} inicial={iaInicial} />
             </div>
 
             {/* Lista de membros */}
