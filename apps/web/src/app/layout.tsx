@@ -12,6 +12,7 @@ import { authOptions } from '@/lib/auth';
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXTAUTH_URL ?? 'https://bussoladotempo.com.br'),
   title: 'Bússola do Tempo',
   description: 'Sistema de gestão de tempo Frente × Categoria — onde seu tempo realmente foi.',
   manifest: '/manifest.webmanifest',
