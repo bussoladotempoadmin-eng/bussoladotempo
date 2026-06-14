@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup Desktop · Módulo Comercial · Bússola do Tempo</title>
+<style>
+  :root{
+    --bg:#f1f5f9; --card:#fff; --border:#e2e8f0; --ink:#0f172a; --mut:#64748b; --mut2:#94a3b8;
+    --pri:#2563eb; --pri-soft:#dbeafe; --green:#16a34a; --green-soft:#dcfce7;
+    --amber:#d97706; --amber-soft:#fef3c7; --red:#dc2626; --red-soft:#fee2e2;
+    --violet:#7c3aed; --violet-soft:#ede9fe; --slate:#f1f5f9; --side:#0f172a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px}
+  .app{display:flex;min-height:100vh}
+  aside{width:230px;background:var(--side);color:#cbd5e1;flex-shrink:0;padding:20px 14px;position:sticky;top:0;height:100vh}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px;color:#fff;padding:4px 8px 18px}
+  .navlbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut2);padding:14px 10px 6px}
+  .nav{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;
+    font-weight:600;color:#cbd5e1;font-size:13.5px;margin-bottom:2px}
+  .nav:hover{background:rgba(255,255,255,.06)}
+  .nav.on{background:var(--pri);color:#fff}
+  .nav .ic{width:18px;text-align:center}
+  .unitbox{margin-top:16px;background:rgba(255,255,255,.06);border-radius:10px;padding:10px}
+  .unitbox label{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut2)}
+  .unitbox select{width:100%;margin-top:5px;background:#1e293b;border:1px solid #334155;color:#fff;
+    border-radius:8px;padding:8px;font:inherit;font-weight:700;font-size:13px;outline:none}
+
+  main{flex:1;padding:24px 30px;max-width:1180px}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;gap:14px;flex-wrap:wrap}
+  .top h1{margin:0;font-size:23px;letter-spacing:-.02em}
+  .top .crumb{font-size:12px;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+  .top .right{display:flex;gap:9px;align-items:flex-end;flex-wrap:wrap}
+  .selsm{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 12px;font:inherit;font-weight:700;font-size:13px}
+  .btn{font-size:13px;font-weight:800;padding:9px 15px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--ink);cursor:pointer}
+  .btn.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+
+  /* filtro de data calendário */
+  .daterange{display:flex;align-items:flex-end;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:7px 11px}
+  .daterange .fld{display:flex;flex-direction:column}
+  .daterange .fld span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin-bottom:2px}
+  .daterange input[type=date]{border:0;font:inherit;font-weight:700;font-size:13px;color:var(--ink);outline:none;background:transparent}
+  .daterange .sep{color:var(--mut2);padding-bottom:3px}
+
+  .pane{display:none} .pane.on{display:block}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:15px 16px}
+  .kpi.hero{background:linear-gradient(135deg,#1e3a8a,#2563eb);border:0;color:#fff}
+  .kpi .lab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--mut)}
+  .kpi.hero .lab{color:#cbd5e1}
+  .kpi .big{font-size:28px;font-weight:900;margin-top:5px;letter-spacing:-.02em}
+  .kpi small{font-size:11.5px;color:var(--mut);font-weight:600}
+  .kpi.hero small{color:#dbeafe}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+  .panel h3{margin:0 0 14px;font-size:14px}
+  .bar{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+  .bar .nm{width:96px;font-size:13px;font-weight:700}
+  .bar .track{flex:1;height:11px;background:var(--slate);border-radius:999px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:999px;background:var(--pri)}
+  .bar .vl{width:78px;text-align:right;font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;font-size:13px;padding:11px 12px;border-bottom:1px solid var(--border)}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);background:var(--slate)}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr:hover td{background:#f8fafc}
+  .totrow td{font-weight:800;background:var(--slate)}
+  .wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .badge{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:7px;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap}
+  .b-empresa{background:var(--pri-soft);color:var(--pri)}
+  .b-evento{background:var(--violet-soft);color:var(--violet)}
+  .b-escola{background:var(--amber-soft);color:var(--amber)}
+  .b-trade{background:var(--green-soft);color:var(--green)}
+  .b-new{background:#e0f2fe;color:#0369a1}
+  .stat{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .s-plan{background:var(--slate);color:var(--mut)}
+  .s-fim{background:var(--green-soft);color:var(--green)}
+  .s-adi{background:var(--amber-soft);color:var(--amber)}
+  .pill{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px}
+  .ok{background:var(--green-soft);color:var(--green)}
+  .alt{background:var(--red-soft);color:var(--red)}
+  .wait{background:var(--slate);color:var(--mut2)}
+  .lk{color:var(--pri);font-weight:700;cursor:pointer;font-size:12px}
+  .lk+.lk{margin-left:9px}
+  .lk.warn{color:var(--amber)}
+  .green{color:var(--green)} .red{color:var(--red)} .mutv{color:var(--mut2)}
+  .note{font-size:12px;color:var(--mut);margin-top:14px;line-height:1.5}
+
+  /* form */
+  .formwrap{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;max-width:760px}
+  .frow{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .f{display:flex;flex-direction:column}
+  .f.full{grid-column:1/3}
+  .f label{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);margin-bottom:6px}
+  .f input,.f select,.f textarea{border:1px solid var(--border);border-radius:10px;padding:10px 12px;font:inherit;font-size:14px;outline:none;background:var(--card)}
+  .f input:focus,.f select:focus,.f textarea:focus{border-color:var(--pri)}
+  .f textarea{resize:vertical;min-height:96px;line-height:1.5}
+  .f .hint{font-size:11px;color:var(--mut2);margin-top:5px;font-weight:600}
+  .inline-add{font-size:11.5px;color:var(--pri);font-weight:800;cursor:pointer;margin-top:6px}
+  .formfoot{display:flex;gap:10px;margin-top:8px;padding-top:18px;border-top:1px solid var(--border)}
+  .diffbox{background:var(--slate);border-radius:10px;padding:12px 14px;font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+  .sectionlabel{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mut2);margin:6px 0 12px}
+  .tag{display:inline-flex;align-items:center;gap:7px;background:var(--slate);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;margin:0 7px 8px 0}
+  .tag .x{color:var(--mut2);cursor:pointer;font-weight:900}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <div class="logo">🧭 Bússola <span style="color:var(--mut2);font-weight:700">Comercial</span></div>
+    <div class="navlbl">Visão</div>
+    <div class="nav on" onclick="go('painel',this)"><span class="ic">📊</span> Painel</div>
+    <div class="nav" onclick="go('acoes',this)"><span class="ic">📋</span> Ações</div>
+    <div class="nav" onclick="go('relatorio',this)"><span class="ic">💰</span> Relatórios</div>
+    <div class="navlbl">Cadastro</div>
+    <div class="nav" onclick="go('unidades',this)"><span class="ic">🏙️</span> Unidades</div>
+    <div class="nav" onclick="go('tipos',this)"><span class="ic">🏷️</span> Tipos de ação</div>
+    <div class="unitbox">
+      <label>Unidade</label>
+      <select><option>Todas (rede)</option><option>Serra</option><option>Vila Velha</option><option>Cariacica</option></select>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ===== PAINEL ===== -->
+    <section class="pane on" id="painel">
+      <div class="top">
+        <div><div class="crumb">Rede · 3 unidades</div><h1>Painel comercial</h1></div>
+        <div class="right">
+          <div class="daterange">
+            <div class="fld"><span>De</span><input type="date" value="2026-05-01"></div>
+            <div class="sep">→</div>
+            <div class="fld"><span>Até</span><input type="date" value="2026-05-31"></div>
+          </div>
+          <button class="btn">⬇ Exportar</button>
+        </div>
+      </div>
+      <div class="kpis">
+        <div class="kpi hero"><div class="lab">Custo por lead</div><div class="big">R$ 5,28</div><small>4.210 ÷ 797 leads</small></div>
+        <div class="kpi"><div class="lab">Leads captados</div><div class="big green">797</div><small>no período</small></div>
+        <div class="kpi"><div class="lab">Execução</div><div class="big">71%</div><small>17 de 24 ações</small></div>
+        <div class="kpi"><div class="lab">Solicitado</div><div class="big">R$ 4.500</div><small>verba pedida</small></div>
+        <div class="kpi"><div class="lab">Gasto</div><div class="big">R$ 4.210</div><small class="green">−R$ 290 vs pedido</small></div>
+      </div>
+      <div class="grid2">
+        <div class="panel">
+          <h3>Leads por unidade</h3>
+          <div class="bar"><div class="nm">Serra</div><div class="track"><div class="fill" style="width:82%"></div></div><div class="vl">671</div></div>
+          <div class="bar"><div class="nm">Vila Velha</div><div class="track"><div class="fill" style="width:12%"></div></div><div class="vl">96</div></div>
+          <div class="bar"><div class="nm">Cariacica</div><div class="track"><div class="fill" style="width:4%"></div></div><div class="vl">30</div></div>
+        </div>
+        <div class="panel">
+          <h3>O que mais converte (custo por lead, menor = melhor)</h3>
+          <div class="bar"><div class="nm">Evento ext.</div><div class="track"><div class="fill" style="width:90%;background:var(--violet)"></div></div><div class="vl">R$ 3,11</div></div>
+          <div class="bar"><div class="nm">Visita empresa</div><div class="track"><div class="fill" style="width:45%;background:var(--pri)"></div></div><div class="vl">R$ 7,33</div></div>
+          <div class="bar"><div class="nm">Visita escola</div><div class="track"><div class="fill" style="width:28%;background:var(--amber)"></div></div><div class="vl">R$ 11,90</div></div>
+        </div>
+      </div>
+      <div class="note">Os filtros <b>De / Até</b> abrem o calendário do navegador — o período recalcula todos os números.</div>
+    </section>
+
+    <!-- ===== AÇÕES ===== -->
+    <section class="pane" id="acoes">
+      <div class="top">
+        <div><div class="crumb">Serra · maio / 2026</div><h1>Ações comerciais</h1></div>
+        <div class="right">
+          <div class="daterange">
+            <div class="fld"><span>De</span><input type="date" value="2026-05-01"></div>
+            <div class="sep">→</div>
+            <div class="fld"><span>Até</span><input type="date" value="2026-05-31"></div>
+          </div>
+          <select class="selsm"><option>Todos os status</option><option>Em planejamento</option><option>Finalizado</option><option>Adiado</option></select>
+          <button class="btn pri" onclick="go('formacao',null)">+ Nova ação</button>
+        </div>
+      </div>
+      <div class="wrap">
+        <table>
+          <thead><tr>
+            <th>Tipo</th><th>Local</th><th>Responsável</th><th>Período</th><th>Status</th>
+            <th class="num">Solicit.</th><th class="num">Gasto</th><th class="num">Leads</th><th>Registrar</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="badge b-empresa">Visita empresa</span></td>
+              <td>Hospital Dório Silva</td><td>Mariana e Regina</td><td>18/05</td>
+              <td><span class="stat s-fim">Finalizado</span></td>
+              <td class="num">300</td><td class="num">300</td><td class="num green">38</td>
+              <td><span class="lk" onclick="go('formstatus',null)">Resultado ✏️</span></td>
+            </tr>
+            <tr>
+              <td><span class="badge b-evento">Evento externo</span></td>
+              <td>Feira de Ciência e Tecnologia</td><td>Comercial + cursos</td><td>09–11/05</td>
+              <td><span class="stat s-fim">Finalizado</span></td>
+              <td class="num">1.600</td><td class="num red">1.850</td><td class="num green">595</td>
+              <td><span class="lk" onclick="go('formstatus',null)">Resultado ✏️</span></td>
+            </tr>
+            <tr>
+              <td><span class="badge b-escola">Visita escola</span></td>
+              <td>Escola Juraci Machado</td><td>Mariana e Regina</td><td>26/05</td>
+              <td><span class="stat s-plan">Em planejamento</span></td>
+              <td class="num">50</td><td class="num mutv">—</td><td class="num mutv">—</td>
+              <td><span class="lk" onclick="go('formstatus',null)">Registrar status</span></td>
+            </tr>
+            <tr>
+              <td><span class="badge b-trade">Ação de trade</span></td>
+              <td>Terminal Rodoviário Laranjeiras</td><td>Mariana e Regina</td><td>era 22/05</td>
+              <td><span class="stat s-adi">Adiado</span></td>
+              <td class="num">450</td><td class="num mutv">—</td><td class="num mutv">—</td>
+              <td><span class="lk warn">Reagendar</span><span class="lk">Realocar</span></td>
+            </tr>
+            <tr class="totrow">
+              <td colspan="5">Total · período selecionado (Serra)</td>
+              <td class="num">2.400</td><td class="num">2.150</td><td class="num">633</td><td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">Período mostra início–fim (ações de vários dias, ex: 09–11/05). "Resultado/Registrar status" abre o formulário de execução. Cada linha tem ⋯ com <b>Reagendar</b> e <b>Realocar</b>.</div>
+    </section>
+
+    <!-- ===== FORM NOVA AÇÃO ===== -->
+    <section class="pane" id="formacao">
+      <div class="top">
+        <div><div class="crumb">Serra · planejamento</div><h1>Nova ação</h1></div>
+        <div class="right"><button class="btn" onclick="go('acoes',document.querySelectorAll('.nav')[1])">← Voltar</button></div>
+      </div>
+      <div class="formwrap">
+        <div class="sectionlabel">Planejamento (5W2H)</div>
+        <div class="frow">
+          <div class="f"><label>Unidade</label><select><option>Serra</option><option>Vila Velha</option><option>Cariacica</option></select></div>
+          <div class="f">
+            <label>Tipo de ação</label>
+            <select><option>Visita em empresa</option><option>Ação condomínio</option><option>Ação de trade</option><option>Evento externo</option><option>Visita em escola</option><option>Órgão público</option><option>＋ Criar novo tipo…</option></select>
+            <span class="inline-add" onclick="go('tipos',document.querySelectorAll('.nav')[4])">＋ cadastrar um tipo novo</span>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="f"><label>Objetivo (por quê)</label><select><option>Captação de lead</option><option>Relacionamento</option><option>Reforço de marca</option><option>Divulgação</option><option>Assinatura de contrato</option></select></div>
+          <div class="f"><label>Local (onde)</label><input placeholder="Ex: Hospital Dório Silva"></div>
+        </div>
+        <div class="frow">
+          <div class="f"><label>Responsáveis (quem)</label><input placeholder="Ex: Mariana, Regina"></div>
+          <div class="f"><label>Valor solicitado (quanto)</label><input type="number" placeholder="R$ 0,00"></div>
+        </div>
+        <div class="frow">
+          <div class="f"><label>Data de início</label><input type="date"></div>
+          <div class="f"><label>Data de fim</label><input type="date"><span class="hint">Deixe igual ao início se for 1 dia só.</span></div>
+        </div>
+        <div class="frow">
+          <div class="f full">
+            <label>Detalhe da ação / planejamento completo (como)</label>
+            <textarea placeholder="Descreva tudo: materiais necessários, pessoas envolvidas, organização, reuniões prévias, logística, horários..."></textarea>
+            <span class="hint">Esse é o campo livre pro planejamento completo — materiais, pessoas, organização, reunião, etc.</span>
+          </div>
+        </div>
+        <div class="formfoot">
+          <button class="btn pri">Salvar ação</button>
+          <button class="btn" onclick="go('acoes',document.querySelectorAll('.nav')[1])">Cancelar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== FORM REGISTRAR RESULTADO/STATUS ===== -->
+    <section class="pane" id="formstatus">
+      <div class="top">
+        <div><div class="crumb">Hospital Dório Silva · 18/05</div><h1>Registrar resultado</h1></div>
+        <div class="right"><button class="btn" onclick="go('acoes',document.querySelectorAll('.nav')[1])">← Voltar</button></div>
+      </div>
+      <div class="formwrap">
+        <div class="sectionlabel">O que aconteceu na ação</div>
+        <div class="frow">
+          <div class="f"><label>Status</label><select><option>Finalizado</option><option>Em planejamento</option><option>Adiado</option><option>Cancelado</option></select></div>
+          <div class="f"><label>Resultado</label><select><option>Lead</option><option>Relacionamento</option><option>Reforço de marca</option><option>Outro</option></select></div>
+        </div>
+        <div class="frow">
+          <div class="f"><label>Resultado quantitativo</label><input type="number" placeholder="Ex: 38 leads"><span class="hint">Quantos leads/contatos a ação rendeu.</span></div>
+          <div class="f"><label>Valor gasto</label><input type="number" value="300"></div>
+        </div>
+        <div class="frow">
+          <div class="f full">
+            <div class="diffbox"><span>Verba: solicitado R$ 300,00 → gasto R$ 300,00</span><span class="pill ok">bateu ✓</span></div>
+          </div>
+        </div>
+        <div class="frow">
+          <div class="f full"><label>Comentários / observações</label>
+            <textarea placeholder="Como foi, o que funcionou, próximos passos, contato firmado..."></textarea>
+          </div>
+        </div>
+        <div class="formfoot">
+          <button class="btn pri">Salvar resultado</button>
+          <button class="btn" onclick="go('acoes',document.querySelectorAll('.nav')[1])">Cancelar</button>
+        </div>
+      </div>
+      <div class="note">Esses campos (status, resultado, quantitativo, valor gasto, comentários) entram no <b>Relatório de resultados</b>, exportável.</div>
+    </section>
+
+    <!-- ===== RELATÓRIOS ===== -->
+    <section class="pane" id="relatorio">
+      <div class="top">
+        <div><div class="crumb">Rede</div><h1>Relatórios</h1></div>
+        <div class="right">
+          <div class="daterange">
+            <div class="fld"><span>De</span><input type="date" value="2026-05-01"></div>
+            <div class="sep">→</div>
+            <div class="fld"><span>Até</span><input type="date" value="2026-05-31"></div>
+          </div>
+          <select class="selsm" id="reptipo" onchange="repsw(this.value)">
+            <option value="verba">Relatório: Verba</option>
+            <option value="result">Relatório: Resultados (leads)</option>
+          </select>
+          <select class="selsm"><option>Agrupar por unidade</option><option>Agrupar por tipo</option><option>Sem agrupar</option></select>
+          <button class="btn pri">⬇ Exportar</button>
+        </div>
+      </div>
+
+      <div id="rep-verba" class="wrap">
+        <table>
+          <thead><tr><th>Unidade</th><th>Tipo de ação</th><th>Responsável</th><th class="num">Solicitado</th><th class="num">Gasto</th><th class="num">Diferença</th><th>Verba</th></tr></thead>
+          <tbody>
+            <tr><td>Serra</td><td>Visita empresa</td><td>Mariana/Regina</td><td class="num">300</td><td class="num">300</td><td class="num">0</td><td><span class="pill ok">bateu</span></td></tr>
+            <tr><td>Serra</td><td>Evento externo</td><td>Comercial</td><td class="num">1.600</td><td class="num red">1.850</td><td class="num red">+250</td><td><span class="pill alt">alterado</span></td></tr>
+            <tr><td>Vila Velha</td><td>Evento externo</td><td>Priscila</td><td class="num">800</td><td class="num green">760</td><td class="num green">−40</td><td><span class="pill ok">economia</span></td></tr>
+            <tr><td>Cariacica</td><td>Ação de trade</td><td>Equipe</td><td class="num">1.050</td><td class="num">1.050</td><td class="num">0</td><td><span class="pill ok">bateu</span></td></tr>
+            <tr class="totrow"><td colspan="3">Total da rede</td><td class="num">4.500</td><td class="num">4.210</td><td class="num green">−290</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="rep-result" class="wrap" style="display:none">
+        <table>
+          <thead><tr><th>Unidade</th><th>Tipo</th><th>Período</th><th>Status</th><th>Resultado</th><th class="num">Qtd.</th><th>Comentário</th></tr></thead>
+          <tbody>
+            <tr><td>Serra</td><td>Visita empresa</td><td>18/05</td><td><span class="stat s-fim">Finalizado</span></td><td>Lead</td><td class="num green">38</td><td>Evento de saúde, retornar p/ matrícula</td></tr>
+            <tr><td>Serra</td><td>Evento externo</td><td>09–11/05</td><td><span class="stat s-fim">Finalizado</span></td><td>Lead</td><td class="num green">595</td><td>Feira — maior volume do mês</td></tr>
+            <tr><td>Vila Velha</td><td>Evento externo</td><td>14/05</td><td><span class="stat s-fim">Finalizado</span></td><td>Lead</td><td class="num green">66</td><td>Boa adesão da comunidade</td></tr>
+            <tr><td>Cariacica</td><td>Ação de trade</td><td>20/05</td><td><span class="stat s-fim">Finalizado</span></td><td>Relacionamento</td><td class="num green">30</td><td>Panfletagem em terminal</td></tr>
+            <tr class="totrow"><td colspan="5">Total de leads no período</td><td class="num">729</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">Dois relatórios na mesma tela: <b>Verba</b> (solicitado × gasto × diferença) e <b>Resultados</b> (status, resultado, quantitativo, comentário). Ambos filtram por data e exportam em CSV/PDF.</div>
+    </section>
+
+    <!-- ===== UNIDADES ===== -->
+    <section class="pane" id="unidades">
+      <div class="top">
+        <div><div class="crumb">Cadastro</div><h1>Unidades</h1></div>
+        <div class="right"><button class="btn pri">+ Nova unidade</button></div>
+      </div>
+      <div class="wrap">
+        <table>
+          <thead><tr><th>Unidade (cidade)</th><th>Coordenador</th><th>Responsáveis de campo</th><th class="num">Ações no mês</th><th class="num">Leads</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><b>Serra</b></td><td>Hiran</td><td>Mariana, Regina</td><td class="num">6</td><td class="num green">671</td><td><span class="lk">Abrir</span></td></tr>
+            <tr><td><b>Vila Velha</b></td><td>Priscila</td><td>Priscila, Natálya</td><td class="num">2</td><td class="num green">96</td><td><span class="lk">Abrir</span></td></tr>
+            <tr><td><b>Cariacica</b></td><td>—</td><td>Equipe contratada</td><td class="num">1</td><td class="num green">30</td><td><span class="lk">Abrir</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== TIPOS DE AÇÃO ===== -->
+    <section class="pane" id="tipos">
+      <div class="top">
+        <div><div class="crumb">Cadastro · liberdade do diretor</div><h1>Tipos de ação</h1></div>
+      </div>
+      <div class="formwrap" style="max-width:620px">
+        <div class="sectionlabel">Criar um tipo novo</div>
+        <div class="frow" style="grid-template-columns:1fr auto;align-items:end">
+          <div class="f"><label>Nome do tipo</label><input placeholder="Ex: Parceria com igreja, Carro de som, Live..."></div>
+          <div class="f"><label>&nbsp;</label><button class="btn pri">＋ Adicionar</button></div>
+        </div>
+        <div class="sectionlabel" style="margin-top:8px">Tipos cadastrados</div>
+        <div>
+          <span class="tag">Visita em empresa <span class="x">×</span></span>
+          <span class="tag">Ação condomínio <span class="x">×</span></span>
+          <span class="tag">Ação de trade <span class="x">×</span></span>
+          <span class="tag">Evento externo <span class="x">×</span></span>
+          <span class="tag">Visita em escola <span class="x">×</span></span>
+          <span class="tag">Órgão público <span class="x">×</span></span>
+          <span class="tag" style="border-color:#7dd3fc;background:#e0f2fe">Carro de som <span class="x">×</span></span>
+        </div>
+        <div class="note">O diretor cria/remove tipos livremente. Eles aparecem na lista do formulário de ação e viram filtro nos relatórios e no painel.</div>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+  function go(id,el){
+    document.querySelectorAll('.nav').forEach(n=>n.classList.remove('on'));
+    if(el) el.classList.add('on');
+    document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id===id));
+    window.scrollTo(0,0);
+  }
+  function repsw(v){
+    document.getElementById('rep-verba').style.display = v==='verba'?'':'none';
+    document.getElementById('rep-result').style.display = v==='result'?'':'none';
+  }
+</script>
+</body>
+</html>

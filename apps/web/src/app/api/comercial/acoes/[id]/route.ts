@@ -1,0 +1,87 @@
+import { NextResponse } from 'next/server';
+import { getSessionUser } from '@/lib/workspace';
+import {
+  atualizarAcao,
+  registrarResultado,
+  reagendar,
+  realocar,
+  removerAcao,
+  type ResultadoInput,
+} from '@/lib/comercial';
+import type { StatusAcao } from '@bussola/db';
+
+export const dynamic = 'force-dynamic';
+
+function numOrNull(v: unknown): number | null {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+const STATUS_VALIDOS: StatusAcao[] = ['EM_PLANEJAMENTO', 'FINALIZADO', 'ADIADO', 'CANCELADO'];
+
+// PATCH /api/comercial/acoes/[id]  body: { acao: 'editar'|'resultado'|'reagendar'|'realocar', ... }
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+  const b = await req.json().catch(() => null);
+  const acao = b?.acao;
+
+  if (acao === 'resultado') {
+    const status = STATUS_VALIDOS.includes(b?.status) ? (b.status as StatusAcao) : null;
+    if (!status) return NextResponse.json({ error: 'Status inválido' }, { status: 400 });
+    const input: ResultadoInput = {
+      status,
+      resultado: typeof b.resultado === 'string' ? b.resultado : null,
+      resultadoQtd: numOrNull(b.resultadoQtd),
+      valorGasto: numOrNull(b.valorGasto),
+      comentarios: typeof b.comentarios === 'string' ? b.comentarios : null,
+    };
+    const ok = await registrarResultado(user.id, params.id, input);
+    return ok
+      ? NextResponse.json({ ok: true })
+      : NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+  }
+
+  if (acao === 'reagendar') {
+    const ok = await reagendar(user.id, params.id, String(b.dataInicio ?? ''), String(b.dataFim ?? ''));
+    return ok
+      ? NextResponse.json({ ok: true })
+      : NextResponse.json({ error: 'Falhou' }, { status: 422 });
+  }
+
+  if (acao === 'realocar') {
+    const r = await realocar(user.id, params.id, {
+      unidadeId: typeof b.unidadeId === 'string' ? b.unidadeId : undefined,
+      responsaveis: typeof b.responsaveis === 'string' ? b.responsaveis : undefined,
+    });
+    return r.ok
+      ? NextResponse.json({ ok: true })
+      : NextResponse.json({ error: r.erro }, { status: 422 });
+  }
+
+  // padrão: editar planejamento
+  const ok = await atualizarAcao(user.id, params.id, {
+    tipo: typeof b.tipo === 'string' ? b.tipo : undefined,
+    objetivo: typeof b.objetivo === 'string' ? b.objetivo : undefined,
+    local: typeof b.local === 'string' ? b.local : undefined,
+    responsaveis: typeof b.responsaveis === 'string' ? b.responsaveis : undefined,
+    detalhe: typeof b.detalhe === 'string' ? b.detalhe : undefined,
+    dataInicio: typeof b.dataInicio === 'string' ? b.dataInicio : undefined,
+    dataFim: typeof b.dataFim === 'string' ? b.dataFim : undefined,
+    valorSolicitado: b.valorSolicitado === undefined ? undefined : numOrNull(b.valorSolicitado),
+  });
+  return ok
+    ? NextResponse.json({ ok: true })
+    : NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+}
+
+// DELETE /api/comercial/acoes/[id]
+export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+  const ok = await removerAcao(user.id, params.id);
+  return ok
+    ? NextResponse.json({ ok: true })
+    : NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+}

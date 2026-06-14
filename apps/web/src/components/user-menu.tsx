@@ -13,6 +13,7 @@ import {
   CalendarDays,
   ClipboardCheck,
   Users,
+  Briefcase,
   Moon,
   Settings,
 } from 'lucide-react';
@@ -122,6 +123,14 @@ export function UserMenu({ className }: { className?: string }) {
             >
               <Users className="h-4 w-4" />
               Meu time
+            </Link>
+            <Link
+              href="/comercial"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+            >
+              <Briefcase className="h-4 w-4" />
+              Comercial
             </Link>
             <Link
               href="/noite"

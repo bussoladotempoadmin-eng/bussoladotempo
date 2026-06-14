@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup · Módulo Comercial · Bússola do Tempo</title>
+<style>
+  :root{
+    --bg:#f1f5f9; --card:#fff; --border:#e2e8f0; --ink:#0f172a; --mut:#64748b;
+    --pri:#2563eb; --pri-soft:#dbeafe; --green:#16a34a; --green-soft:#dcfce7;
+    --amber:#d97706; --amber-soft:#fef3c7; --red:#dc2626; --red-soft:#fee2e2;
+    --violet:#7c3aed; --violet-soft:#ede9fe; --slate-soft:#f1f5f9;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    display:flex;justify-content:center;padding:16px}
+  .phone{width:100%;max-width:430px;background:var(--bg);border-radius:28px;
+    border:1px solid var(--border);overflow:hidden;box-shadow:0 20px 50px rgba(15,23,42,.12)}
+  header{background:var(--card);padding:14px 16px;border-bottom:1px solid var(--border);
+    position:sticky;top:0;z-index:5}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px}
+  .brand .pin{color:var(--pri)}
+  .sub{font-size:11px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .unitsel{margin-top:10px;display:flex;align-items:center;gap:6px;background:var(--slate-soft);
+    border-radius:10px;padding:8px 10px;font-size:13px;font-weight:600}
+  .unitsel select{border:0;background:transparent;font:inherit;font-weight:700;color:var(--ink);flex:1;outline:none}
+  .tabs{display:flex;gap:4px;background:var(--card);padding:6px 10px;border-bottom:1px solid var(--border);position:sticky;top:96px;z-index:4}
+  .tab{flex:1;text-align:center;padding:9px 0;font-size:13px;font-weight:700;color:var(--mut);
+    border-radius:9px;cursor:pointer;border:0;background:transparent}
+  .tab.active{background:var(--pri-soft);color:var(--pri)}
+  main{padding:14px;min-height:520px}
+  .pane{display:none} .pane.active{display:block}
+
+  /* chips de filtro */
+  .filters{display:flex;gap:7px;overflow-x:auto;padding-bottom:10px;margin-bottom:4px}
+  .chip{white-space:nowrap;font-size:12px;font-weight:700;padding:6px 11px;border-radius:999px;
+    border:1px solid var(--border);background:var(--card);color:var(--mut);cursor:pointer}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  /* card de ação */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:13px;margin-bottom:11px}
+  .row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .badge{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:7px;text-transform:uppercase;letter-spacing:.03em}
+  .b-empresa{background:var(--pri-soft);color:var(--pri)}
+  .b-evento{background:var(--violet-soft);color:var(--violet)}
+  .b-escola{background:var(--amber-soft);color:var(--amber)}
+  .b-trade{background:var(--green-soft);color:var(--green)}
+  .local{font-weight:800;font-size:15px;margin:8px 0 2px}
+  .meta{font-size:12.5px;color:var(--mut);line-height:1.5}
+  .meta b{color:var(--ink);font-weight:700}
+  .stat{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px}
+  .s-plan{background:var(--slate-soft);color:var(--mut)}
+  .s-fim{background:var(--green-soft);color:var(--green)}
+  .s-adi{background:var(--amber-soft);color:var(--amber)}
+  .moneyline{display:flex;gap:8px;margin-top:11px;padding-top:11px;border-top:1px dashed var(--border);flex-wrap:wrap}
+  .kv{flex:1;min-width:88px}
+  .kv .lab{font-size:10.5px;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+  .kv .val{font-size:15px;font-weight:800;margin-top:1px}
+  .leads .val{color:var(--green)}
+  .actbar{display:flex;gap:6px;margin-top:11px}
+  .act{flex:1;font-size:12px;font-weight:800;padding:8px 0;border-radius:9px;border:1px solid var(--border);
+    background:var(--card);color:var(--ink);text-align:center;cursor:pointer}
+  .act.pri{background:var(--pri);color:#fff;border-color:var(--pri)}
+
+  /* painel financeiro confirmação */
+  .recon{margin-top:11px;padding:11px;border-radius:12px;background:var(--slate-soft)}
+  .recon .ttl{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);margin-bottom:8px}
+  .reconrow{display:flex;justify-content:space-between;font-size:13.5px;padding:3px 0}
+  .reconrow.tot{font-weight:800;border-top:1px solid var(--border);margin-top:4px;padding-top:7px}
+  .pill{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px}
+  .ok{background:var(--green-soft);color:var(--green)}
+  .alt{background:var(--red-soft);color:var(--red)}
+
+  /* tabela relatório */
+  .reptools{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .reptools h3{margin:0;font-size:15px}
+  .exp{font-size:12px;font-weight:800;color:var(--pri);background:var(--pri-soft);border:0;padding:8px 12px;border-radius:9px;cursor:pointer}
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+  th,td{text-align:left;font-size:12px;padding:9px 10px;border-bottom:1px solid var(--border)}
+  th{background:var(--slate-soft);color:var(--mut);text-transform:uppercase;font-size:10.5px;letter-spacing:.03em}
+  td.num{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+  tr:last-child td{border-bottom:0}
+  .totrow td{font-weight:800;background:var(--slate-soft)}
+
+  /* painel KPIs */
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px}
+  .kpi.hero{grid-column:1/3;background:linear-gradient(135deg,#1e3a8a,#2563eb);border:0;color:#fff}
+  .kpi .lab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;opacity:.85}
+  .kpi .big{font-size:26px;font-weight:900;margin-top:3px;letter-spacing:-.02em}
+  .kpi.hero .lab{color:#cbd5e1}
+  .kpi small{font-size:11px;opacity:.8;font-weight:600}
+  .sech{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;color:var(--mut);margin:16px 0 9px}
+  .bar{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+  .bar .nm{width:78px;font-size:12.5px;font-weight:700}
+  .bar .track{flex:1;height:9px;background:var(--slate-soft);border-radius:999px;overflow:hidden}
+  .bar .fill{height:100%;border-radius:999px;background:var(--pri)}
+  .bar .vl{width:70px;text-align:right;font-size:12px;font-weight:800}
+  .note{font-size:11px;color:var(--mut);text-align:center;margin-top:16px;line-height:1.5}
+  .mh{font-size:13px;font-weight:800;margin:2px 0 10px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="phone">
+  <header>
+    <div class="brand"><span class="pin">🧭</span> Bússola · <span style="color:var(--mut);font-weight:700">Comercial</span></div>
+    <div class="unitsel">
+      <span>🏙️</span>
+      <select>
+        <option>Todas as unidades (rede)</option>
+        <option>Serra</option>
+        <option>Vila Velha</option>
+        <option>Cariacica</option>
+      </select>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="go(0,this)">Ações</button>
+    <button class="tab" onclick="go(1,this)">Relatório</button>
+    <button class="tab" onclick="go(2,this)">Painel</button>
+  </div>
+
+  <main>
+    <!-- ============ AÇÕES ============ -->
+    <section class="pane active">
+      <div class="filters">
+        <span class="chip on">Maio</span>
+        <span class="chip">Tipo</span>
+        <span class="chip">Status</span>
+        <span class="chip">Responsável</span>
+      </div>
+      <div class="mh">Serra · 6 ações em maio</div>
+
+      <!-- ação finalizada com lead + valor conferido -->
+      <div class="card">
+        <div class="row">
+          <span class="badge b-empresa">Visita em empresa</span>
+          <span class="stat s-fim">Finalizado</span>
+        </div>
+        <div class="local">Hospital Dório Silva</div>
+        <div class="meta">🎯 Captação de lead · 👥 <b>Mariana e Regina</b><br/>📅 18/05 · Evento de saúde p/ colaboradores</div>
+        <div class="moneyline">
+          <div class="kv"><div class="lab">Solicitado</div><div class="val">R$ 300</div></div>
+          <div class="kv"><div class="lab">Gasto</div><div class="val">R$ 300</div></div>
+          <div class="kv leads"><div class="lab">Leads</div><div class="val">38</div></div>
+        </div>
+        <div class="recon">
+          <div class="ttl">Conferência da verba</div>
+          <div class="reconrow"><span>Valor solicitado</span><span>R$ 300,00</span></div>
+          <div class="reconrow"><span>Valor gasto</span><span>R$ 300,00</span></div>
+          <div class="reconrow tot"><span>Diferença <span class="pill ok">bateu ✓</span></span><span>R$ 0,00</span></div>
+        </div>
+        <div class="actbar">
+          <button class="act">Reagendar</button>
+          <button class="act">Realocar</button>
+        </div>
+      </div>
+
+      <!-- ação finalizada com alteração de valor -->
+      <div class="card">
+        <div class="row">
+          <span class="badge b-evento">Evento externo</span>
+          <span class="stat s-fim">Finalizado</span>
+        </div>
+        <div class="local">Feira de Ciência e Tecnologia</div>
+        <div class="meta">🎯 Reforço de marca · 👥 <b>Comercial + cursos</b><br/>📅 10/05 · Ação comercial com participantes</div>
+        <div class="moneyline">
+          <div class="kv"><div class="lab">Solicitado</div><div class="val">R$ 1.600</div></div>
+          <div class="kv"><div class="lab">Gasto</div><div class="val" style="color:var(--red)">R$ 1.850</div></div>
+          <div class="kv leads"><div class="lab">Leads</div><div class="val">595</div></div>
+        </div>
+        <div class="recon">
+          <div class="ttl">Conferência da verba</div>
+          <div class="reconrow"><span>Valor solicitado</span><span>R$ 1.600,00</span></div>
+          <div class="reconrow"><span>Valor gasto</span><span>R$ 1.850,00</span></div>
+          <div class="reconrow tot"><span>Diferença <span class="pill alt">+R$ 250 alterado</span></span><span style="color:var(--red)">R$ 250,00</span></div>
+        </div>
+        <div class="actbar">
+          <button class="act">Reagendar</button>
+          <button class="act">Realocar</button>
+        </div>
+      </div>
+
+      <!-- ação em planejamento, aguardando -->
+      <div class="card">
+        <div class="row">
+          <span class="badge b-escola">Visita em escola</span>
+          <span class="stat s-plan">Em planejamento</span>
+        </div>
+        <div class="local">Escola Juraci Machado</div>
+        <div class="meta">🎯 Captação de lead · 👥 <b>Mariana e Regina</b><br/>📅 26/05 · Divulgação Acesso Superior</div>
+        <div class="moneyline">
+          <div class="kv"><div class="lab">Solicitado</div><div class="val">R$ 50</div></div>
+          <div class="kv"><div class="lab">Gasto</div><div class="val" style="color:var(--mut)">—</div></div>
+          <div class="kv leads"><div class="lab">Leads</div><div class="val" style="color:var(--mut)">—</div></div>
+        </div>
+        <div class="actbar">
+          <button class="act pri">Marcar resultado</button>
+          <button class="act">Reagendar</button>
+          <button class="act">Realocar</button>
+        </div>
+      </div>
+
+      <!-- ação adiada -->
+      <div class="card">
+        <div class="row">
+          <span class="badge b-trade">Ação de trade</span>
+          <span class="stat s-adi">Adiado</span>
+        </div>
+        <div class="local">Terminal Rodoviário Laranjeiras</div>
+        <div class="meta">🎯 Relacionamento · 👥 <b>Mariana e Regina</b><br/>📅 era 22/05 · Panfletagem</div>
+        <div class="moneyline">
+          <div class="kv"><div class="lab">Solicitado</div><div class="val">R$ 450</div></div>
+          <div class="kv"><div class="lab">Gasto</div><div class="val" style="color:var(--mut)">—</div></div>
+          <div class="kv"><div class="lab">Novo prazo</div><div class="val" style="font-size:13px">a definir</div></div>
+        </div>
+        <div class="actbar">
+          <button class="act pri">Reagendar</button>
+          <button class="act">Realocar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RELATÓRIO ============ -->
+    <section class="pane">
+      <div class="reptools">
+        <h3>Relatório de verba</h3>
+        <button class="exp">⬇ Exportar</button>
+      </div>
+      <div class="mh">Rede · maio/2026</div>
+      <table>
+        <thead><tr><th>Unidade</th><th>Tipo de ação</th><th class="num">Solicit.</th><th class="num">Gasto</th></tr></thead>
+        <tbody>
+          <tr><td>Serra</td><td>Visita empresa</td><td class="num">300</td><td class="num">300</td></tr>
+          <tr><td>Serra</td><td>Evento externo</td><td class="num">1.600</td><td class="num" style="color:var(--red)">1.850</td></tr>
+          <tr><td>Serra</td><td>Visita escola</td><td class="num">50</td><td class="num">—</td></tr>
+          <tr><td>Serra</td><td>Ação de trade</td><td class="num">450</td><td class="num">—</td></tr>
+          <tr><td>V. Velha</td><td>Evento externo</td><td class="num">800</td><td class="num">760</td></tr>
+          <tr><td>V. Velha</td><td>Visita empresa</td><td class="num">250</td><td class="num">250</td></tr>
+          <tr><td>Cariacica</td><td>Ação de trade</td><td class="num">1.050</td><td class="num">1.050</td></tr>
+          <tr class="totrow"><td colspan="2">Total da rede</td><td class="num">4.500</td><td class="num">4.210</td></tr>
+        </tbody>
+      </table>
+      <div class="note">Exporta em CSV/PDF com Unidade · Tipo · Valor solicitado · Valor gasto · Status.<br/>Linhas em vermelho = gasto diferente do solicitado.</div>
+    </section>
+
+    <!-- ============ PAINEL ============ -->
+    <section class="pane">
+      <div class="mh">Rede · 3 unidades · maio/2026</div>
+      <div class="kpis">
+        <div class="kpi hero">
+          <div class="lab">Custo por lead (rede)</div>
+          <div class="big">R$ 5,28</div>
+          <small>4.210 gastos ÷ 797 leads captados</small>
+        </div>
+        <div class="kpi"><div class="lab">Leads</div><div class="big" style="color:var(--green)">797</div></div>
+        <div class="kpi"><div class="lab">Execução</div><div class="big">71%</div><small>17 de 24 ações</small></div>
+        <div class="kpi"><div class="lab">Solicitado</div><div class="big">R$ 4.500</div></div>
+        <div class="kpi"><div class="lab">Gasto</div><div class="big">R$ 4.210</div><small style="color:var(--green)">−R$ 290 vs pedido</small></div>
+      </div>
+
+      <div class="sech">Leads por unidade</div>
+      <div class="bar"><div class="nm">Serra</div><div class="track"><div class="fill" style="width:82%"></div></div><div class="vl">671</div></div>
+      <div class="bar"><div class="nm">V. Velha</div><div class="track"><div class="fill" style="width:12%"></div></div><div class="vl">96</div></div>
+      <div class="bar"><div class="nm">Cariacica</div><div class="track"><div class="fill" style="width:4%"></div></div><div class="vl">30</div></div>
+
+      <div class="sech">O que mais converte (custo por lead)</div>
+      <div class="bar"><div class="nm">Evento ext.</div><div class="track"><div class="fill" style="width:90%;background:var(--violet)"></div></div><div class="vl">R$ 3,11</div></div>
+      <div class="bar"><div class="nm">Visita emp.</div><div class="track"><div class="fill" style="width:45%;background:var(--pri)"></div></div><div class="vl">R$ 7,33</div></div>
+      <div class="bar"><div class="nm">Visita esc.</div><div class="track"><div class="fill" style="width:30%;background:var(--amber)"></div></div><div class="vl">R$ 11,90</div></div>
+
+      <div class="note">Os números do topo (KPIs) e qual deles fica "gigante" a gente ajusta —<br/>hoje deixei <b>custo por lead</b> como herói. É só dizer.</div>
+    </section>
+  </main>
+</div>
+
+<script>
+  function go(i,el){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.pane').forEach((p,k)=>p.classList.toggle('active',k===i));
+    window.scrollTo(0,0);
+  }
+</script>
+</body>
+</html>

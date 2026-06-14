@@ -85,6 +85,7 @@ model User {
   sugestoesEnviadas  Sugestao[] @relation("SugDe")
   sugestoesRecebidas Sugestao[] @relation("SugPara")
   pushSubscriptions  PushSubscription[]
+  unidadesCoord      Unidade[]  @relation("UnidadeCoord")
 }
 
 // Inscrição Web Push (um device/navegador por linha). Lembretes do ritual semanal.
@@ -321,11 +322,15 @@ model Organizacao {
   id        String   @id @default(cuid())
   nome      String
   ownerId   String
+  // Módulo Comercial (pago/ligável). false = só Bússola do Tempo.
+  comercialAtivo Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  owner   User           @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  membros MembroEquipe[]
+  owner     User               @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  membros   MembroEquipe[]
+  unidades  Unidade[]
+  tiposAcao TipoAcaoComercial[]
 
   @@index([ownerId])
 }
@@ -372,4 +377,79 @@ model MembroEquipe {
   @@index([organizacaoId])
   @@index([userId])
   @@index([chefeId])
+}
+
+// ============================================================
+// COMERCIAL — Módulo pago/ligável (Agenda Comercial de ações)
+// Quadro multi-unidade de ações de captação do setor comercial.
+// Não é agenda individual; é o setor. Aditivo, isolado do core.
+// ============================================================
+
+enum StatusAcao {
+  EM_PLANEJAMENTO
+  FINALIZADO
+  ADIADO
+  CANCELADO
+}
+
+model Unidade {
+  id            String   @id @default(cuid())
+  organizacaoId String
+  nome          String // cidade / unidade
+  coordenadorId String? // userId do coordenador (vê/edita só esta unidade)
+  ativa         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  organizacao Organizacao     @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  coordenador User?           @relation("UnidadeCoord", fields: [coordenadorId], references: [id], onDelete: SetNull)
+  acoes       AcaoComercial[]
+
+  @@index([organizacaoId])
+  @@index([coordenadorId])
+}
+
+// Tipos de ação editáveis pelo diretor (liberdade pra criar tipos novos).
+model TipoAcaoComercial {
+  id            String   @id @default(cuid())
+  organizacaoId String
+  nome          String
+  ativo         Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  organizacao Organizacao @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+
+  @@unique([organizacaoId, nome])
+  @@index([organizacaoId])
+}
+
+model AcaoComercial {
+  id        String @id @default(cuid())
+  unidadeId String
+
+  // Planejamento (5W2H)
+  tipo            String // nome do tipo (denormalizado da lista do diretor)
+  objetivo        String // captação de lead, relacionamento, etc
+  local           String // onde
+  responsaveis    String // quem (texto livre: "Mariana, Regina")
+  dataInicio      DateTime
+  dataFim         DateTime
+  detalhe         String?  @db.Text // como — planejamento completo (materiais, pessoas...)
+  valorSolicitado Float? // quanto (verba pedida)
+
+  // Execução (registrar resultado)
+  status       StatusAcao @default(EM_PLANEJAMENTO)
+  resultado    String? // Lead, Relacionamento...
+  resultadoQtd Int? // quantitativo (ex: 38 leads)
+  valorGasto   Float? // verba realmente gasta
+  comentarios  String?    @db.Text
+
+  criadoPorId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  unidade Unidade @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+
+  @@index([unidadeId])
+  @@index([status])
 }
