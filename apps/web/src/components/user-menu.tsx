@@ -16,6 +16,7 @@ import {
   Moon,
   Settings,
   ShieldCheck,
+  CreditCard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -139,6 +140,14 @@ export function UserMenu({ className }: { className?: string }) {
             >
               <UserIcon className="h-4 w-4" />
               Meu perfil
+            </Link>
+            <Link
+              href="/meu-plano"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
+            >
+              <CreditCard className="h-4 w-4" />
+              Meu plano
             </Link>
             <Link
               href="/configuracoes"

@@ -13,6 +13,8 @@ import { nudgeRevisao } from '@/lib/nudge-revisao';
 import { SugestoesGestor } from './sugestoes-gestor';
 import { sugestoesPendentes } from '@/lib/equipe';
 import { AtivarLembretes } from '@/components/ativar-lembretes';
+import { garantirAssinatura, getEntitlements } from '@/lib/assinatura';
+import { AvisoPlano } from './aviso-plano';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -22,6 +24,11 @@ export default async function Home() {
   if (!session?.user) {
     redirect('/login');
   }
+
+  // Garante que quem entrou direto (Google/link mágico) ganhe um trial e
+  // apareça no painel. Depois lê os entitlements pra decidir o aviso de plano.
+  await garantirAssinatura(session.user.id);
+  const ent = await getEntitlements(session.user.id);
 
   const workspace = await getCurrentWorkspace();
   const iso = currentIsoWeek();
@@ -101,6 +108,10 @@ export default async function Home() {
           <UserMenu />
         </div>
       </header>
+
+      {ent.temAssinatura && !ent.planoConfirmado && (
+        <AvisoPlano planoNome={ent.planoNome ?? 'plano Essencial'} diasRestantes={ent.diasRestantesTrial} />
+      )}
 
       {sugestoes.length > 0 && (
         <div className="container mb-2">

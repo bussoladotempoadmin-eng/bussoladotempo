@@ -1,34 +1,46 @@
 import Link from 'next/link';
 import { listarContas, listarPlanos } from '@/lib/admin-billing';
-import { fmtData, STATUS_LABEL, STATUS_CLASSE } from '../fmt';
-import type { StatusAssinatura } from '@bussola/db';
+import { fmtData, STATUS_LABEL, STATUS_CLASSE, ORIGEM_LABEL } from '../fmt';
+import type { StatusAssinatura, OrigemAssinatura } from '@bussola/db';
 import { NovaContaButton } from './nova-conta';
 
 export const dynamic = 'force-dynamic';
 
 const STATUSES: StatusAssinatura[] = ['TRIAL', 'ATIVA', 'ATRASADA', 'SUSPENSA', 'CANCELADA'];
+const ORIGENS: OrigemAssinatura[] = ['AUTO', 'TRIBO', 'CADASTRO', 'ADMIN'];
 
 export default async function ContasPage({
   searchParams,
 }: {
-  searchParams: { status?: string; plano?: string; q?: string; page?: string };
+  searchParams: { status?: string; plano?: string; origem?: string; ativar?: string; q?: string; page?: string };
 }) {
   const status = STATUSES.includes(searchParams.status as StatusAssinatura)
     ? (searchParams.status as StatusAssinatura)
     : undefined;
+  const origem = ORIGENS.includes(searchParams.origem as OrigemAssinatura)
+    ? (searchParams.origem as OrigemAssinatura)
+    : undefined;
+  const aguardandoAtivacao = searchParams.ativar === '1' ? true : undefined;
   const planoSlug = searchParams.plano?.trim() || undefined;
   const busca = searchParams.q?.trim() || undefined;
   const page = Math.max(1, Number(searchParams.page) || 1);
 
   const [{ contas, total, perPage }, planos] = await Promise.all([
-    listarContas({ status, planoSlug, busca, page }),
+    listarContas({ status, planoSlug, origem, aguardandoAtivacao, busca, page }),
     listarPlanos(),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / perPage));
 
   const qs = (patch: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
-    const base = { status, plano: planoSlug, q: busca, ...patch };
+    const base = {
+      status,
+      plano: planoSlug,
+      origem,
+      ativar: aguardandoAtivacao ? '1' : undefined,
+      q: busca,
+      ...patch,
+    };
     for (const [key, val] of Object.entries(base)) if (val) p.set(key, val);
     const s = p.toString();
     return s ? `/admin/contas?${s}` : '/admin/contas';
@@ -66,10 +78,31 @@ export default async function ContasPage({
             </option>
           ))}
         </select>
+        <select name="origem" defaultValue={origem ?? ''} className="rounded-lg border border-border bg-background px-3 py-2 text-sm">
+          <option value="">Toda origem</option>
+          {ORIGENS.map((o) => (
+            <option key={o} value={o}>
+              {ORIGEM_LABEL[o]}
+            </option>
+          ))}
+        </select>
         <button type="submit" className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
           Filtrar
         </button>
       </form>
+
+      {/* Atalhos rápidos */}
+      <div className="flex flex-wrap gap-2 text-xs">
+        <Link href="/admin/contas?origem=AUTO" className="rounded-full border border-border px-3 py-1 font-semibold text-muted-foreground hover:bg-muted">
+          🔎 Entraram direto (pra contatar)
+        </Link>
+        <Link href="/admin/contas?ativar=1" className="rounded-full border border-border px-3 py-1 font-semibold text-muted-foreground hover:bg-muted">
+          💳 Querem ativar plano
+        </Link>
+        <Link href="/admin/contas?status=TRIAL" className="rounded-full border border-border px-3 py-1 font-semibold text-muted-foreground hover:bg-muted">
+          ⏳ Em trial
+        </Link>
+      </div>
 
       {/* Lista */}
       {contas.length === 0 ? (
@@ -82,7 +115,19 @@ export default async function ContasPage({
             <li key={c.id}>
               <Link href={`/admin/contas/${c.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted">
                 <div className="min-w-0">
-                  <div className="truncate font-semibold">{c.nome}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-semibold">{c.nome}</span>
+                    {c.origem === 'AUTO' && (
+                      <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                        entrou direto
+                      </span>
+                    )}
+                    {c.aguardandoAtivacao && (
+                      <span className="shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                        quer ativar
+                      </span>
+                    )}
+                  </div>
                   <div className="truncate text-xs text-muted-foreground">{c.email}</div>
                 </div>
                 <div className="flex shrink-0 items-center gap-3 text-xs">

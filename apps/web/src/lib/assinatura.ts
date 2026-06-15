@@ -17,8 +17,10 @@
  */
 import { prisma } from '@bussola/db';
 import type { Plano, Assinatura, StatusAssinatura, CicloPlano } from '@bussola/db';
+import { enviarLeadParaTribo } from './tribo-lead';
 
 const FALLBACK_PERMISSIVO = true;
+const DIAS_TRIAL_PADRAO = 14;
 
 export type Entitlements = {
   temAssinatura: boolean;
@@ -34,6 +36,8 @@ export type Entitlements = {
   trialTerminaEm: Date | null;
   /** Dias restantes do trial (null se não está em trial). */
   diasRestantesTrial: number | null;
+  /** Já escolheu plano conscientemente? (false = mostra o aviso de onboarding) */
+  planoConfirmado: boolean;
 };
 
 // Entitlement de fallback quando não há assinatura (período de transição).
@@ -49,6 +53,7 @@ const ENTITLEMENT_LIBERADO: Entitlements = {
   assentos: 1,
   trialTerminaEm: null,
   diasRestantesTrial: null,
+  planoConfirmado: true,
 };
 
 const ENTITLEMENT_BLOQUEADO: Entitlements = {
@@ -110,7 +115,60 @@ export function entitlementsDe(assinatura: AssinaturaComPlano): Entitlements {
     assentos: assinatura.assentos,
     trialTerminaEm: assinatura.trialTerminaEm,
     diasRestantesTrial: emTrial ? diasAte(assinatura.trialTerminaEm) : null,
+    planoConfirmado: assinatura.planoConfirmado,
   };
+}
+
+/**
+ * Garante que um usuário "solo" tenha assinatura. Se ele entrou direto
+ * (Google/link mágico) e não tem nenhuma, cria um trial do Essencial marcado
+ * como AUTO (não confirmado) — assim ele entra, mas vê o aviso pra escolher
+ * plano, e você o enxerga no painel. Membros de time (cobertos pela org) e
+ * quem já tem assinatura não são tocados. Best-effort: nunca quebra o acesso.
+ */
+export async function garantirAssinatura(userId: string): Promise<void> {
+  try {
+    const existente = await resolveAssinatura(userId);
+    if (existente) return;
+
+    // É membro de uma organização? Então o time cobre (não cria assinatura própria).
+    const ehMembro = await prisma.membroEquipe.findFirst({
+      where: { userId },
+      select: { id: true },
+    });
+    if (ehMembro) return;
+
+    const essencial = await prisma.plano.findUnique({
+      where: { slug: 'essencial' },
+      select: { id: true },
+    });
+    if (!essencial) return; // planos não semeados — não faz nada
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true },
+    });
+    if (!user) return;
+
+    // Cria de forma idempotente (ownerUserId é único): se outro request criou
+    // no meio, o catch absorve a violação de unicidade.
+    await prisma.assinatura.create({
+      data: {
+        ownerUserId: userId,
+        planoId: essencial.id,
+        status: 'TRIAL',
+        origem: 'AUTO',
+        planoConfirmado: false,
+        trialTerminaEm: new Date(Date.now() + DIAS_TRIAL_PADRAO * 86400000),
+      },
+    });
+
+    // Empurra como lead pro TriboCRM (no-op enquanto a API não está ligada).
+    await enviarLeadParaTribo({ nome: user.name, email: user.email, origem: 'entrou-direto' });
+  } catch (e) {
+    // Não derruba o acesso por causa do provisionamento.
+    console.error('[assinatura] garantirAssinatura falhou (ignorado):', e);
+  }
 }
 
 /** Entitlements do usuário logado (com fallback de transição). */
@@ -118,6 +176,49 @@ export async function getEntitlements(userId: string): Promise<Entitlements> {
   const assinatura = await resolveAssinatura(userId);
   if (assinatura) return entitlementsDe(assinatura);
   return FALLBACK_PERMISSIVO ? ENTITLEMENT_LIBERADO : ENTITLEMENT_BLOQUEADO;
+}
+
+/** A assinatura do próprio usuário (dono), com plano — pra página "Meu Plano". */
+export async function getMinhaAssinatura(userId: string) {
+  return prisma.assinatura.findUnique({
+    where: { ownerUserId: userId },
+    include: { plano: true },
+  });
+}
+
+/**
+ * Usuário escolhe um plano em "Meu Plano". No lançamento (cobrança manual) isso
+ * registra a escolha, esconde o aviso de onboarding e sinaliza pro super admin
+ * que a conta quer ativar — quem ativa de fato é você, combinando o pagamento.
+ */
+export async function escolherPlano(
+  userId: string,
+  planoSlug: string,
+  ciclo: CicloPlano = 'MENSAL',
+  assentos = 1,
+): Promise<{ ok: true } | { ok: false; erro: string }> {
+  const assinatura = await prisma.assinatura.findUnique({
+    where: { ownerUserId: userId },
+    select: { id: true, status: true, origem: true },
+  });
+  if (!assinatura) return { ok: false, erro: 'Você ainda não tem uma assinatura.' };
+  const plano = await prisma.plano.findUnique({ where: { slug: planoSlug }, select: { id: true } });
+  if (!plano) return { ok: false, erro: 'Plano inválido.' };
+
+  await prisma.assinatura.update({
+    where: { id: assinatura.id },
+    data: {
+      planoId: plano.id,
+      ciclo,
+      assentos: Math.max(1, assentos),
+      planoConfirmado: true,
+      // Se ainda não está ativa, marca que aguarda ativação manual sua.
+      aguardandoAtivacao: assinatura.status !== 'ATIVA',
+      // "Entrou direto" que escolhe plano vira CADASTRO (escolha consciente).
+      origem: assinatura.origem === 'AUTO' ? 'CADASTRO' : assinatura.origem,
+    },
+  });
+  return { ok: true };
 }
 
 /**

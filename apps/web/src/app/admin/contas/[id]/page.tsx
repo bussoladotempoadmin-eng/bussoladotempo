@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { contaDetalhe, listarPlanos } from '@/lib/admin-billing';
 import { valorCobranca } from '@/lib/assinatura';
-import { fmtMoney, fmtData, STATUS_LABEL, STATUS_CLASSE } from '../../fmt';
+import { fmtMoney, fmtData, STATUS_LABEL, STATUS_CLASSE, ORIGEM_LABEL } from '../../fmt';
 import { AcoesConta, CobrancaAcoes } from './acoes-conta';
 
 export const dynamic = 'force-dynamic';
@@ -45,11 +45,21 @@ export default async function ContaDetalhePage({ params }: { params: { id: strin
         <Campo label="Trial até" valor={fmtData(a.trialTerminaEm)} />
         <Campo label="Plano expira" valor={fmtData(a.planoExpiraEm)} />
         <Campo label="Cliente desde" valor={fmtData(a.owner.createdAt)} />
+        <Campo label="Origem" valor={ORIGEM_LABEL[a.origem]} />
         <Campo
           label="Time"
           valor={a.organizacao ? `${a.organizacao.nome} (${a.organizacao._count.membros} membros)` : '—'}
         />
       </div>
+
+      {a.aguardandoAtivacao && (
+        <div className="rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm">
+          <b className="text-primary">Esta conta escolheu um plano e aguarda ativação.</b>{' '}
+          <span className="text-muted-foreground">
+            Combine o pagamento e, ao marcar uma cobrança como paga, a conta é ativada.
+          </span>
+        </div>
+      )}
 
       {/* Ações */}
       <AcoesConta

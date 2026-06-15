@@ -1,5 +1,5 @@
 /** Formatação do painel de gestão (puro — server e client). */
-import type { StatusAssinatura } from '@bussola/db';
+import type { StatusAssinatura, OrigemAssinatura } from '@bussola/db';
 
 export function fmtMoney(n: number | null | undefined, casas = 2): string {
   if (n === null || n === undefined) return '—';
@@ -32,4 +32,11 @@ export const STATUS_CLASSE: Record<StatusAssinatura, string> = {
   ATRASADA: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
   SUSPENSA: 'bg-red-500/12 text-red-600 dark:text-red-400',
   CANCELADA: 'bg-muted text-muted-foreground',
+};
+
+export const ORIGEM_LABEL: Record<OrigemAssinatura, string> = {
+  AUTO: 'Entrou direto',
+  CADASTRO: 'Escolheu plano',
+  ADMIN: 'Criada por você',
+  TRIBO: 'Veio do formulário',
 };

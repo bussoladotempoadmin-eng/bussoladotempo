@@ -535,6 +535,14 @@ enum TipoDesconto {
   FIXO
 }
 
+// De onde a assinatura nasceu (pra distinguir quem "entrou direto" e contatar).
+enum OrigemAssinatura {
+  AUTO     // entrou direto (Google/link mágico) e ganhou trial automático
+  CADASTRO // fez o cadastro e escolheu um plano conscientemente
+  ADMIN    // criada pelo super admin
+  TRIBO    // veio de um lead do formulário (webhook TriboCRM)
+}
+
 enum DuracaoCupom {
   PRIMEIRO   // só na 1ª cobrança
   RECORRENTE // em todo ciclo (por N meses)
@@ -594,6 +602,11 @@ model Assinatura {
   planoIniciadoEm DateTime?
   planoExpiraEm   DateTime?
   metodoPreferido MetodoPagamento @default(MANUAL)
+
+  // Onboarding: "entrou direto" (AUTO) ainda não escolheu plano → mostra o aviso.
+  origem             OrigemAssinatura @default(AUTO)
+  planoConfirmado    Boolean          @default(false) // já escolheu plano? (esconde o aviso)
+  aguardandoAtivacao Boolean          @default(false) // escolheu plano pago e espera você ativar
 
   // Desconto recorrente concedido pelo super admin.
   descontoTipo   TipoDesconto?

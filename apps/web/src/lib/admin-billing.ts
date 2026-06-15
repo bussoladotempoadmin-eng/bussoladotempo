@@ -13,6 +13,7 @@ import type {
   StatusCobranca,
   MetodoPagamento,
   CicloPlano,
+  OrigemAssinatura,
 } from '@bussola/db';
 import { valorCobranca } from './assinatura';
 
@@ -118,6 +119,8 @@ export type ContaResumo = {
   email: string;
   planoNome: string;
   status: StatusAssinatura;
+  origem: OrigemAssinatura;
+  aguardandoAtivacao: boolean;
   assentos: number;
   trialTerminaEm: Date | null;
   planoExpiraEm: Date | null;
@@ -127,6 +130,8 @@ export type ContaResumo = {
 export async function listarContas(opts: {
   status?: StatusAssinatura;
   planoSlug?: string;
+  origem?: OrigemAssinatura;
+  aguardandoAtivacao?: boolean;
   busca?: string;
   page?: number;
   perPage?: number;
@@ -138,6 +143,8 @@ export async function listarContas(opts: {
   const where = {
     ...(opts.status ? { status: opts.status } : {}),
     ...(opts.planoSlug ? { plano: { slug: opts.planoSlug } } : {}),
+    ...(opts.origem ? { origem: opts.origem } : {}),
+    ...(opts.aguardandoAtivacao ? { aguardandoAtivacao: true } : {}),
     ...(busca
       ? {
           owner: {
@@ -168,6 +175,8 @@ export async function listarContas(opts: {
       email: a.owner.email,
       planoNome: a.plano.nome,
       status: a.status,
+      origem: a.origem,
+      aguardandoAtivacao: a.aguardandoAtivacao,
       assentos: a.assentos,
       trialTerminaEm: a.trialTerminaEm,
       planoExpiraEm: a.planoExpiraEm,
@@ -245,6 +254,10 @@ export async function criarOuAtualizarAssinatura(input: {
     assentos: Math.max(1, input.assentos ?? 1),
     status,
     trialTerminaEm,
+    // Criada por você = plano consciente: sem aviso de onboarding.
+    origem: 'ADMIN' as const,
+    planoConfirmado: true,
+    aguardandoAtivacao: false,
   };
 
   const a = await prisma.assinatura.upsert({
@@ -372,6 +385,8 @@ export async function marcarCobranca(
         planoIniciadoEm: c.assinatura.planoExpiraEm ? undefined : pagaEm,
         planoExpiraEm: novaValidade,
         ultimoEstadoBilling: null, // reseta a máquina de e-mails
+        aguardandoAtivacao: false, // ativada — não aguarda mais
+        planoConfirmado: true,
       },
     }),
   ]);

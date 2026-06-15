@@ -90,6 +90,28 @@ export async function POST(req: Request) {
     ? existente.id
     : (await prisma.user.create({ data: { email, name: nome || null }, select: { id: true } })).id;
 
+  // Cria a assinatura do lead (trial 14d, origem TRIBO) se ainda não existir.
+  // Assim ele já aparece no painel como veio do formulário.
+  const temAssinatura = await prisma.assinatura.findUnique({
+    where: { ownerUserId: userId },
+    select: { id: true },
+  });
+  if (!temAssinatura) {
+    const essencial = await prisma.plano.findUnique({ where: { slug: 'essencial' }, select: { id: true } });
+    if (essencial) {
+      await prisma.assinatura.create({
+        data: {
+          ownerUserId: userId,
+          planoId: essencial.id,
+          status: 'TRIAL',
+          origem: 'TRIBO',
+          planoConfirmado: false,
+          trialTerminaEm: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+        },
+      });
+    }
+  }
+
   // Token de acesso (reusa o fluxo de redefinir-senha) — vale 7 dias.
   await prisma.passwordResetToken.deleteMany({ where: { userId } });
   const token = randomBytes(32).toString('hex');
