@@ -1,9 +1,22 @@
 import { NextResponse } from 'next/server';
-import { randomBytes } from 'crypto';
+import { randomBytes, createHmac, timingSafeEqual } from 'crypto';
 import { prisma } from '@bussola/db';
 import { sendAcessoCriadoEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
+
+// Valida a assinatura HMAC SHA-256 que o TriboCRM envia (X-TriboCRM-Signature: sha256=<hex>).
+function assinaturaValida(raw: string, header: string | null, secret: string): boolean {
+  if (!header) return false;
+  const recebido = header.replace(/^sha256=/i, '').trim();
+  const esperado = createHmac('sha256', secret).update(raw).digest('hex');
+  if (recebido.length !== esperado.length) return false;
+  try {
+    return timingSafeEqual(Buffer.from(recebido, 'hex'), Buffer.from(esperado, 'hex'));
+  } catch {
+    return false;
+  }
+}
 
 // Procura uma chave (em vários nomes/níveis comuns do payload).
 function pegar(body: unknown, ...keys: string[]): string {
@@ -29,14 +42,25 @@ function pegar(body: unknown, ...keys: string[]): string {
 // Cria o acesso na Bússola e manda e-mail pra pessoa criar a senha.
 export async function POST(req: Request) {
   const url = new URL(req.url);
+  // Lê o corpo CRU (a assinatura é calculada sobre os bytes exatos).
+  const raw = await req.text();
+
   const secret = process.env.TRIBO_WEBHOOK_SECRET;
-  if (secret && url.searchParams.get('token') !== secret) {
-    return NextResponse.json({ error: 'token inválido' }, { status: 401 });
+  if (secret) {
+    const assinatura = req.headers.get('x-tribocrm-signature');
+    if (!assinaturaValida(raw, assinatura, secret)) {
+      return NextResponse.json({ error: 'assinatura inválida' }, { status: 401 });
+    }
   }
 
-  const body = await req.json().catch(() => null);
+  let body: unknown = null;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    body = null;
+  }
   // Loga o payload bruto — assim confirmamos os nomes reais dos campos no 1º teste.
-  console.log('[tribo-webhook] payload:', JSON.stringify(body));
+  console.log('[tribo-webhook] payload:', raw.slice(0, 2000));
 
   // Filtro anti-lixo: só age em leads do formulário da Bússola (se vier o id do form).
   const formId = process.env.TRIBO_FORM_ID;
