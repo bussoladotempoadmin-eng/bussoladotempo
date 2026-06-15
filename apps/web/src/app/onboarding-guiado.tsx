@@ -11,18 +11,27 @@ import { X } from 'lucide-react';
  * Reversível: o home decide se renderiza este, o de cards, ou nenhum (TOUR_MODO).
  */
 
-type Passo = { target?: string; titulo: string; texto: string };
+type Passo = { target?: string; abrirMenu?: boolean; titulo: string; texto: string };
 
 const PASSOS: Passo[] = [
   { titulo: 'Bem-vindo à Bússola 🧭', texto: 'Em 30 segundos te mostro onde fica cada coisa. Pode pular quando quiser.' },
-  { target: '[data-tour="menu"]', titulo: 'Suas seções', texto: 'No seu nome ficam Frentes, Time, Meu Plano e configurações.' },
-  { target: '[data-tour="nav-semana"]', titulo: 'Sua semana', texto: 'É onde você monta a semana com a IA e ajusta seus blocos.' },
-  { target: '[data-tour="nav-revisao"]', titulo: 'Revisão', texto: 'De sexta a domingo, revise como foi e já planeje a próxima.' },
+  { target: '[data-tour="menu"]', titulo: 'Seu menu', texto: 'No seu nome ficam todas as suas seções. Vou te mostrar as principais.' },
+  { target: '[data-tour="menu-frentes"]', abrirMenu: true, titulo: 'Frentes', texto: 'Comece por aqui: cadastre suas áreas de atuação. Tudo se organiza por elas.' },
+  { target: '[data-tour="menu-semana"]', abrirMenu: true, titulo: 'Sua semana', texto: 'É onde você monta a semana com a IA e ajusta seus blocos.' },
+  { target: '[data-tour="menu-revisao"]', abrirMenu: true, titulo: 'Revisão', texto: 'De sexta a domingo, revise como foi e já planeje a próxima.' },
   { titulo: 'Conclua suas demandas ✅', texto: 'Ao terminar um bloco, toque em “Concluir”: diga quando foi e se saiu como planejado, virou urgente ou foi disperso.' },
   { titulo: 'Pronto pra começar 🚀', texto: 'Bom proveito! Você pode rever isso quando quiser.' },
 ];
 
 const PAD = 8;
+
+// O menu está aberto? (algum item data-tour="menu-..." presente no DOM)
+function menuAberto(): boolean {
+  return !!document.querySelector('[data-tour^="menu-"]');
+}
+function botaoMenu(): HTMLElement | null {
+  return document.querySelector('[data-tour="menu"]');
+}
 
 export function OnboardingGuiado() {
   const [i, setI] = React.useState(0);
@@ -46,13 +55,25 @@ export function OnboardingGuiado() {
     setRect(r);
   }, [passo]);
 
-  // Ao trocar de passo: rola o alvo pra vista e mede.
+  // Ao trocar de passo: abre/fecha o menu conforme o passo, rola e mede.
   React.useEffect(() => {
-    if (passo.target) {
-      const el = document.querySelector(passo.target) as HTMLElement | null;
-      if (el && el.offsetParent !== null) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const btn = botaoMenu();
+    if (passo.abrirMenu) {
+      if (!menuAberto() && btn) btn.click(); // abre o menu pra mostrar o item
+    } else if (menuAberto() && btn) {
+      btn.click(); // fecha o menu nos passos que não precisam dele
     }
-    const t = setTimeout(medir, 80);
+
+    const t = setTimeout(
+      () => {
+        if (passo.target && !passo.abrirMenu) {
+          const el = document.querySelector(passo.target) as HTMLElement | null;
+          if (el && el.offsetParent !== null) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+        medir();
+      },
+      passo.abrirMenu ? 180 : 80,
+    );
     return () => clearTimeout(t);
   }, [i, passo, medir]);
 
@@ -92,6 +113,8 @@ export function OnboardingGuiado() {
   }, [rect, i]);
 
   async function fim() {
+    // Fecha o menu se ele ficou aberto pelo tour.
+    if (menuAberto()) botaoMenu()?.click();
     setFechado(true);
     try {
       await fetch('/api/conta/onboarding', { method: 'POST' });

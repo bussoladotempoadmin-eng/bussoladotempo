@@ -80,6 +80,7 @@ export function UserMenu({ className }: { className?: string }) {
             </div>
             <Link
               href="/frentes"
+              data-tour="menu-frentes"
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
             >
@@ -96,6 +97,7 @@ export function UserMenu({ className }: { className?: string }) {
             </Link>
             <Link
               href="/semana"
+              data-tour="menu-semana"
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
             >
@@ -104,6 +106,7 @@ export function UserMenu({ className }: { className?: string }) {
             </Link>
             <Link
               href="/revisao"
+              data-tour="menu-revisao"
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
             >
