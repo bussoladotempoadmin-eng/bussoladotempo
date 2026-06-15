@@ -16,12 +16,8 @@ import { AtivarLembretes } from '@/components/ativar-lembretes';
 import { garantirAssinatura, getEntitlements } from '@/lib/assinatura';
 import { BLOQUEIO_ATIVO } from '@/lib/acesso';
 import { AvisoPlano } from './aviso-plano';
-import { OnboardingTour } from './onboarding-tour';
-import { OnboardingGuiado } from './onboarding-guiado';
-
-// Qual onboarding mostrar pra quem ainda não viu. Reverter é trocar aqui:
-//   'guiado' = tour ancorado (spotlight) | 'cards' = cards | 'off' = nenhum
-const TOUR_MODO: 'guiado' | 'cards' | 'off' = 'guiado';
+import { FirstRun } from '@/components/tour/first-run';
+import { TourButton } from '@/components/tour/tour-button';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -122,13 +118,13 @@ export default async function Home() {
           <span>Bússola do Tempo</span>
         </div>
         <div className="flex items-center gap-2">
+          <TourButton />
           <ThemeToggle />
           <UserMenu />
         </div>
       </header>
 
-      {!conta?.onboardingVisto && TOUR_MODO === 'guiado' && <OnboardingGuiado />}
-      {!conta?.onboardingVisto && TOUR_MODO === 'cards' && <OnboardingTour />}
+      {!conta?.onboardingVisto && <FirstRun />}
 
       {ent.temAssinatura && !ent.planoConfirmado && (
         <AvisoPlano planoNome={ent.planoNome ?? 'plano Essencial'} diasRestantes={ent.diasRestantesTrial} />

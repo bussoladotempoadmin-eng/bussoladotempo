@@ -7,6 +7,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { Compass, ArrowLeft } from 'lucide-react';
 import { ConfiguracoesForm, type WorkspaceDTO } from './configuracoes-form';
+import { ReverTourButton } from '@/components/tour/tour-button';
 
 export const metadata = { title: 'Configurações · Bússola do Tempo' };
 
@@ -57,6 +58,14 @@ export default async function ConfiguracoesPage() {
 
         <div className="mt-8">
           <ConfiguracoesForm initial={dto} />
+        </div>
+
+        <div className="mt-8 border-t border-border pt-6">
+          <h2 className="text-sm font-semibold">Tour guiado</h2>
+          <p className="mt-1 mb-3 text-sm text-muted-foreground">
+            Quer rever a apresentação das funções? O “?” no topo de cada tela também abre o tour daquela tela.
+          </p>
+          <ReverTourButton rota="/" label="Rever tour guiado" />
         </div>
       </section>
     </main>

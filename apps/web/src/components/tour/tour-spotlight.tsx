@@ -2,30 +2,16 @@
 
 import * as React from 'react';
 import { X } from 'lucide-react';
+import type { Passo } from '@/lib/tour-passos';
 
 /**
- * Tour guiado ancorado (spotlight). Para cada passo, ilumina o elemento real
- * (via data-tour) com um balão. Se o alvo não existir/estiver invisível na tela
- * (ex.: barra de baixo no desktop), o passo vira um card centralizado.
- *
- * Reversível: o home decide se renderiza este, o de cards, ou nenhum (TOUR_MODO).
+ * Engine do tour guiado (spotlight). Recebe os passos e ilumina o elemento real
+ * (data-tour) de cada um. Passo sem alvo (ou alvo invisível) vira card central.
+ * Passos com `abrirMenu` abrem o menu do usuário e destacam o item lá dentro.
  */
-
-type Passo = { target?: string; abrirMenu?: boolean; titulo: string; texto: string };
-
-const PASSOS: Passo[] = [
-  { titulo: 'Bem-vindo à Bússola 🧭', texto: 'Em 30 segundos te mostro onde fica cada coisa. Pode pular quando quiser.' },
-  { target: '[data-tour="menu"]', titulo: 'Seu menu', texto: 'No seu nome ficam todas as suas seções. Vou te mostrar as principais.' },
-  { target: '[data-tour="menu-frentes"]', abrirMenu: true, titulo: 'Frentes', texto: 'Comece por aqui: cadastre suas áreas de atuação. Tudo se organiza por elas.' },
-  { target: '[data-tour="menu-semana"]', abrirMenu: true, titulo: 'Sua semana', texto: 'É onde você monta a semana com a IA e ajusta seus blocos.' },
-  { target: '[data-tour="menu-revisao"]', abrirMenu: true, titulo: 'Revisão', texto: 'De sexta a domingo, revise como foi e já planeje a próxima.' },
-  { titulo: 'Conclua suas demandas ✅', texto: 'Ao terminar um bloco, toque em “Concluir”: diga quando foi e se saiu como planejado, virou urgente ou foi disperso.' },
-  { titulo: 'Pronto pra começar 🚀', texto: 'Bom proveito! Você pode rever isso quando quiser.' },
-];
 
 const PAD = 8;
 
-// O menu está aberto? (algum item data-tour="menu-..." presente no DOM)
 function menuAberto(): boolean {
   return !!document.querySelector('[data-tour^="menu-"]');
 }
@@ -33,19 +19,17 @@ function botaoMenu(): HTMLElement | null {
   return document.querySelector('[data-tour="menu"]');
 }
 
-export function OnboardingGuiado() {
+export function TourSpotlight({ steps, onClose }: { steps: Passo[]; onClose: () => void }) {
   const [i, setI] = React.useState(0);
-  const [fechado, setFechado] = React.useState(false);
   const [rect, setRect] = React.useState<DOMRect | null>(null);
   const [montado, setMontado] = React.useState(false);
+  const popRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => setMontado(true), []);
 
-  const popRef = React.useRef<HTMLDivElement>(null);
-  const passo = PASSOS[i];
-  const ultimo = i === PASSOS.length - 1;
+  const passo = steps[i] ?? steps[0];
+  const ultimo = i === steps.length - 1;
 
-  // Mede o alvo do passo atual (ou null = vira card centralizado).
   const medir = React.useCallback(() => {
     if (!passo.target) return setRect(null);
     const el = document.querySelector(passo.target) as HTMLElement | null;
@@ -55,15 +39,14 @@ export function OnboardingGuiado() {
     setRect(r);
   }, [passo]);
 
-  // Ao trocar de passo: abre/fecha o menu conforme o passo, rola e mede.
+  // Troca de passo: abre/fecha menu conforme necessário, rola e mede.
   React.useEffect(() => {
     const btn = botaoMenu();
     if (passo.abrirMenu) {
-      if (!menuAberto() && btn) btn.click(); // abre o menu pra mostrar o item
+      if (!menuAberto() && btn) btn.click();
     } else if (menuAberto() && btn) {
-      btn.click(); // fecha o menu nos passos que não precisam dele
+      btn.click();
     }
-
     const t = setTimeout(
       () => {
         if (passo.target && !passo.abrirMenu) {
@@ -77,7 +60,6 @@ export function OnboardingGuiado() {
     return () => clearTimeout(t);
   }, [i, passo, medir]);
 
-  // Reposiciona em scroll/resize.
   React.useEffect(() => {
     window.addEventListener('resize', medir);
     window.addEventListener('scroll', medir, true);
@@ -87,7 +69,6 @@ export function OnboardingGuiado() {
     };
   }, [medir]);
 
-  // Posiciona o balão (imperativo) sempre que muda o alvo.
   React.useLayoutEffect(() => {
     const pop = popRef.current;
     if (!pop) return;
@@ -95,9 +76,7 @@ export function OnboardingGuiado() {
     const ph = pop.offsetHeight;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-
     if (!rect) {
-      // centralizado
       pop.style.left = Math.round((vw - pw) / 2) + 'px';
       pop.style.top = Math.round((vh - ph) / 2) + 'px';
       return;
@@ -112,22 +91,15 @@ export function OnboardingGuiado() {
     pop.style.top = Math.round(top) + 'px';
   }, [rect, i]);
 
-  async function fim() {
-    // Fecha o menu se ele ficou aberto pelo tour.
+  function fim() {
     if (menuAberto()) botaoMenu()?.click();
-    setFechado(true);
-    try {
-      await fetch('/api/conta/onboarding', { method: 'POST' });
-    } catch {
-      /* ignora */
-    }
+    onClose();
   }
 
-  if (fechado || !montado) return null;
+  if (!montado) return null;
 
   return (
     <>
-      {/* fundo escuro: buraco (spotlight) quando há alvo; tela cheia quando é card */}
       {rect ? (
         <div
           className="pointer-events-none fixed z-[60] rounded-xl border-2 border-primary transition-all duration-300"
@@ -143,14 +115,13 @@ export function OnboardingGuiado() {
         <div className="fixed inset-0 z-[60] bg-black/65" />
       )}
 
-      {/* balão */}
       <div
         ref={popRef}
         className="fixed z-[61] w-[300px] max-w-[calc(100vw-24px)] rounded-2xl border border-border bg-card p-5 shadow-2xl transition-all duration-300"
       >
         <div className="mb-2 flex items-start justify-between">
           <span className="text-[11px] font-bold uppercase tracking-wide text-primary">
-            Passo {i + 1} de {PASSOS.length}
+            Passo {i + 1} de {steps.length}
           </span>
           <button onClick={fim} aria-label="Pular" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
             Pular <X className="inline h-3.5 w-3.5" />
@@ -161,7 +132,7 @@ export function OnboardingGuiado() {
         <p className="mt-1 text-sm text-muted-foreground">{passo.texto}</p>
 
         <div className="mt-4 flex items-center gap-1.5">
-          {PASSOS.map((_, idx) => (
+          {steps.map((_, idx) => (
             <span key={idx} className={`h-1.5 flex-1 rounded-full ${idx <= i ? 'bg-primary' : 'bg-muted'}`} />
           ))}
         </div>
@@ -176,10 +147,10 @@ export function OnboardingGuiado() {
             </button>
           )}
           <button
-            onClick={() => (ultimo ? fim() : setI((v) => Math.min(PASSOS.length - 1, v + 1)))}
+            onClick={() => (ultimo ? fim() : setI((v) => Math.min(steps.length - 1, v + 1)))}
             className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
           >
-            {ultimo ? 'Começar 🚀' : 'Avançar'}
+            {ultimo ? 'Concluir 🚀' : 'Avançar'}
           </button>
         </div>
       </div>

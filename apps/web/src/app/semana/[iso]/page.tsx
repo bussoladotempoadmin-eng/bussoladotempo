@@ -21,6 +21,7 @@ import { SemanaView } from './semana-view';
 import { AgendaIAView } from '@/app/agenda-padrao/agenda-ia-view';
 import { statusCota } from '@/lib/cota-ia';
 import { exigirAcesso } from '@/lib/acesso';
+import { TourButton } from '@/components/tour/tour-button';
 
 export const metadata = {
   title: 'Semana · Bússola do Tempo',
@@ -99,6 +100,7 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
           <span>Bússola do Tempo</span>
         </Link>
         <div className="flex items-center gap-2">
+          <TourButton />
           <ThemeToggle />
           <UserMenu />
         </div>

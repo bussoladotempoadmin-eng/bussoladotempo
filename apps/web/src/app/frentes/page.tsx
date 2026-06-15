@@ -9,6 +9,7 @@ import { UserMenu } from '@/components/user-menu';
 import { Compass, ArrowLeft } from 'lucide-react';
 import { FrentesManager, type FrenteDTO } from './frentes-manager';
 import { exigirAcesso } from '@/lib/acesso';
+import { TourButton } from '@/components/tour/tour-button';
 
 export const metadata = {
   title: 'Frentes · Bússola do Tempo',
@@ -47,6 +48,7 @@ export default async function FrentesPage() {
           <span>Bússola do Tempo</span>
         </Link>
         <div className="flex items-center gap-2">
+          <TourButton />
           <ThemeToggle />
           <UserMenu />
         </div>

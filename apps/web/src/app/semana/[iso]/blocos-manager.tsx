@@ -396,6 +396,7 @@ export function BlocosManager({
       ) : (
         <button
           type="button"
+          data-tour="semana-novo"
           onClick={() => {
             setAdding(true);
             setEditingId(null);

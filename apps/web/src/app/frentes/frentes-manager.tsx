@@ -221,6 +221,7 @@ export function FrentesManager({ initialFrentes }: { initialFrentes: FrenteDTO[]
       ) : (
         <button
           type="button"
+          data-tour="frente-nova"
           onClick={() => {
             setAdding(true);
             setEditingId(null);

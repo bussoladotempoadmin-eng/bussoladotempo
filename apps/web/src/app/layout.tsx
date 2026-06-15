@@ -7,6 +7,7 @@ import { SessionProvider } from '@/components/session-provider';
 import { PwaRegister } from '@/components/pwa-register';
 import { ToastProvider } from '@/components/toast';
 import { BottomNav } from '@/components/bottom-nav';
+import { TourHost } from '@/components/tour/tour-host';
 import { authOptions } from '@/lib/auth';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -48,6 +49,7 @@ export default async function RootLayout({
             <ToastProvider>
               {children}
               <BottomNav />
+              <TourHost />
             </ToastProvider>
             <PwaRegister />
           </ThemeProvider>
