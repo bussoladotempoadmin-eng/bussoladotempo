@@ -57,14 +57,14 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, chefeId: chefeSel || null }),
     });
+    const d = await r.json().catch(() => null);
     setAddBusy(false);
     if (!r.ok) {
-      const d = await r.json().catch(() => null);
-      setErro(d?.error ?? 'Não consegui adicionar.');
+      setErro(d?.error ?? 'Não consegui convidar.');
       return;
     }
     setEmail('');
-    toast('Pessoa adicionada ao time');
+    toast(d?.convidado ? 'Convite enviado por e-mail!' : 'Pessoa adicionada ao time');
     await recarregar();
   }
 
@@ -129,10 +129,10 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
 
       {/* Adicionar membro */}
       <div className="rounded-2xl border border-border bg-card p-5">
-        <p className="text-sm font-semibold">Adicionar pessoa</p>
+        <p className="text-sm font-semibold">Convidar pessoa</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          A pessoa precisa ter entrado no app (login) ao menos uma vez. Aí você adiciona pelo
-          e-mail dela.
+          Digite o e-mail. Se a pessoa ainda não tem conta, criamos e enviamos um convite pra ela
+          criar a senha. Ela já entra dentro do seu time, coberta pelo seu plano.
         </p>
         <form onSubmit={adicionar} className="mt-3 flex flex-wrap items-center gap-2">
           <input
@@ -163,7 +163,7 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
           >
             {addBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Adicionar
+            Convidar
           </button>
         </form>
         {erro && (

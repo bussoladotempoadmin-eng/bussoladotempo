@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/workspace';
-import { adicionarMembroPorEmail, removerMembro } from '@/lib/equipe';
+import { convidarMembro, removerMembro } from '@/lib/equipe';
 
 export const dynamic = 'force-dynamic';
 
-// POST /api/equipe/membros — adiciona membro por e-mail  body: { email }
+// POST /api/equipe/membros — convida membro por e-mail (cria conta se preciso)  body: { email }
 export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
@@ -14,9 +14,9 @@ export async function POST(req: Request) {
   if (!email.includes('@')) {
     return NextResponse.json({ error: 'E-mail inválido' }, { status: 400 });
   }
-  const r = await adicionarMembroPorEmail(user.id, email, chefeId);
+  const r = await convidarMembro(user.id, email, chefeId);
   if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, convidado: r.convidado });
 }
 
 // DELETE /api/equipe/membros?id=<membroId>

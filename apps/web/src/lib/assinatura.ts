@@ -65,16 +65,13 @@ const ENTITLEMENT_BLOQUEADO: Entitlements = {
 
 type AssinaturaComPlano = Assinatura & { plano: Plano };
 
-/** Acha a assinatura que vale pra este usuário (própria ou da organização dele). */
+/**
+ * Acha a assinatura que vale pra este usuário.
+ * Prioridade: se ele é MEMBRO de uma empresa que tem assinatura, a empresa o
+ * cobre (vem primeiro). Só então cai na assinatura própria (donos/solo).
+ */
 export async function resolveAssinatura(userId: string): Promise<AssinaturaComPlano | null> {
-  // 1. Assinatura própria (o usuário é o dono/pagador).
-  const propria = await prisma.assinatura.findUnique({
-    where: { ownerUserId: userId },
-    include: { plano: true },
-  });
-  if (propria) return propria;
-
-  // 2. Assinatura do time: é membro de uma org que tem assinatura.
+  // 1. Coberto por uma empresa: é membro de uma org que tem assinatura.
   const vinculo = await prisma.membroEquipe.findFirst({
     where: { userId, organizacao: { assinatura: { isNot: null } } },
     select: { organizacaoId: true },
@@ -86,6 +83,13 @@ export async function resolveAssinatura(userId: string): Promise<AssinaturaComPl
     });
     if (doTime) return doTime;
   }
+
+  // 2. Assinatura própria (dono/pagador ou usuário solo).
+  const propria = await prisma.assinatura.findUnique({
+    where: { ownerUserId: userId },
+    include: { plano: true },
+  });
+  if (propria) return propria;
 
   return null;
 }

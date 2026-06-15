@@ -4,7 +4,9 @@
  * O gestor vê os dados de tempo dos membros; reflexões ficam SEMPRE privadas
  * (isso é garantido em quem consome estes dados, não aqui).
  */
+import { randomBytes } from 'crypto';
 import { prisma } from '@bussola/db';
+import { sendAcessoCriadoEmail } from './email';
 
 export type MembroInfo = {
   membroId: string; // id do vínculo MembroEquipe
@@ -101,6 +103,97 @@ export async function adicionarMembroPorEmail(
     return { ok: false, erro: 'Essa pessoa já está no time.' };
   }
   return { ok: true };
+}
+
+/**
+ * Convida um colaborador por e-mail. Se a pessoa ainda não tem conta, CRIA a
+ * conta e manda o e-mail de acesso (criar senha). Em seguida vincula ao time.
+ * Membro de time é coberto pela empresa: removemos a assinatura individual
+ * "entrou direto" (AUTO) dele, se houver, pra não cobrar à parte.
+ */
+export async function convidarMembro(
+  gestorId: string,
+  email: string,
+  chefeId?: string | null,
+): Promise<{ ok: boolean; erro?: string; convidado?: boolean }> {
+  const org = await getOrgDoGestor(gestorId);
+  if (!org) return { ok: false, erro: 'Crie seu time primeiro.' };
+
+  const emailLimpo = email.toLowerCase().trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo)) {
+    return { ok: false, erro: 'E-mail inválido.' };
+  }
+
+  // Limite de assentos (se a empresa tem plano com assentos definidos).
+  const assinatura = await prisma.assinatura.findUnique({
+    where: { organizacaoId: org.id },
+    select: { assentos: true },
+  });
+  if (assinatura) {
+    const membrosAtuais = await prisma.membroEquipe.count({ where: { organizacaoId: org.id } });
+    // Conta o dono + os membros como acessos usados.
+    if (1 + membrosAtuais >= assinatura.assentos) {
+      return {
+        ok: false,
+        erro: `Você contratou ${assinatura.assentos} assento(s) e já usou todos. Fale com a gente pra adicionar mais.`,
+      };
+    }
+  }
+
+  // Acha ou cria a conta da pessoa.
+  let alvo = await prisma.user.findUnique({
+    where: { email: emailLimpo },
+    select: { id: true, senhaHash: true },
+  });
+  let convidado = false;
+
+  if (!alvo) {
+    const novo = await prisma.user.create({
+      data: { email: emailLimpo },
+      select: { id: true, senhaHash: true },
+    });
+    alvo = novo;
+    convidado = true;
+
+    // E-mail de acesso (reusa o fluxo de redefinir-senha) — vale 7 dias.
+    const token = randomBytes(32).toString('hex');
+    await prisma.passwordResetToken.create({
+      data: { userId: novo.id, token, expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+    });
+    const base = process.env.NEXTAUTH_URL ?? 'https://app.bussoladotempo.com.br';
+    try {
+      await sendAcessoCriadoEmail({ to: emailLimpo, link: `${base}/redefinir-senha?token=${token}` });
+    } catch (e) {
+      console.error('[equipe] falha ao enviar convite:', e);
+    }
+  }
+
+  if (alvo.id === gestorId) {
+    return { ok: false, erro: 'Você é o gestor — não precisa se adicionar como membro.' };
+  }
+
+  // O "chefe" (se informado) precisa ser um membro do mesmo time.
+  let chefe: string | null = null;
+  if (chefeId) {
+    const c = await prisma.membroEquipe.findFirst({
+      where: { id: chefeId, organizacaoId: org.id },
+      select: { id: true },
+    });
+    if (!c) return { ok: false, erro: 'Chefe inválido.' };
+    chefe = c.id;
+  }
+
+  // Membro é coberto pela empresa: tira a assinatura individual "AUTO" dele.
+  await prisma.assinatura.deleteMany({ where: { ownerUserId: alvo.id, origem: 'AUTO' } });
+
+  try {
+    await prisma.membroEquipe.create({
+      data: { organizacaoId: org.id, userId: alvo.id, papel: 'MEMBRO', chefeId: chefe },
+    });
+  } catch {
+    return { ok: false, erro: 'Essa pessoa já está no time.' };
+  }
+  return { ok: true, convidado };
 }
 
 export async function removerMembro(gestorId: string, membroId: string): Promise<boolean> {
