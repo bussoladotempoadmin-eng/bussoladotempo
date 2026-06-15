@@ -102,6 +102,74 @@ export async function sendAcessoCriadoEmail({
   }
 }
 
+/**
+ * E-mail transacional de billing (avisos de trial, cobrança, atraso, suspensão).
+ * Visual igual aos demais. `paragrafos` vira uma sequência de <p>.
+ */
+export async function sendBillingEmail({
+  to,
+  subject,
+  titulo,
+  paragrafos,
+  ctaLabel,
+  ctaUrl,
+}: {
+  to: string;
+  subject: string;
+  titulo: string;
+  paragrafos: string[];
+  ctaLabel?: string;
+  ctaUrl?: string;
+}) {
+  const from = process.env.EMAIL_FROM ?? 'Bússola do Tempo <contato@bussoladotempo.com.br>';
+  const resend = getResend();
+
+  const { error } = await resend.emails.send({
+    from,
+    to,
+    subject,
+    html: buildBillingHtml(titulo, paragrafos, ctaLabel, ctaUrl),
+    text: [`Bússola do Tempo · ${titulo}`, '', ...paragrafos, ctaUrl ? `\n${ctaLabel ?? 'Acessar'}: ${ctaUrl}` : ''].join('\n'),
+  });
+
+  if (error) {
+    console.error('[email] erro ao enviar billing:', error);
+    throw new Error(`Resend erro: ${error.message}`);
+  }
+}
+
+function buildBillingHtml(titulo: string, paragrafos: string[], ctaLabel?: string, ctaUrl?: string): string {
+  const ps = paragrafos
+    .map(
+      (p) =>
+        `<tr><td style="font-size:15px;color:#475569;line-height:1.6;padding-bottom:16px;">${p}</td></tr>`,
+    )
+    .join('');
+  const cta =
+    ctaUrl && ctaLabel
+      ? `<tr><td style="padding:8px 0 24px;"><a href="${ctaUrl}" style="display:inline-block;background:#3b82f6;color:#fff;font-weight:600;padding:14px 28px;border-radius:10px;text-decoration:none;font-size:15px;">${ctaLabel}</a></td></tr>`
+      : '';
+  return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="utf-8" /><title>Bússola do Tempo</title></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border-radius:16px;border:1px solid #e2e8f0;padding:40px;">
+        <tr><td style="padding-bottom:24px;">
+          <div style="display:inline-flex;align-items:center;gap:8px;font-size:20px;font-weight:800;color:#0f172a;">🧭&nbsp;Bússola do Tempo</div>
+        </td></tr>
+        <tr><td style="font-size:22px;font-weight:700;padding-bottom:16px;">${titulo}</td></tr>
+        ${ps}
+        ${cta}
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`.trim();
+}
+
 function buildAcessoHtml(ola: string, link: string): string {
   return `
 <!DOCTYPE html>

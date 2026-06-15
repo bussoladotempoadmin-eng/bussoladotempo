@@ -15,6 +15,7 @@ import {
   Briefcase,
   Moon,
   Settings,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -147,6 +148,16 @@ export function UserMenu({ className }: { className?: string }) {
               <Settings className="h-4 w-4" />
               Configurações
             </Link>
+            {session.user.superAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 border-t border-border px-4 py-2.5 text-sm text-primary transition-colors hover:bg-muted"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Gestão do produto
+              </Link>
+            )}
             <button
               type="button"
               onClick={() => signOut({ callbackUrl: '/' })}

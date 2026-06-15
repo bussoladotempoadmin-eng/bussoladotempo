@@ -92,17 +92,23 @@ export const authOptions: NextAuthOptions = {
   },
   providers,
   callbacks: {
-    // No sign-in, guarda o id do usuário no token JWT.
+    // No sign-in, guarda o id do usuário e a flag de super admin no token JWT.
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { superAdmin: true },
+        });
+        token.superAdmin = Boolean(dbUser?.superAdmin);
       }
       return token;
     },
-    // Expõe o id no objeto de sessão lido pelas páginas.
+    // Expõe o id e o super admin no objeto de sessão lido pelas páginas.
     async session({ session, token }) {
       if (session.user && token?.id) {
         session.user.id = token.id as string;
+        session.user.superAdmin = Boolean(token.superAdmin);
       }
       return session;
     },

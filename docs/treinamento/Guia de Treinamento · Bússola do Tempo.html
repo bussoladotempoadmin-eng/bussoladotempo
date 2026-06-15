@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Guia de Treinamento · Bússola do Tempo</title>
+<style>
+  :root{
+    --bg:#f1f5f9; --card:#fff; --ink:#0f172a; --mut:#64748b; --border:#e2e8f0;
+    --pri:#2563eb; --pri-soft:#dbeafe;
+    --imp:#10b981; --imp-soft:#d1fae5; --urg:#ef4444; --urg-soft:#fee2e2; --dis:#94a3b8; --dis-soft:#eef2f6;
+    --time:#7c3aed; --time-soft:#ede9fe; --com:#0891b2; --com-soft:#cffafe;
+    --shadow:0 1px 3px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);line-height:1.55;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px}
+  h1,h2,h3,h4{line-height:1.15;letter-spacing:-.02em;margin:0}
+  a{color:var(--pri)}
+
+  /* topo */
+  header.bar{background:#fff;border-bottom:1px solid var(--border)}
+  .bar-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px 14px;padding:14px 0}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:17px;line-height:1.4}
+  .brand-txt{min-width:0}
+  .brand .suffix{color:var(--mut)}
+  .disc{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:14px;flex:none;
+    background:conic-gradient(from 0deg,var(--pri),var(--imp),var(--urg),var(--pri))}
+  .btn-pdf{display:inline-flex;align-items:center;gap:8px;flex:none;background:var(--pri);color:#fff;border:none;cursor:pointer;
+    font-weight:800;font-size:14px;border-radius:999px;padding:11px 20px;box-shadow:var(--shadow);white-space:nowrap}
+  /* botão flutuante: sempre visível ao rolar */
+  .fab{position:fixed;right:18px;bottom:18px;z-index:50;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;
+    background:var(--pri);color:#fff;border:none;cursor:pointer;font-weight:800;font-size:14px;border-radius:999px;
+    padding:13px 22px;box-shadow:0 10px 30px rgba(37,99,235,.45)}
+
+  /* capa */
+  .cover{text-align:center;padding:44px 0 34px}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--pri)}
+  .cover h1{font-size:clamp(26px,4vw,40px);font-weight:900;margin:14px auto 0;max-width:680px}
+  .cover p{font-size:18px;color:var(--mut);max-width:600px;margin:18px auto 0}
+  .cat-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+  .chip{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:8px 16px;font-size:14px;font-weight:800}
+
+  section{padding:34px 0}
+  .sec-title{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .sec-num{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-weight:900;font-size:20px;color:#fff;flex:none;background:var(--accent,var(--pri))}
+  .sec-title h2{font-size:25px}
+  .sec-title p{font-size:13.5px;color:var(--mut);margin:2px 0 0}
+
+  .lead{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:18px}
+
+  /* trio de categorias reutilizável */
+  .cat3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+  .cat3 .c{border-radius:12px;padding:13px;font-size:13px;line-height:1.45}
+  .cat3 .c b{display:block;margin-bottom:3px}
+  .cat-imp{background:var(--imp-soft);color:#065f46}
+  .cat-urg{background:var(--urg-soft);color:#991b1b}
+  .cat-dis{background:var(--dis-soft);color:#475569}
+
+  /* passos com linha do tempo */
+  .step{position:relative;display:grid;grid-template-columns:46px 1fr;gap:16px;background:var(--card);border:1px solid var(--border);
+    border-radius:16px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:14px;break-inside:avoid}
+  .step::before{content:"";position:absolute;left:39px;top:60px;bottom:-14px;width:2px;background:var(--border);z-index:0}
+  .step:last-child::before{display:none}
+  .step-n{position:relative;z-index:1;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
+    font-weight:900;color:#fff;background:var(--accent,var(--pri));box-shadow:0 0 0 4px var(--card)}
+  .step h3{font-size:16.5px;margin-bottom:4px}
+  .step p{margin:0;font-size:14.5px;color:var(--mut)}
+  .step .tip{margin-top:8px;margin-right:6px;font-size:13px;background:var(--pri-soft);color:#1e3a8a;border-radius:8px;padding:7px 11px;display:inline-block}
+  .step .key{font-weight:800;color:var(--ink)}
+
+  /* mini telas com moldura de app */
+  .shot{position:relative;margin-top:14px;background:linear-gradient(180deg,#111a2e,#0d1526);
+    border-radius:16px;padding:0;color:#e2e8f0;font-size:12px;border:1px solid #243049;box-shadow:0 10px 30px rgba(13,21,38,.35)}
+  .shot::before{content:"";display:block;height:30px;border-bottom:1px solid #1e293b;background:#0b1220;border-radius:16px 16px 0 0;
+    background-image:radial-gradient(circle 4px at 16px 15px,#ef4444 98%,transparent),
+                     radial-gradient(circle 4px at 32px 15px,#f59e0b 98%,transparent),
+                     radial-gradient(circle 4px at 48px 15px,#10b981 98%,transparent)}
+  .shot > *{padding-left:15px;padding-right:15px}
+  .shot .sh-head{display:flex;justify-content:space-between;align-items:center;font-weight:800;color:#fff;padding-top:12px;padding-bottom:9px;font-size:12.5px}
+  .sh-sub{color:#94a3b8;font-weight:600;font-variant-numeric:tabular-nums}
+  .sh-line{display:flex;align-items:center;gap:8px;padding-top:6px;padding-bottom:6px;border-bottom:1px dashed #1e293b}
+  .sh-line:last-child{border-bottom:none;padding-bottom:13px}
+  .sh-time{color:#94a3b8;font-variant-numeric:tabular-nums;width:84px;font-size:11px}
+  .sh-task{flex:1;font-weight:600}
+  .pill{font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;white-space:nowrap}
+  .p-i{background:var(--imp-soft);color:#065f46}.p-u{background:var(--urg-soft);color:#991b1b}.p-d{background:var(--dis-soft);color:#475569}
+  .bar{display:flex;height:11px;border-radius:6px;overflow:hidden;background:#1e293b;margin-top:4px;margin-bottom:13px}
+  .bar span{display:block;height:100%}
+
+  /* ciclo com setas */
+  .cycle{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .cy{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;text-align:center;box-shadow:var(--shadow);position:relative}
+  .cy:not(:last-child)::after{content:"→";position:absolute;right:-13px;top:50%;transform:translateY(-50%);color:var(--mut);font-weight:900;font-size:20px;z-index:2}
+  .cy .n{width:34px;height:34px;border-radius:50%;background:var(--pri);color:#fff;display:grid;place-items:center;font-weight:900;margin:0 auto 10px}
+  .cy h4{font-size:15px;margin-bottom:5px}.cy p{font-size:13px;color:var(--mut);margin:0}
+
+  /* rotina */
+  .routine{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .rt{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+  .rt h4{font-size:16px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .rt ul{margin:0;padding-left:18px}.rt li{font-size:14px;margin-bottom:6px}
+
+  .check{background:var(--card);border:1px dashed var(--border);border-radius:16px;padding:20px}
+  .check label{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;padding:6px 0}
+  .check input{margin-top:4px}
+
+  .badge-plan{font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;text-transform:uppercase;letter-spacing:.06em}
+  .b-pro{background:var(--time-soft);color:var(--time)}.b-ent{background:var(--com-soft);color:var(--com)}
+
+  footer{border-top:1px solid var(--border);padding:26px 0;color:var(--mut);font-size:13px;text-align:center;margin-top:20px}
+  footer a{font-weight:700;text-decoration:none}
+
+  @media (max-width:760px){
+    .cycle{grid-template-columns:1fr 1fr} .routine{grid-template-columns:1fr}
+    .cy:not(:last-child)::after{content:"↓";right:50%;top:auto;bottom:-13px;transform:translateX(50%)}
+  }
+  @media (max-width:560px){ .cat3{grid-template-columns:1fr} }
+  @media (max-width:480px){ .brand .suffix{display:none} .btn-pdf{padding:10px 14px} }
+
+  /* IMPRESSÃO / PDF — quebra só onde marcado, protege cards */
+  @media print{
+    @page{margin:12mm 14mm}
+    body{background:#fff;font-size:11.5px;line-height:1.5}
+    header.bar,.btn-pdf,.no-print{display:none!important}
+    .step,.cy,.rt,.lead,.check,.shot{box-shadow:none;break-inside:avoid}
+    section{padding:11px 0}
+    .sec-title{break-after:avoid}
+    .step h3,.rt h4,.cy h4{break-after:avoid}
+    .step::before{background:#cbd5e1}
+    p,li{orphans:3;widows:3}
+    .pagebreak-hard{break-before:page}
+    /* topo na pág 1: esconde os chips (já aparecem no card "A ideia"),
+       deixa o título grande e os espaços enxutos — cabe sem espremer texto */
+    .cat-row{display:none}
+    .cover{padding:18px 0 16px}
+    .cover h1{font-size:33px;margin-top:12px}
+    .cover p{font-size:14.5px;margin-top:14px}
+    .lead{padding:16px 20px;margin-bottom:16px}
+    .cy{padding:15px}
+    .step{padding:14px 18px;margin-bottom:10px}
+    .shot{margin-top:10px}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-row">
+    <div class="brand"><span class="disc">🧭</span><span class="brand-txt">Bússola do Tempo<span class="suffix"> · Treinamento</span></span></div>
+    <button class="btn-pdf" onclick="window.print()">⬇ Baixar em PDF</button>
+  </div>
+</header>
+
+<!-- CAPA -->
+<section class="cover wrap">
+  <span class="eyebrow">Guia oficial · leitura de ~10 min</span>
+  <h1>Aprenda a usar a Bússola do Tempo de ponta a ponta</h1>
+  <p>Em poucos minutos você sai sabendo planejar, executar e revisar sua semana com a ajuda da IA. Os módulos 1 a 5 servem pra todo mundo; o 6 e o 7 são pra quem tem plano Pro ou Enterprise. Siga na ordem.</p>
+  <div class="cat-row">
+    <span class="chip" style="background:var(--imp-soft);color:#065f46">🎯 Importante</span>
+    <span class="chip" style="background:var(--urg-soft);color:#991b1b">🔥 Urgente</span>
+    <span class="chip" style="background:var(--dis-soft);color:#475569">💨 Disperso</span>
+  </div>
+</section>
+
+<!-- A IDEIA -->
+<section class="wrap">
+  <div class="lead">
+    <h3 style="margin-bottom:8px">📌 A ideia em 30 segundos</h3>
+    <p style="margin:0;color:var(--mut);font-size:15px">A Bússola cruza suas <b style="color:var(--ink)">Frentes de trabalho</b> (ex: Empresa, Negócio próprio, Cliente A) com <b style="color:var(--ink)">3 categorias de tempo</b>. No fim da semana você vê, em números, <b>onde seu tempo realmente foi</b> — e a IA já te entrega a próxima semana montada.</p>
+    <div class="cat3">
+      <div class="c cat-imp"><b>🎯 Importante</b>Move sua estratégia. Onde você decide, não reage.</div>
+      <div class="c cat-urg"><b>🔥 Urgente</b>Pega fogo, exige resposta agora. Perigoso em excesso.</div>
+      <div class="c cat-dis"><b>💨 Disperso</b>Pareceu trabalho mas não rendeu. O tempo mais fácil de cortar.</div>
+    </div>
+  </div>
+
+  <h3 style="margin:24px 0 14px">🔄 O ciclo que você vai repetir toda semana</h3>
+  <div class="cycle">
+    <div class="cy"><div class="n">1</div><h4>A IA propõe</h4><p>Monta sua semana a partir do que já funcionou. Você edita e aprova.</p></div>
+    <div class="cy"><div class="n">2</div><h4>Você vive e marca</h4><p>Um toque ao fim de cada bloco: foi Importante, Urgente ou Disperso?</p></div>
+    <div class="cy"><div class="n">3</div><h4>O Espelho revela</h4><p>Você vê, lado a lado, o que planejou × o que viveu. A verdade em números.</p></div>
+    <div class="cy"><div class="n">4</div><h4>Revisar &amp; Planejar</h4><p>A IA analisa e já propõe a próxima. O ciclo recomeça.</p></div>
+  </div>
+</section>
+
+<!-- MÓDULO 1 -->
+<section class="wrap pagebreak-hard" style="--accent:var(--pri)">
+  <div class="sec-title"><div class="sec-num">1</div><div><h2>Entrar e configurar (5 min, uma vez só)</h2><p>Criar sua conta e dizer pra Bússola como é a sua rotina.</p></div></div>
+
+  <div class="step"><div class="step-n">1</div><div>
+    <h3>Crie sua conta</h3>
+    <p>No e-mail de boas-vindas, clique em <span class="key">"Criar minha senha"</span>. Ou entre direto em <b>app.bussoladotempo.com.br</b> com <span class="key">e-mail e senha</span>, <span class="key">conta Google</span> ou <span class="key">link mágico</span> (um link de acesso que chega no seu e-mail — sem senha pra digitar).</p>
+    <span class="tip">💡 Esqueceu a senha? "Esqueci a senha" na tela de login resolve em 1 minuto.</span>
+    <span class="tip">🎁 Você começa com 14 dias grátis — sem cadastrar cartão. Dá pra testar tudo sem compromisso.</span>
+  </div></div>
+
+  <div class="step"><div class="step-n">2</div><div>
+    <h3>Defina seu ritmo</h3>
+    <p>Diga a que horas você <span class="key">acorda, dorme</span> e seu <span class="key">horário de almoço</span>. É o esqueleto do seu dia — a IA respeita isso ao montar a agenda.</p>
+  </div></div>
+
+  <div class="step"><div class="step-n">3</div><div>
+    <h3>Cadastre suas Frentes</h3>
+    <p>Liste suas áreas de trabalho e quantas <span class="key">horas por semana</span> cada uma merece. Ex: Empresa 20h, Negócio próprio 12h, Cliente A 8h. <b>Esse é o coração do sistema.</b></p>
+    <div class="shot">
+      <div class="sh-head">🧭 Minhas frentes <span class="sh-sub">orçamento semanal</span></div>
+      <div class="sh-line"><span class="sh-task">📊 Empresa</span><span class="sh-sub">20h</span></div>
+      <div class="sh-line"><span class="sh-task">🚀 Negócio próprio</span><span class="sh-sub">12h</span></div>
+      <div class="sh-line"><span class="sh-task">🤝 Cliente A</span><span class="sh-sub">8h</span></div>
+    </div>
+  </div></div>
+
+  <div class="step"><div class="step-n">4</div><div>
+    <h3>Adicione compromissos fixos (opcional)</h3>
+    <p>Reuniões recorrentes, academia, aula — coisas que se repetem toda semana. A IA encaixa o resto em volta delas.</p>
+  </div></div>
+
+  <div class="step"><div class="step-n">5</div><div>
+    <h3>Gere sua primeira agenda</h3>
+    <p>Pronto! Clique em <span class="key">gerar</span> e a Bússola monta sua semana-base a partir das frentes e compromissos. Você revisa e confirma.</p>
+    <span class="tip">✅ Da próxima vez, a IA aprende do seu histórico e fica cada vez mais afiada.</span>
+  </div></div>
+</section>
+
+<!-- MÓDULO 2 -->
+<section class="wrap" style="--accent:var(--pri)">
+  <div class="sec-title"><div class="sec-num">2</div><div><h2>Planejar a sua semana</h2><p>Onde você vê, cria e ajusta os blocos de tempo.</p></div></div>
+
+  <div class="step"><div class="step-n">1</div><div>
+    <h3>O Painel do Dia (tela inicial)</h3>
+    <p>Ao entrar, você vê <span class="key">o dia de hoje</span>: seus blocos, suas prioridades da semana e o que vem a seguir. É o seu ponto de partida diário.</p>
+  </div></div>
+
+  <div class="step"><div class="step-n">2</div><div>
+    <h3>Abra a Semana</h3>
+    <p>Na barra de baixo (celular) ou no menu, toque em <span class="key">Semana</span>. Veja em <span class="key">Lista</span> ou <span class="key">Calendário</span>. Navegue entre semanas com "Anterior / Próxima".</p>
+    <div class="shot">
+      <div class="sh-head">📅 Semana de 15–21 jun <span class="sh-sub">Lista</span></div>
+      <div class="sh-line"><span class="sh-time">08:00–12:00</span><span class="sh-task">Empresa · planejamento</span><span class="pill p-i">Importante</span></div>
+      <div class="sh-line"><span class="sh-time">14:00–15:00</span><span class="sh-task">Cliente A · alinhamento</span><span class="pill p-u">Urgente</span></div>
+    </div>
+  </div></div>
+
+  <div class="step"><div class="step-n">3</div><div>
+    <h3>Crie ou edite um bloco</h3>
+    <p>Toque em <span class="key">+ Novo bloco</span>: escolha a tarefa, o horário, a <span class="key">frente</span> e a <span class="key">categoria planejada</span>. Pode adicionar <span class="key">subtarefas</span> e marcar uma como <span class="key">prioridade ⭐</span> da semana.</p>
+  </div></div>
+
+  <div class="step"><div class="step-n">4</div><div>
+    <h3>Semana vazia? Monte com a IA ali mesmo</h3>
+    <p>Se a semana está sem blocos, aparece o botão <span class="key">"Montar com IA"</span> na própria tela. Ela propõe a semana inteira; você remove o que não quer e confirma.</p>
+  </div></div>
+</section>
+
+<!-- MÓDULO 3 -->
+<section class="wrap" style="--accent:var(--imp)">
+  <div class="sec-title"><div class="sec-num">3</div><div><h2>Viver e marcar</h2><p>O hábito diário que faz toda a mágica acontecer — leva segundos.</p></div></div>
+
+  <div class="step"><div class="step-n">1</div><div>
+    <h3>Ao terminar um bloco, marque o que ele <i>realmente</i> foi</h3>
+    <p>Planejou um bloco como "Importante", mas virou apagar incêndio? Marque como <span class="key">Urgente</span> — um toque ou um swipe e pronto. <b>É essa honestidade que faz o Espelho valer.</b></p>
+    <div class="shot">
+      <div class="sh-head">Como foi este bloco? <span class="sh-sub">1 toque</span></div>
+      <div class="sh-line"><span class="sh-task">Reunião comitê</span>
+        <span class="pill p-i">🎯</span><span class="pill p-u">🔥</span><span class="pill p-d">💨</span></div>
+    </div>
+  </div></div>
+
+  <div class="step"><div class="step-n">2</div><div>
+    <h3>Fechamento da noite (2 min)</h3>
+    <p>No fim do dia, passe rápido pelos blocos confirmando o que rolou. Um destaque do que foi bom e um aprendizado pra amanhã. Mantém o Espelho fiel à realidade.</p>
+  </div></div>
+</section>
+
+<!-- MÓDULO 4 -->
+<section class="wrap" style="--accent:var(--urg)">
+  <div class="sec-title"><div class="sec-num">4</div><div><h2>O ritual semanal (o coração de tudo)</h2><p>5 minutos na sexta, sábado ou domingo — e a próxima semana já vem montada.</p></div></div>
+
+  <div class="step"><div class="step-n">1</div><div>
+    <h3>Abra a Revisão da semana</h3>
+    <p>Tudo num lugar só. No topo, o <span class="key">Espelho</span>: total de horas e a divisão Importante / Urgente / Disperso, por frente, <b>planejado × realizado</b>.</p>
+    <div class="shot">
+      <div class="sh-head">📊 Espelho · 47h <span class="sh-sub">Imp 43% · Urg 38% · Disp 19%</span></div>
+      <div class="sh-line"><span class="sh-task">Empresa 18h</span></div>
+      <div class="bar"><span style="width:33%;background:var(--imp)"></span><span style="width:50%;background:var(--urg)"></span><span style="width:17%;background:var(--dis)"></span></div>
+    </div>
+  </div></div>
+
+  <div class="step"><div class="step-n">2</div><div>
+    <h3>Leia o Coach Gentil (a IA comentando seus números)</h3>
+    <p>A Bússola lê seu Espelho e te dá 2 ou 3 recados concretos, sem moralismo. Ex: <i>"50% da semana foi Urgente — escolha 1 fonte de urgência e ataque a causa."</i></p>
+  </div></div>
+
+  <div class="step"><div class="step-n">3</div><div>
+    <h3>Clique em "Revisar &amp; Planejar com a IA"</h3>
+    <p>Num comando só, a IA <span class="key">analisa a semana que passou</span> e já <span class="key">propõe a próxima</span>, aprendendo dos seus desvios. Você edita os blocos que quiser.</p>
+    <span class="tip">⚙️ Aplique em <b>1, 2 ou 4 semanas</b> de uma vez — e isso conta como <b>1 geração só</b>.</span>
+  </div></div>
+
+  <div class="step"><div class="step-n">4</div><div>
+    <h3>Entenda a cota de IA</h3>
+    <p>No plano Essencial você gera <span class="key">1 nova agenda por semana</span>, num total de <span class="key">6 por mês</span>. <b>Reabrir, editar e reaplicar um resultado já gerado é de graça</b> — a cota só conta quando a IA cria uma semana do zero. Por isso o ideal é concentrar tudo num ritual <b>na sexta, sábado ou domingo</b>.</p>
+  </div></div>
+
+  <div class="step"><div class="step-n">5</div><div>
+    <h3>Feche com a retrospectiva</h3>
+    <p>Responda rapidinho: o que funcionou, o que não funcionou, o que mudar. Isso fica privado e alimenta as próximas sugestões da IA.</p>
+  </div></div>
+</section>
+
+<!-- MÓDULO 5 -->
+<section class="wrap" style="--accent:var(--pri)">
+  <div class="sec-title"><div class="sec-num">5</div><div><h2>Turbinar (2 ajustes rápidos)</h2><p>Sincronize sua agenda e deixe a Bússola te lembrar — sem depender da sua memória.</p></div></div>
+
+  <div class="step"><div class="step-n">1</div><div>
+    <h3>Conecte o Google Agenda (2 vias)</h3>
+    <p>Seus compromissos do Google aparecem na Bússola, e seus blocos da Bússola vão pro Google. Tudo num lugar só, nos dois sentidos.</p>
+  </div></div>
+
+  <div class="step"><div class="step-n">2</div><div>
+    <h3>Ative o lembrete no celular</h3>
+    <p>Na tela inicial, toque em <span class="key">"Ativar lembrete do ritual"</span> e permita as notificações. No domingo, a Bússola te cutuca pra revisar a semana — mesmo com o app fechado.</p>
+    <span class="tip">📱 No iPhone, instale o app na tela inicial primeiro (Compartilhar → Adicionar à Tela de Início).</span>
+  </div></div>
+</section>
+
+<!-- MÓDULO 6 - TIME -->
+<section class="wrap pagebreak-hard" style="--accent:var(--time)">
+  <div class="sec-title"><div class="sec-num">6</div>
+    <div><h2>Módulo de Time <span class="badge-plan b-pro">Plano Pro</span></h2><p>Para o gestor: a visão do time inteiro, sem invadir a privacidade de ninguém.</p></div></div>
+
+  <div class="step"><div class="step-n">1</div><div>
+    <h3>Crie seu time e adicione pessoas</h3>
+    <p>Em <span class="key">Meu time</span>, dê um nome e adicione cada pessoa pelo <span class="key">e-mail</span> (ela precisa ter entrado no app uma vez). Defina a quem cada um reporta — a hierarquia.</p>
+  </div></div>
+
+  <div class="step"><div class="step-n">2</div><div>
+    <h3>Acompanhe no Painel do Time</h3>
+    <p>Veja a distribuição de tempo de cada membro e do time como um todo. <b>Você vê o TEMPO — nunca as reflexões pessoais.</b> A privacidade é um pilar.</p>
+  </div></div>
+
+  <div class="step"><div class="step-n">3</div><div>
+    <h3>Oriente com "Sugerir"</h3>
+    <p>Mande uma sugestão de foco pra um membro. Ele recebe, e <b>ele decide</b> se aplica. Você orienta — não edita a agenda dele. Coach, não comando.</p>
+  </div></div>
+</section>
+
+<!-- MÓDULO 7 - COMERCIAL -->
+<section class="wrap" style="--accent:var(--com)">
+  <div class="sec-title"><div class="sec-num">7</div>
+    <div><h2>Módulo Comercial <span class="badge-plan b-ent">Plano Enterprise</span></h2><p>Para o setor comercial: ações de captação por cidade, com controle de verba.</p></div></div>
+
+  <div class="step"><div class="step-n">1</div><div>
+    <h3>Ative o módulo e crie a empresa</h3>
+    <p>Em <span class="key">Comercial</span>, ative o módulo e dê o nome da empresa. Dá pra ter <span class="key">várias empresas num login só</span> (use o seletor no topo pra trocar).</p>
+  </div></div>
+
+  <div class="step"><div class="step-n">2</div><div>
+    <h3>Cadastre as unidades (cidades)</h3>
+    <p>Cada cidade/praça é uma <span class="key">unidade</span>, com seu coordenador. O diretor vê todas; o coordenador vê só a dele.</p>
+  </div></div>
+
+  <div class="step"><div class="step-n">3</div><div>
+    <h3>Registre as ações (método 5W2H)</h3>
+    <p>Cada ação: tipo, objetivo, local, responsáveis, datas (início e fim) e a <span class="key">verba solicitada</span>. Planeje tudo num campo de detalhe.</p>
+    <div class="shot">
+      <div class="sh-head">Visita em empresa · Hospital Dório <span class="sh-sub">Finalizado</span></div>
+      <div class="sh-line"><span class="sh-task">Solicitado R$ 300 · Gasto R$ 300</span><span class="pill p-i">bateu ✓</span></div>
+      <div class="sh-line"><span class="sh-task">Leads captados</span><span class="pill" style="background:var(--imp-soft);color:#065f46">38</span></div>
+    </div>
+  </div></div>
+
+  <div class="step"><div class="step-n">4</div><div>
+    <h3>Registre o resultado</h3>
+    <p>Depois da ação: <span class="key">Status, Resultado, quantos leads, valor gasto</span> e comentários. A Bússola confere a verba (bateu, economia ou alterado) na hora.</p>
+  </div></div>
+
+  <div class="step"><div class="step-n">5</div><div>
+    <h3>Acompanhe no Painel e nos Relatórios</h3>
+    <p>Veja <span class="key">custo por lead</span>, leads por cidade, % de execução, e exporte os <span class="key">relatórios em CSV</span> (verba e resultados). Tudo consolidado, várias cidades juntas.</p>
+  </div></div>
+</section>
+
+<!-- ROTINA IDEAL -->
+<section class="wrap pagebreak-hard" style="--accent:var(--imp)">
+  <div class="sec-title"><div class="sec-num">✓</div><div><h2>Sua rotina ideal</h2><p>O hábito que faz a Bússola valer a pena. Mínimo esforço, máximo resultado.</p></div></div>
+  <div class="routine">
+    <div class="rt"><h4>☀️ Todo dia (≈ 4 min)</h4>
+      <ul>
+        <li>De manhã: abra o <b>Painel do Dia</b> (2 min).</li>
+        <li>Ao fim de cada bloco: marque a categoria real (1 toque).</li>
+        <li>À noite: <b>Fechamento da noite</b> (2 min).</li>
+      </ul>
+    </div>
+    <div class="rt"><h4>🗓️ Uma vez por semana (≈ 5 min)</h4>
+      <ul>
+        <li>Sexta, sábado ou domingo: abra a <b>Revisão</b>.</li>
+        <li>Leia o Espelho + o Coach Gentil.</li>
+        <li><b>Revisar &amp; Planejar com a IA</b> → aprove a próxima semana.</li>
+        <li>Feche com a retrospectiva.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section class="wrap" style="--accent:var(--pri)">
+  <div class="sec-title"><div class="sec-num">★</div><div><h2>Está dominando? Marque aqui</h2><p>Se você consegue fazer tudo isso, está usando a Bússola de ponta a ponta.</p></div></div>
+  <div class="check">
+    <label><input type="checkbox"> Criei minha conta e configurei ritmo + frentes</label>
+    <label><input type="checkbox"> Gerei minha primeira agenda com a IA</label>
+    <label><input type="checkbox"> Sei criar e editar um bloco na semana</label>
+    <label><input type="checkbox"> Marco a categoria real ao fim de cada bloco</label>
+    <label><input type="checkbox"> Fiz o ritual de Revisão (Espelho + IA) pelo menos uma vez</label>
+    <label><input type="checkbox"> Entendo a cota de IA (1 nova agenda/semana, 6/mês — reabrir é grátis)</label>
+    <label><input type="checkbox"> Ativei o lembrete no celular</label>
+    <label><input type="checkbox"> (Pro) Montei meu time e vi o painel</label>
+    <label><input type="checkbox"> (Enterprise) Cadastrei uma unidade e registrei uma ação</label>
+  </div>
+</section>
+
+<button class="fab no-print" onclick="window.print()">⬇ Baixar PDF</button>
+
+<footer>
+  🧭 <b>Bússola do Tempo</b> · Guia de Treinamento · onde seu tempo realmente vai<br/>
+  <a href="https://app.bussoladotempo.com.br">Abrir a Bússola</a> · Dúvidas? contato@bussoladotempo.com.br
+</footer>
+
+</body>
+</html>

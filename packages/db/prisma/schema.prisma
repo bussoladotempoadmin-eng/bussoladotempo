@@ -75,6 +75,7 @@ model User {
   emailVerified DateTime?
   image         String?
   senhaHash     String? // login por e-mail/senha (null = só Google/link mágico)
+  superAdmin    Boolean       @default(false) // acesso ao painel de gestão do produto
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -88,6 +89,8 @@ model User {
   pushSubscriptions  PushSubscription[]
   unidadesCoord      Unidade[]  @relation("UnidadeCoord")
   resetTokens        PasswordResetToken[]
+  assinatura         Assinatura?         @relation("AssinaturaDono")
+  parceiro           Parceiro?
 }
 
 // Token de "esqueci a senha" — uso único, com validade curta.
@@ -362,10 +365,11 @@ model Organizacao {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  owner     User               @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  membros   MembroEquipe[]
-  unidades  Unidade[]
-  tiposAcao TipoAcaoComercial[]
+  owner      User               @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  membros    MembroEquipe[]
+  unidades   Unidade[]
+  tiposAcao  TipoAcaoComercial[]
+  assinatura Assinatura?
 
   @@index([ownerId])
 }
@@ -487,4 +491,276 @@ model AcaoComercial {
 
   @@index([unidadeId])
   @@index([status])
+}
+
+// ============================================================
+// BILLING — Gestão do produto (planos, assinatura, cobrança, parceiros)
+// Referência de design: docs/Analise TriboCRM .../MODULO_PAGAMENTO_BLUEPRINT.md
+// Princípio: o estado da assinatura mora na conta (Assinatura); cada cobrança
+// é uma linha em Cobranca. UMA assinatura por conta = UMA cobrança por ciclo,
+// cobrindo todos os assentos (empresa paga pelo time inteiro).
+// Lançamento = cobrança MANUAL; gateway (Efí/PIX) entra na Fase 5 (campos já
+// previstos como opcionais pra não exigir nova migration depois).
+// ============================================================
+
+enum StatusAssinatura {
+  TRIAL     // em teste grátis (14 dias)
+  ATIVA     // pagando em dia
+  ATRASADA  // venceu e não pagou (PAYMENT_OVERDUE)
+  SUSPENSA  // bloqueada por falta de pagamento
+  CANCELADA // encerrada
+}
+
+enum CicloPlano {
+  MENSAL
+  ANUAL
+}
+
+enum MetodoPagamento {
+  PIX
+  BOLETO
+  CARTAO
+  MANUAL // baixa manual feita pelo super admin (lançamento)
+}
+
+enum StatusCobranca {
+  PENDENTE
+  PAGA
+  ATRASADA
+  CANCELADA
+}
+
+enum TipoDesconto {
+  PERCENTUAL
+  FIXO
+}
+
+enum DuracaoCupom {
+  PRIMEIRO   // só na 1ª cobrança
+  RECORRENTE // em todo ciclo (por N meses)
+}
+
+enum StatusComissao {
+  PENDENTE   // criada, dentro da carência
+  DISPONIVEL // passou a carência, pode pagar
+  PAGA       // payout feito (manual)
+  ESTORNADA  // revertida (reembolso/chargeback)
+}
+
+// Catálogo de planos. Limites e features são COLUNAS — trocar o plano = trocar
+// os números, sem mexer em código espalhado.
+model Plano {
+  id     String @id @default(cuid())
+  slug   String @unique // "essencial" | "pro" | "enterprise"
+  nome   String
+
+  // Preço. Conta = precoMensal/Anual (base) + assentos extras × precoPorAssento.
+  // Essencial: precoPorAssento = 0, assentosIncluidos = 1 (preço fixo).
+  // Pro/Enterprise: precoPorAssento > 0 (cobrança por acesso).
+  precoMensal      Float @default(0)
+  precoAnual       Float @default(0)
+  precoPorAssento  Float @default(0)
+  assentosIncluidos Int  @default(1)
+
+  // Permissões/limites destravados por este plano.
+  moduloTimeAtivo      Boolean @default(false) // módulo de Time (Organizacao)
+  moduloComercialAtivo Boolean @default(false) // Agenda Comercial
+  geracoesIaMes        Int     @default(6)     // cota de IA/mês (ver cota-ia.ts)
+  maxAssentos          Int?    // teto de assentos (null = ilimitado)
+
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assinaturas Assinatura[]
+
+  @@index([ativo])
+}
+
+// A assinatura da conta. Dona = um User (quem paga). Se for plano de time,
+// aponta também pra Organizacao. Os assentos vivem aqui, não no plano.
+model Assinatura {
+  id          String @id @default(cuid())
+  ownerUserId String @unique // quem paga (dono da conta)
+  organizacaoId String? @unique // preenchido quando é plano de time
+
+  planoId String
+  ciclo   CicloPlano       @default(MENSAL)
+  status  StatusAssinatura @default(TRIAL)
+  assentos Int             @default(1) // nº de acessos contratados
+
+  trialTerminaEm  DateTime?
+  planoIniciadoEm DateTime?
+  planoExpiraEm   DateTime?
+  metodoPreferido MetodoPagamento @default(MANUAL)
+
+  // Desconto recorrente concedido pelo super admin.
+  descontoTipo   TipoDesconto?
+  descontoValor  Float?
+  descontoDe     DateTime?
+  descontoAte    DateTime?
+  descontoCiclos Int?
+  descontoMotivo String?
+
+  // Cartão recorrente (Efí) — Fase 5. Opcional desde já.
+  efiSubscriptionId     String?
+  efiSubscriptionStatus String?
+  cartaoFinal           String?
+  cartaoBandeira        String?
+  proximaCobrancaEm     DateTime?
+
+  // Máquina de estados de billing (idempotência dos e-mails) — ver job diário.
+  ultimoEstadoBilling   String?
+  ultimoEstadoBillingEm DateTime?
+
+  // Indicação por parceiro.
+  indicadoPorParceiroId String?
+  indicadoEm            DateTime?
+
+  notasInternas String? @db.Text // anotações de suporte/financeiro
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner       User         @relation("AssinaturaDono", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  organizacao Organizacao? @relation(fields: [organizacaoId], references: [id], onDelete: SetNull)
+  plano       Plano        @relation(fields: [planoId], references: [id])
+  parceiro    Parceiro?    @relation(fields: [indicadoPorParceiroId], references: [id], onDelete: SetNull)
+  cobrancas   Cobranca[]
+  comissoes   ComissaoParceiro[]
+  trocasParceiro TrocaParceiro[]
+
+  @@index([planoId])
+  @@index([status])
+  @@index([indicadoPorParceiroId])
+}
+
+// Cada cobrança individual da conta. mesRef alimenta os relatórios (MRR/ARR).
+model Cobranca {
+  id           String          @id @default(cuid())
+  assinaturaId String
+  valor        Float
+  descontoValor Float          @default(0)
+  vencimento   DateTime
+  pagaEm       DateTime?
+  metodo       MetodoPagamento @default(MANUAL)
+  status       StatusCobranca  @default(PENDENTE)
+  mesRef       String          // "YYYY-MM" — base dos relatórios
+
+  // Gateway (Efí) — Fase 5.
+  efiCobrancaId String?
+  boletoUrl     String?
+  pixCopiaECola String? @db.Text
+
+  nota String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assinatura Assinatura        @relation(fields: [assinaturaId], references: [id], onDelete: Cascade)
+  comissao   ComissaoParceiro?
+
+  @@index([assinaturaId])
+  @@index([status])
+  @@index([mesRef])
+}
+
+// Cupons de desconto. Soft-delete via ativo=false.
+model Cupom {
+  id             String       @id @default(cuid())
+  code           String       @unique
+  descontoTipo   TipoDesconto
+  descontoValor  Float
+  planosAplicaveis String[]   // slugs; vazio = todos
+  maxUsos        Int?
+  maxUsosPorUser Int?
+  usados         Int          @default(0)
+  validoDe       DateTime?
+  validoAte      DateTime?
+  duracaoTipo    DuracaoCupom @default(PRIMEIRO)
+  duracaoMeses   Int?
+  ativo          Boolean      @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ativo])
+}
+
+// ============================================================
+// PARCEIROS — programa de indicação (afiliados)
+// ============================================================
+
+// O afiliado/agência que indica clientes. code = "PRT" + 8 hex.
+model Parceiro {
+  id     String  @id @default(cuid())
+  code   String  @unique
+  userId String? @unique // conta na Bússola, se o parceiro tiver uma
+  nome   String
+  email  String?
+
+  // Faixas progressivas de comissão (JSON): ex. [{ ateClientes: 5, rate: 15 }, ...].
+  comissaoTiers Json?
+  comissaoRate  Float @default(0) // legado / fallback quando não há tiers
+
+  // Dados bancários para payout manual (PIX/TED).
+  pixChave     String?
+  banco        String?
+  agencia      String?
+  conta        String?
+  tipoConta    String?
+
+  ativo Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  indicacoes Assinatura[]
+  comissoes  ComissaoParceiro[]
+  trocas     TrocaParceiro[]    @relation("ParceiroNovo")
+
+  @@index([ativo])
+}
+
+// Uma linha por cobrança PAGA de cliente indicado. cobrancaId único = "uma
+// comissão por cobrança" (idempotência mesmo com webhook duplicado).
+model ComissaoParceiro {
+  id           String         @id @default(cuid())
+  parceiroId   String
+  cobrancaId   String         @unique
+  assinaturaId String
+  valor        Float          // valor da cobrança
+  rate         Float          // % congelado no momento da criação
+  comissao     Float          // valor × rate / 100
+  status       StatusComissao @default(PENDENTE)
+  disponivelEm DateTime       // pagaEm + 30 dias (carência)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parceiro   Parceiro   @relation(fields: [parceiroId], references: [id], onDelete: Cascade)
+  cobranca   Cobranca   @relation(fields: [cobrancaId], references: [id], onDelete: Cascade)
+  assinatura Assinatura @relation(fields: [assinaturaId], references: [id], onDelete: Cascade)
+
+  @@index([parceiroId, status])
+  @@index([status, disponivelEm])
+  @@index([assinaturaId])
+}
+
+// Auditoria de troca de parceiro de uma conta (atribuição last-touch + histórico).
+model TrocaParceiro {
+  id              String   @id @default(cuid())
+  assinaturaId    String
+  parceiroAntigoId String?
+  parceiroNovoId  String?
+  alteradoPor     String?  // userId de quem mudou
+  fonte           String   // "signup_cookie" | "gestor_ui" | "super_admin"
+  createdAt       DateTime @default(now())
+
+  assinatura    Assinatura @relation(fields: [assinaturaId], references: [id], onDelete: Cascade)
+  parceiroNovo  Parceiro?  @relation("ParceiroNovo", fields: [parceiroNovoId], references: [id], onDelete: SetNull)
+
+  @@index([assinaturaId])
 }

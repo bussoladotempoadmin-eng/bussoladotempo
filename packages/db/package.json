@@ -11,6 +11,7 @@
     "migrate:deploy": "prisma migrate deploy",
     "studio": "prisma studio",
     "seed": "tsx prisma/seed.ts",
+    "seed:planos": "tsx prisma/seed-planos.ts",
     "reset": "prisma migrate reset"
   },
   "prisma": {
