@@ -60,6 +60,7 @@ export function UserMenu({ className }: { className?: string }) {
     <div className={cn('relative', className)}>
       <button
         type="button"
+        data-tour="menu"
         onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-semibold text-foreground shadow-sm transition-all hover:shadow-md"
       >

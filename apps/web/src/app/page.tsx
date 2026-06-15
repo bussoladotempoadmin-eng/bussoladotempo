@@ -17,6 +17,11 @@ import { garantirAssinatura, getEntitlements } from '@/lib/assinatura';
 import { BLOQUEIO_ATIVO } from '@/lib/acesso';
 import { AvisoPlano } from './aviso-plano';
 import { OnboardingTour } from './onboarding-tour';
+import { OnboardingGuiado } from './onboarding-guiado';
+
+// Qual onboarding mostrar pra quem ainda não viu. Reverter é trocar aqui:
+//   'guiado' = tour ancorado (spotlight) | 'cards' = cards | 'off' = nenhum
+const TOUR_MODO: 'guiado' | 'cards' | 'off' = 'guiado';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -122,7 +127,8 @@ export default async function Home() {
         </div>
       </header>
 
-      {!conta?.onboardingVisto && <OnboardingTour />}
+      {!conta?.onboardingVisto && TOUR_MODO === 'guiado' && <OnboardingGuiado />}
+      {!conta?.onboardingVisto && TOUR_MODO === 'cards' && <OnboardingTour />}
 
       {ent.temAssinatura && !ent.planoConfirmado && (
         <AvisoPlano planoNome={ent.planoNome ?? 'plano Essencial'} diasRestantes={ent.diasRestantesTrial} />

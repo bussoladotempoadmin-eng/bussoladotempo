@@ -7,10 +7,10 @@ import { Home, CalendarDays, ClipboardCheck, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ITENS = [
-  { href: '/', label: 'Hoje', icon: Home, match: (p: string) => p === '/' },
-  { href: '/semana', label: 'Semana', icon: CalendarDays, match: (p: string) => p.startsWith('/semana') },
-  { href: '/revisao', label: 'Revisão', icon: ClipboardCheck, match: (p: string) => p.startsWith('/revisao') || p.startsWith('/espelho') },
-  { href: '/comercial', label: 'Comercial', icon: Briefcase, match: (p: string) => p.startsWith('/comercial') },
+  { href: '/', label: 'Hoje', icon: Home, tour: 'nav-hoje', match: (p: string) => p === '/' },
+  { href: '/semana', label: 'Semana', icon: CalendarDays, tour: 'nav-semana', match: (p: string) => p.startsWith('/semana') },
+  { href: '/revisao', label: 'Revisão', icon: ClipboardCheck, tour: 'nav-revisao', match: (p: string) => p.startsWith('/revisao') || p.startsWith('/espelho') },
+  { href: '/comercial', label: 'Comercial', icon: Briefcase, tour: 'nav-comercial', match: (p: string) => p.startsWith('/comercial') },
 ];
 
 // Rotas onde a barra NÃO aparece (fluxos de entrada / tela cheia).
@@ -39,6 +39,7 @@ export function BottomNav() {
               <Link
                 key={it.href}
                 href={it.href}
+                data-tour={it.tour}
                 className={cn(
                   'flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold transition-colors',
                   ativo ? 'text-primary' : 'text-muted-foreground',
