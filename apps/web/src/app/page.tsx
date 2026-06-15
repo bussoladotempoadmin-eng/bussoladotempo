@@ -14,6 +14,7 @@ import { SugestoesGestor } from './sugestoes-gestor';
 import { sugestoesPendentes } from '@/lib/equipe';
 import { AtivarLembretes } from '@/components/ativar-lembretes';
 import { garantirAssinatura, getEntitlements } from '@/lib/assinatura';
+import { BLOQUEIO_ATIVO } from '@/lib/acesso';
 import { AvisoPlano } from './aviso-plano';
 
 export default async function Home() {
@@ -29,6 +30,11 @@ export default async function Home() {
   // apareça no painel. Depois lê os entitlements pra decidir o aviso de plano.
   await garantirAssinatura(session.user.id);
   const ent = await getEntitlements(session.user.id);
+
+  // Conta suspensa/cancelada → tela de regularização (só bloqueia esses status).
+  if (BLOQUEIO_ATIVO && ent.temAssinatura && !ent.ativa) {
+    redirect('/conta-suspensa');
+  }
 
   const workspace = await getCurrentWorkspace();
   const iso = currentIsoWeek();

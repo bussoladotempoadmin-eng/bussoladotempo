@@ -3,6 +3,7 @@ import { getCurrentWorkspace } from '@/lib/workspace';
 import { isIsoWeek } from '@/lib/semana';
 import { revisarEPlanejarComCache, lerRitualCache, SemChaveIA } from '@/lib/ai-agenda';
 import { statusCota, registrarGeracao, mensagemCota } from '@/lib/cota-ia';
+import { contaBloqueada } from '@/lib/acesso';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,9 @@ export async function POST(req: Request) {
   const workspace = await getCurrentWorkspace();
   if (!workspace) {
     return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+  }
+  if (await contaBloqueada(workspace.userId)) {
+    return NextResponse.json({ error: 'Conta suspensa. Regularize pra voltar a usar.' }, { status: 403 });
   }
 
   const body = await req.json().catch(() => null);

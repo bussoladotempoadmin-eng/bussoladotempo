@@ -20,6 +20,7 @@ import type { BlocoDTO, FrenteOption } from './blocos-manager';
 import { SemanaView } from './semana-view';
 import { AgendaIAView } from '@/app/agenda-padrao/agenda-ia-view';
 import { statusCota } from '@/lib/cota-ia';
+import { exigirAcesso } from '@/lib/acesso';
 
 export const metadata = {
   title: 'Semana · Bússola do Tempo',
@@ -30,6 +31,7 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
   if (!session?.user) {
     redirect(`/login?callbackUrl=/semana/${params.iso}`);
   }
+  await exigirAcesso(session.user.id);
 
   const iso = decodeURIComponent(params.iso);
   if (!isIsoWeek(iso)) {

@@ -8,6 +8,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { Compass, ArrowLeft } from 'lucide-react';
 import { FrentesManager, type FrenteDTO } from './frentes-manager';
+import { exigirAcesso } from '@/lib/acesso';
 
 export const metadata = {
   title: 'Frentes · Bússola do Tempo',
@@ -18,6 +19,7 @@ export default async function FrentesPage() {
   if (!session?.user) {
     redirect('/login?callbackUrl=/frentes');
   }
+  await exigirAcesso(session.user.id);
 
   const workspace = await getCurrentWorkspace();
   const frentes = workspace
