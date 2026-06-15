@@ -40,9 +40,12 @@ function toMin(hhmm: string): number {
 export function AgendaIAView({
   frentes,
   semanas,
+  semanaUnica = false,
 }: {
   frentes: Frente[];
   semanas: { iso: string; label: string }[];
+  // Modo "esta semana": sem seletor de semana nem repetição (usado na semana vazia).
+  semanaUnica?: boolean;
 }) {
   const frenteById = React.useMemo(() => new Map(frentes.map((f) => [f.id, f])), [frentes]);
 
@@ -141,27 +144,35 @@ export function AgendaIAView({
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <label className="text-xs font-semibold text-muted-foreground">Semana-alvo:</label>
-        <select
-          value={alvo}
-          onChange={(e) => setAlvo(e.target.value)}
-          className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
-        >
-          {semanas.map((s) => (
-            <option key={s.iso} value={s.iso}>
-              Semana de {isoWeekLabel(s.iso)}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={gerar}
-          disabled={loading || !alvo}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-md disabled:opacity-60"
-        >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-          {proposta ? 'Gerar de novo' : 'Gerar agenda'}
-        </button>
+        {!semanaUnica && (
+          <>
+            <label className="text-xs font-semibold text-muted-foreground">Semana-alvo:</label>
+            <select
+              value={alvo}
+              onChange={(e) => setAlvo(e.target.value)}
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
+            >
+              {semanas.map((s) => (
+                <option key={s.iso} value={s.iso}>
+                  Semana de {isoWeekLabel(s.iso)}
+                </option>
+              ))}
+            </select>
+          </>
+        )}
+        {/* Na semana vazia (semanaUnica) só deixa gerar UMA vez — evita queimar
+            crédito clicando "Gerar de novo". Pra regerar, recarrega a página. */}
+        {(!semanaUnica || !proposta) && (
+          <button
+            type="button"
+            onClick={gerar}
+            disabled={loading || !alvo}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-md disabled:opacity-60"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {proposta ? 'Gerar de novo' : 'Gerar agenda'}
+          </button>
+        )}
       </div>
 
       {loading && (
@@ -263,6 +274,7 @@ export function AgendaIAView({
           </p>
 
           {/* Aplicar em 1 semana ou repetir o padrão nas próximas (o "mês") */}
+          {!semanaUnica && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground">Aplicar em:</span>
             <div className="inline-flex rounded-lg border border-border p-0.5 text-xs font-semibold">
@@ -290,6 +302,7 @@ export function AgendaIAView({
               </button>
             </div>
           </div>
+          )}
 
           <button
             type="button"

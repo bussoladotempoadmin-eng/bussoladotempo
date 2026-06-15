@@ -87,13 +87,14 @@ export function RevisaoForm({ data }: { data: RevisaoData }) {
         <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" />
         <h2 className="mt-3 text-xl font-bold">Revisão salva!</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Bora planejar a próxima semana ({data.proximaIso} · {data.proximaRangeLabel}).
+          Se você usou a IA aqui em cima, a próxima semana ({data.proximaRangeLabel}) já está
+          montada. Abra pra conferir e ajustar bloco a bloco.
         </p>
         <Link
           href={`/semana/${data.proximaIso}`}
           className="mt-5 inline-flex rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
         >
-          Planejar {data.proximaIso}
+          Abrir a próxima semana
         </Link>
       </div>
     );
@@ -166,7 +167,7 @@ export function RevisaoForm({ data }: { data: RevisaoData }) {
         {/* Passo 2 — Próxima semana */}
         {step === 1 && (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold">Preparar {data.proximaIso}</h2>
+            <h2 className="text-lg font-bold">Preparar a próxima semana</h2>
             <p className="text-xs text-muted-foreground">{data.proximaRangeLabel}</p>
             <Campo
               label="Maior risco da próxima semana"

@@ -18,6 +18,7 @@ import { UserMenu } from '@/components/user-menu';
 import { Compass, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { BlocoDTO, FrenteOption } from './blocos-manager';
 import { SemanaView } from './semana-view';
+import { AgendaIAView } from '@/app/agenda-padrao/agenda-ia-view';
 
 export const metadata = {
   title: 'Semana · Bússola do Tempo',
@@ -126,6 +127,16 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
             </Link>
           </div>
         </div>
+
+        {initialBlocos.length === 0 && frenteOptions.length > 0 && (
+          <div className="mt-8">
+            <AgendaIAView
+              frentes={frenteOptions}
+              semanas={[{ iso, label: isoWeekRangeLabel(iso) }]}
+              semanaUnica
+            />
+          </div>
+        )}
 
         <div className="mt-8">
           <SemanaView

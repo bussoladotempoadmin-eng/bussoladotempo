@@ -9,7 +9,6 @@ import {
   User as UserIcon,
   Compass,
   CalendarClock,
-  CalendarRange,
   CalendarDays,
   ClipboardCheck,
   Users,
@@ -91,14 +90,6 @@ export function UserMenu({ className }: { className?: string }) {
             >
               <CalendarClock className="h-4 w-4" />
               Compromissos fixos
-            </Link>
-            <Link
-              href="/agenda-padrao"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm transition-colors hover:bg-muted"
-            >
-              <CalendarRange className="h-4 w-4" />
-              Agenda padrão
             </Link>
             <Link
               href="/semana"
