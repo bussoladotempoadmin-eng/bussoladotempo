@@ -76,12 +76,14 @@ export function BlocoModal({
     if (ok) onClose();
   }
 
+  const [novaHoraFim, setNovaHoraFim] = React.useState('');
   function submitTarefa() {
     const t = novaTarefa.trim();
     if (!t) return;
-    mut.addTarefa(b.id, t, novaHora || null);
+    mut.addTarefa(b.id, t, novaHora || null, novaHoraFim || null);
     setNovaTarefa('');
     setNovaHora('');
+    setNovaHoraFim('');
   }
 
   const realizadoBtns: { r: 'SIM' | 'URGENTE' | 'DISPERSO'; label: string; icon: React.ReactNode; cls: string }[] = [
@@ -98,10 +100,18 @@ export function BlocoModal({
   const [quando, setQuando] = React.useState<string>(() =>
     paraInputLocal(b.concluidoEm ? new Date(b.concluidoEm) : new Date()),
   );
+  // Horário real do bloco (Caso 2) — começa no planejado; só vira desvio se mudar.
+  const [realIni, setRealIni] = React.useState(b.horaRealInicio ?? b.horaInicio);
+  const [realFim, setRealFim] = React.useState(b.horaRealFim ?? b.horaFim);
+  const horarioDesviou = realIni !== b.horaInicio || realFim !== b.horaFim;
 
   async function concluir(r: 'SIM' | 'URGENTE' | 'DISPERSO') {
     const iso = quando ? new Date(quando).toISOString() : undefined;
-    await mut.registrarRealizado(b.id, r, iso);
+    await mut.registrarRealizado(b.id, r, {
+      concluidoEm: iso,
+      horaRealInicio: realIni,
+      horaRealFim: realFim,
+    });
   }
 
   const concluidoLabel = b.concluidoEm
@@ -119,7 +129,7 @@ export function BlocoModal({
       onClick={onClose}
     >
       <div
-        className="max-h-[88vh] w-full max-w-md overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl"
+        className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -210,6 +220,34 @@ export function BlocoModal({
                 })}
               </div>
 
+              {/* Horário real do bloco (Caso 2) — só preencha se executou fora do planejado */}
+              <div className="mt-3 rounded-lg bg-muted/40 p-2.5">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                  <span className="font-semibold">Horário real</span>
+                  <input
+                    type="time"
+                    value={realIni}
+                    onChange={(e) => setRealIni(e.target.value)}
+                    className="rounded-md border border-border bg-background px-1.5 py-1 font-mono text-foreground"
+                  />
+                  <span>–</span>
+                  <input
+                    type="time"
+                    value={realFim}
+                    onChange={(e) => setRealFim(e.target.value)}
+                    className="rounded-md border border-border bg-background px-1.5 py-1 font-mono text-foreground"
+                  />
+                  <span className="text-[11px]">
+                    (planejado {b.horaInicio}–{b.horaFim})
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  {horarioDesviou
+                    ? '⚠️ Executado fora do planejado — isso entra na análise da IA e do Coach.'
+                    : 'Mantém o planejado. Ajuste só se você fez em outro horário.'}
+                </p>
+              </div>
+
               {b.concluido && (
                 <button
                   type="button"
@@ -221,16 +259,16 @@ export function BlocoModal({
               )}
             </div>
 
-            {/* Checklist */}
+            {/* Checklist — cada tarefa com Início e Fim */}
             <div className="mb-4">
               <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                 O que fazer
               </p>
               {tarefasOrdenadas.length > 0 && (
-                <ul className="mb-2 space-y-1">
+                <ul className="mb-2 space-y-1.5">
                   {tarefasOrdenadas.map((t) => (
                     <li key={t.id} className="flex items-center gap-2">
-                      <button type="button" onClick={() => mut.toggleTarefa(b.id, t.id, !t.feito)}>
+                      <button type="button" onClick={() => mut.toggleTarefa(b.id, t.id, !t.feito)} className="shrink-0">
                         {t.feito ? (
                           <CheckSquare className="h-4 w-4 text-emerald-600" />
                         ) : (
@@ -239,11 +277,23 @@ export function BlocoModal({
                       </button>
                       <input
                         type="time"
+                        aria-label="Início da tarefa"
                         value={t.hora ?? ''}
                         onChange={(e) => mut.updateTarefaHora(b.id, t.id, e.target.value || null)}
                         className={cn(
-                          'w-[5.5rem] shrink-0 rounded-md border border-border bg-background px-1.5 py-0.5 font-mono text-xs',
+                          'w-[4.4rem] shrink-0 rounded-md border border-border bg-background px-1 py-0.5 font-mono text-xs',
                           !t.hora && 'text-muted-foreground',
+                        )}
+                      />
+                      <span className="shrink-0 text-xs text-muted-foreground">–</span>
+                      <input
+                        type="time"
+                        aria-label="Fim da tarefa"
+                        value={t.horaFim ?? ''}
+                        onChange={(e) => mut.updateTarefaFim(b.id, t.id, e.target.value || null)}
+                        className={cn(
+                          'w-[4.4rem] shrink-0 rounded-md border border-border bg-background px-1 py-0.5 font-mono text-xs',
+                          !t.horaFim && 'text-muted-foreground',
                         )}
                       />
                       <span className={cn('flex-1 text-sm', t.feito && 'text-muted-foreground line-through')}>
@@ -252,7 +302,7 @@ export function BlocoModal({
                       <button
                         type="button"
                         onClick={() => mut.deleteTarefa(b.id, t.id)}
-                        className="rounded p-1 text-muted-foreground hover:text-destructive"
+                        className="shrink-0 rounded p-1 text-muted-foreground hover:text-destructive"
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
@@ -260,13 +310,26 @@ export function BlocoModal({
                   ))}
                 </ul>
               )}
-              <div className="flex items-center gap-2">
-                <input
-                  type="time"
-                  value={novaHora}
-                  onChange={(e) => setNovaHora(e.target.value)}
-                  className="w-[5.5rem] shrink-0 rounded-lg border border-border bg-background px-2 py-1.5 font-mono text-xs text-muted-foreground"
-                />
+
+              {/* Adicionar: Início | Fim | tarefa */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <input
+                    type="time"
+                    aria-label="Início"
+                    value={novaHora}
+                    onChange={(e) => setNovaHora(e.target.value)}
+                    className="w-[4.4rem] rounded-lg border border-border bg-background px-1 py-1.5 font-mono text-xs text-muted-foreground"
+                  />
+                  <span className="text-xs text-muted-foreground">–</span>
+                  <input
+                    type="time"
+                    aria-label="Fim"
+                    value={novaHoraFim}
+                    onChange={(e) => setNovaHoraFim(e.target.value)}
+                    className="w-[4.4rem] rounded-lg border border-border bg-background px-1 py-1.5 font-mono text-xs text-muted-foreground"
+                  />
+                </div>
                 <input
                   value={novaTarefa}
                   onChange={(e) => setNovaTarefa(e.target.value)}
@@ -277,12 +340,12 @@ export function BlocoModal({
                     }
                   }}
                   placeholder="Adicionar tarefa…"
-                  className="flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
+                  className="min-w-[8rem] flex-1 rounded-lg border border-border bg-background px-3 py-1.5 text-sm"
                 />
                 <button
                   type="button"
                   onClick={submitTarefa}
-                  className="rounded-lg bg-primary px-3 py-1.5 text-primary-foreground"
+                  className="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-primary-foreground"
                 >
                   <Plus className="h-4 w-4" />
                 </button>

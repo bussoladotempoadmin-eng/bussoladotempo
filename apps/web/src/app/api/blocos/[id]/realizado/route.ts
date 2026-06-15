@@ -53,9 +53,19 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     if (!Number.isNaN(d.getTime())) concluidoEm = d;
   }
 
+  // Horário REAL do bloco (Caso 2). Guarda só quando difere do planejado;
+  // igual ao planejado (ou vazio) = executou no horário → null.
+  const hhmm = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const limpaReal = (v: unknown, planejado: string): string | null => {
+    if (typeof v !== 'string' || !hhmm.test(v)) return null;
+    return v === planejado ? null : v;
+  };
+  const horaRealInicio = limpaReal(body?.horaRealInicio, bloco.horaInicio);
+  const horaRealFim = limpaReal(body?.horaRealFim, bloco.horaFim);
+
   const atualizado = await prisma.bloco.update({
     where: { id: params.id },
-    data: { categoriaRealizada, invadido, concluido: true, concluidoEm },
+    data: { categoriaRealizada, invadido, concluido: true, concluidoEm, horaRealInicio, horaRealFim },
   });
   return NextResponse.json(atualizado);
 }

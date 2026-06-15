@@ -77,11 +77,15 @@ export function useBlocoMutations(setBlocos: SetBlocos, semanaIso: string) {
   );
 
   const registrarRealizado = React.useCallback(
-    async (id: string, resultado: 'SIM' | 'URGENTE' | 'DISPERSO', concluidoEm?: string) => {
+    async (
+      id: string,
+      resultado: 'SIM' | 'URGENTE' | 'DISPERSO',
+      opts?: { concluidoEm?: string; horaRealInicio?: string; horaRealFim?: string },
+    ) => {
       const res = await fetch(`/api/blocos/${id}/realizado`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resultado, concluidoEm }),
+        body: JSON.stringify({ resultado, ...opts }),
       });
       if (!res.ok) return false;
       const at: BlocoDTO = await res.json();
@@ -93,6 +97,8 @@ export function useBlocoMutations(setBlocos: SetBlocos, semanaIso: string) {
                 categoriaRealizada: at.categoriaRealizada,
                 concluido: at.concluido,
                 concluidoEm: at.concluidoEm,
+                horaRealInicio: at.horaRealInicio,
+                horaRealFim: at.horaRealFim,
               }
             : b,
         ),
@@ -119,11 +125,11 @@ export function useBlocoMutations(setBlocos: SetBlocos, semanaIso: string) {
   );
 
   const addTarefa = React.useCallback(
-    async (blocoId: string, texto: string, hora: string | null) => {
+    async (blocoId: string, texto: string, hora: string | null, horaFim: string | null = null) => {
       const res = await fetch(`/api/blocos/${blocoId}/tarefas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ texto, hora }),
+        body: JSON.stringify({ texto, hora, horaFim }),
       });
       if (!res.ok) return;
       const t: SubTarefa = await res.json();
@@ -182,6 +188,24 @@ export function useBlocoMutations(setBlocos: SetBlocos, semanaIso: string) {
     [setBlocos],
   );
 
+  const updateTarefaFim = React.useCallback(
+    async (blocoId: string, tarefaId: string, horaFim: string | null) => {
+      setBlocos((prev) =>
+        prev.map((b) =>
+          b.id === blocoId
+            ? { ...b, subtarefas: b.subtarefas.map((t) => (t.id === tarefaId ? { ...t, horaFim } : t)) }
+            : b,
+        ),
+      );
+      await fetch(`/api/tarefas/${tarefaId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ horaFim }),
+      });
+    },
+    [setBlocos],
+  );
+
   return {
     createBloco,
     updateBloco,
@@ -193,5 +217,6 @@ export function useBlocoMutations(setBlocos: SetBlocos, semanaIso: string) {
     toggleTarefa,
     deleteTarefa,
     updateTarefaHora,
+    updateTarefaFim,
   };
 }

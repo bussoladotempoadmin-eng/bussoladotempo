@@ -41,11 +41,13 @@ export type BlocoDTO = {
   categoriaRealizada: Categoria;
   concluido: boolean;
   concluidoEm: string | null;
+  horaRealInicio: string | null;
+  horaRealFim: string | null;
   prioridadeSemana: number | null;
   subtarefas: SubTarefa[];
 };
 
-export type SubTarefa = { id: string; texto: string; feito: boolean; hora: string | null };
+export type SubTarefa = { id: string; texto: string; feito: boolean; hora: string | null; horaFim: string | null };
 
 export type FormState = {
   diaSemana: DiaSemana;

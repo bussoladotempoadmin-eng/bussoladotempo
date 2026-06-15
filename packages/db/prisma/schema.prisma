@@ -292,6 +292,10 @@ model Bloco {
   motivoDesvio       String?     @db.Text
   concluido          Boolean     @default(false) // demanda marcada como concluída
   concluidoEm        DateTime?   // quando foi concluída (data/hora real)
+  // Horário REAL do bloco quando executado fora do planejado (Caso 2 — desvio
+  // de horário, sem readequação). null = executou no horário planejado.
+  horaRealInicio     String?     // "HH:mm"
+  horaRealFim        String?     // "HH:mm"
   prioridadeSemana   Int?        // 1, 2 ou 3
   invadido           Boolean     @default(false)
   fonteOrigem        FonteOrigem @default(MANUAL)
@@ -311,7 +315,8 @@ model SubTarefa {
   id        String   @id @default(cuid())
   blocoId   String
   texto     String   @db.Text
-  hora      String? // "HH:mm" opcional — quando a tarefa tem horário marcado
+  hora      String? // "HH:mm" opcional — horário de início da tarefa
+  horaFim   String? // "HH:mm" opcional — horário de fim da tarefa
   feito     Boolean  @default(false)
   ordem     Int      @default(0)
   createdAt DateTime @default(now())

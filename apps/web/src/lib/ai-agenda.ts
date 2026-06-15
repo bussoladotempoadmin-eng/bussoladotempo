@@ -16,6 +16,18 @@ import {
 
 const MODELO = 'claude-sonnet-4-6';
 
+// Sufixo "[real HH:mm-HH:mm]" quando o bloco foi executado fora do horário
+// planejado (Caso 2 — desvio de horário). Vazio quando saiu no horário.
+function sufixoHorarioReal(b: {
+  horaInicio: string;
+  horaFim: string;
+  horaRealInicio: string | null;
+  horaRealFim: string | null;
+}): string {
+  if (!b.horaRealInicio && !b.horaRealFim) return '';
+  return ` [real ${b.horaRealInicio ?? b.horaInicio}-${b.horaRealFim ?? b.horaFim}]`;
+}
+
 export type PropostaBloco = {
   diaSemana: DiaSemana;
   horaInicio: string;
@@ -107,7 +119,7 @@ export async function gerarAgendaIA(
             ? 'fez'
             : `virou ${b.categoriaRealizada}`;
         const prio = b.prioridadeSemana ? ` [prioridade ${b.prioridadeSemana}]` : '';
-        return `  ${diaLabel(b.diaSemana)} ${b.horaInicio}-${b.horaFim} ${fr}: ${b.tarefa} (plan: ${b.categoriaPlanejada}, real: ${realizado})${prio}`;
+        return `  ${diaLabel(b.diaSemana)} ${b.horaInicio}-${b.horaFim} ${fr}: ${b.tarefa} (plan: ${b.categoriaPlanejada}, real: ${realizado})${sufixoHorarioReal(b)}${prio}`;
       })
       .join('\n');
     const rev = s.revisao
@@ -147,6 +159,7 @@ export async function gerarAgendaIA(
     '- Distribua o tempo de cada frente perto do orçamento de horas dela.',
     '- Baseie-se FORTEMENTE no que REALMENTE aconteceu (categoriaRealizada), não só no que foi planejado. O que repetiu em várias semanas provavelmente repete — proponha de novo (é assim que a recorrência emerge).',
     '- Se um tipo de trabalho sempre vira DISPERSO ou URGENTE em certo horário, evite colocar trabalho IMPORTANTE ali; proteja os horários que historicamente funcionam.',
+    '- "[real HH:mm-HH:mm]" num bloco = ele foi EXECUTADO fora do horário planejado. Se um bloco/horário sempre desliza (ex.: planejado de manhã mas sempre feito à tarde), proponha já no horário real que costuma funcionar.',
     '- Leve em conta as reflexões e fechamentos (o que o usuário disse que funcionou/atrapalhou).',
     '- Fins de semana (Sáb/Dom): deixe livres, a menos que o histórico mostre trabalho recorrente neles.',
     '- Com pouco histórico, seja conservador: gere a partir dos orçamentos e compromissos e não invente uma semana lotada.',
@@ -291,7 +304,7 @@ export async function gerarInsightsSemana(
       const fr = frenteNome.get(b.frenteId) ?? '?';
       const real =
         b.categoriaRealizada === b.categoriaPlanejada ? 'fez' : `virou ${b.categoriaRealizada}`;
-      return `  ${diaLabel(b.diaSemana)} ${b.horaInicio}-${b.horaFim} ${fr}: ${b.tarefa} (plan: ${b.categoriaPlanejada}, real: ${real})`;
+      return `  ${diaLabel(b.diaSemana)} ${b.horaInicio}-${b.horaFim} ${fr}: ${b.tarefa} (plan: ${b.categoriaPlanejada}, real: ${real})${sufixoHorarioReal(b)}`;
     })
     .join('\n');
   const rev = semana.revisao
@@ -392,7 +405,7 @@ export async function revisarEPlanejar(
         const fr = frenteNome.get(b.frenteId) ?? '?';
         const real =
           b.categoriaRealizada === b.categoriaPlanejada ? 'fez' : `virou ${b.categoriaRealizada}`;
-        return `  ${diaLabel(b.diaSemana)} ${b.horaInicio}-${b.horaFim} ${fr}: ${b.tarefa} (plan: ${b.categoriaPlanejada}, real: ${real})`;
+        return `  ${diaLabel(b.diaSemana)} ${b.horaInicio}-${b.horaFim} ${fr}: ${b.tarefa} (plan: ${b.categoriaPlanejada}, real: ${real})${sufixoHorarioReal(b)}`;
       })
       .join('\n');
     const rev = s.revisao

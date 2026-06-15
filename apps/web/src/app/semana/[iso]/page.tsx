@@ -66,12 +66,15 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
     categoriaRealizada: b.categoriaRealizada,
     concluido: b.concluido,
     concluidoEm: b.concluidoEm ? b.concluidoEm.toISOString() : null,
+    horaRealInicio: b.horaRealInicio,
+    horaRealFim: b.horaRealFim,
     prioridadeSemana: b.prioridadeSemana,
     subtarefas: b.subtarefas.map((t) => ({
       id: t.id,
       texto: t.texto,
       feito: t.feito,
       hora: t.hora,
+      horaFim: t.horaFim,
     })),
   }));
 
