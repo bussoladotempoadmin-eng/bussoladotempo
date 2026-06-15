@@ -3,9 +3,13 @@
  * Seguro pra importar em componentes cliente (não arrasta o Prisma pro bundle).
  */
 
-/** Retorna a semana ISO ("YYYY-Www") de uma data. */
-export function isoWeek(date: Date): string {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+/**
+ * Semana ISO de uma data já em UTC (lê só getters UTC).
+ * Base de todo o cálculo — evita o bug de fuso quando recebe uma data
+ * construída em UTC meia-noite (ex: a segunda-feira vinda de mondayOfIsoWeek).
+ */
+function isoWeekOfUTC(d0: Date): string {
+  const d = new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate()));
   const dayNum = (d.getUTCDay() + 6) % 7; // segunda = 0
   d.setUTCDate(d.getUTCDate() - dayNum + 3); // quinta da semana
   const firstThursday = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
@@ -13,6 +17,15 @@ export function isoWeek(date: Date): string {
   firstThursday.setUTCDate(firstThursday.getUTCDate() - firstThursdayDay + 3);
   const week = 1 + Math.round((d.getTime() - firstThursday.getTime()) / (7 * 86400000));
   return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+/**
+ * Semana ISO ("YYYY-Www") do DIA LOCAL da data (o "hoje" do usuário).
+ * Converte o dia local pra UTC meia-noite antes de calcular, então o
+ * resultado é estável independente do fuso de quem chama.
+ */
+export function isoWeek(date: Date): string {
+  return isoWeekOfUTC(new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())));
 }
 
 export function currentIsoWeek(): string {
@@ -47,7 +60,8 @@ export function shiftIsoWeek(iso: string, delta: number): string {
   const [year, week] = iso.split('-W').map(Number);
   const monday = mondayOfIsoWeek(year, week);
   monday.setUTCDate(monday.getUTCDate() + delta * 7);
-  return isoWeek(monday);
+  // monday é UTC meia-noite → calcula em UTC (senão volta 1 semana em fuso negativo).
+  return isoWeekOfUTC(monday);
 }
 
 /** Rótulo "08/06 – 14/06/2026" para a semana ISO. */

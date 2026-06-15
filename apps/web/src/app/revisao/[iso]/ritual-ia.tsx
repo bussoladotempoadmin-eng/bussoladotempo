@@ -150,7 +150,8 @@ export function RitualIA({
     }
     const d: { criadas: string[]; puladas: string[] } = await r.json();
     if (d.criadas.length === 0 && d.puladas.length > 0) {
-      if (window.confirm(`${d.puladas.join(', ')} já tinha(m) blocos. Substituir pelo padrão da IA?`)) {
+      const nomes = d.puladas.map(isoWeekLabel).join(', ');
+      if (window.confirm(`A semana de ${nomes} já tem blocos. Substituir pelo padrão da IA?`)) {
         return aplicar(true);
       }
       return;
