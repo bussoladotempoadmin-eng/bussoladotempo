@@ -67,6 +67,70 @@ export async function sendPasswordResetEmail({ to, link }: { to: string; link: s
   }
 }
 
+export async function sendAcessoCriadoEmail({
+  to,
+  nome,
+  link,
+}: {
+  to: string;
+  nome?: string;
+  link: string;
+}) {
+  const from = process.env.EMAIL_FROM ?? 'Bússola do Tempo <contato@bussoladotempo.com.br>';
+  const resend = getResend();
+  const ola = nome ? `Olá, ${nome}!` : 'Olá!';
+
+  const { error } = await resend.emails.send({
+    from,
+    to,
+    subject: 'Seu acesso à Bússola do Tempo está pronto 🧭',
+    html: buildAcessoHtml(ola, link),
+    text: [
+      'Bússola do Tempo · seu acesso está pronto',
+      '',
+      ola,
+      'Sua conta foi criada. Crie sua senha pra entrar (o link vale 7 dias):',
+      link,
+      '',
+      'Bons 14 dias de teste!',
+    ].join('\n'),
+  });
+
+  if (error) {
+    console.error('[email] erro ao enviar acesso criado:', error);
+    throw new Error(`Resend erro: ${error.message}`);
+  }
+}
+
+function buildAcessoHtml(ola: string, link: string): string {
+  return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="utf-8" /><title>Bússola do Tempo</title></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#0f172a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border-radius:16px;border:1px solid #e2e8f0;padding:40px;">
+        <tr><td style="padding-bottom:24px;">
+          <div style="display:inline-flex;align-items:center;gap:8px;font-size:20px;font-weight:800;color:#0f172a;">🧭&nbsp;Bússola do Tempo</div>
+        </td></tr>
+        <tr><td style="font-size:22px;font-weight:700;padding-bottom:12px;">${ola}</td></tr>
+        <tr><td style="font-size:15px;color:#475569;line-height:1.6;padding-bottom:24px;">
+          Sua conta foi criada e seus <b>14 dias grátis</b> começaram. Crie sua senha pra entrar — o link vale 7 dias.
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <a href="${link}" style="display:inline-block;background:#3b82f6;color:#fff;font-weight:600;padding:14px 28px;border-radius:10px;text-decoration:none;font-size:15px;">Criar minha senha e entrar</a>
+        </td></tr>
+        <tr><td style="font-size:13px;color:#94a3b8;padding-bottom:16px;">
+          Ou copia esse endereço:<br/><span style="word-break:break-all;color:#3b82f6;">${link}</span>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`.trim();
+}
+
 function buildResetHtml(link: string): string {
   return `
 <!DOCTYPE html>
