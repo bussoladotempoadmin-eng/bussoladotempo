@@ -5,6 +5,7 @@ import {
   estenderTrial,
   criarCobrancaManual,
 } from '@/lib/admin-billing';
+import { vincularParceiroAssinatura } from '@/lib/comissoes';
 import type { CicloPlano, StatusAssinatura } from '@bussola/db';
 
 export const dynamic = 'force-dynamic';
@@ -50,6 +51,13 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     });
     if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
     return NextResponse.json({ ok: true, cobrancaId: r.cobrancaId });
+  }
+
+  if (tipo === 'vincular_parceiro') {
+    const code = typeof body?.code === 'string' ? body.code : '';
+    const r = await vincularParceiroAssinatura(params.id, code, admin.id);
+    if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
+    return NextResponse.json({ ok: true });
   }
 
   return NextResponse.json({ error: 'Ação desconhecida' }, { status: 400 });

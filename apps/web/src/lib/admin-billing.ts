@@ -16,6 +16,7 @@ import type {
   OrigemAssinatura,
 } from '@bussola/db';
 import { valorCobranca } from './assinatura';
+import { criarComissaoSeIndicado } from './comissoes';
 
 // ---------- helpers de mês ----------
 
@@ -390,5 +391,8 @@ export async function marcarCobranca(
       },
     }),
   ]);
+
+  // Comissão do parceiro (se houver) — fire-and-forget, nunca quebra o pagamento.
+  await criarComissaoSeIndicado(cobrancaId);
   return { ok: true };
 }

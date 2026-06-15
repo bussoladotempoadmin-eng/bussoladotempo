@@ -34,10 +34,12 @@ export function AcoesConta(props: {
   notasInternas: string;
   valorSugerido: number;
   planos: { slug: string; nome: string }[];
+  parceiroCode: string;
 }) {
   const router = useRouter();
   const { toast } = useToast();
   const [busy, setBusy] = React.useState<string | null>(null);
+  const [parceiroCode, setParceiroCode] = React.useState(props.parceiroCode);
 
   // edição da assinatura
   const [status, setStatus] = React.useState(props.status);
@@ -194,6 +196,35 @@ export function AcoesConta(props: {
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
           >
             {busy === 'cob' && <Loader2 className="h-4 w-4 animate-spin" />} Gerar cobrança
+          </button>
+        </div>
+      </Card>
+
+      <Card titulo="Parceiro (indicação)">
+        <div className="space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-xs text-muted-foreground">Código do parceiro (vazio = sem parceiro)</span>
+            <input
+              className={`${INP} font-mono`}
+              value={parceiroCode}
+              onChange={(e) => setParceiroCode(e.target.value.toUpperCase())}
+              placeholder="PRT........"
+            />
+          </label>
+          <p className="text-xs text-muted-foreground">
+            Vincular faz as próximas cobranças pagas gerarem comissão pro parceiro.
+          </p>
+          <button
+            onClick={() =>
+              call('parc', `/api/admin/contas/${props.assinaturaId}`, 'POST', {
+                tipo: 'vincular_parceiro',
+                code: parceiroCode,
+              }).then((ok) => ok && toast('Parceiro atualizado.'))
+            }
+            disabled={busy !== null}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm font-semibold hover:bg-muted disabled:opacity-60"
+          >
+            {busy === 'parc' && <Loader2 className="h-4 w-4 animate-spin" />} Salvar parceiro
           </button>
         </div>
       </Card>

@@ -71,6 +71,7 @@ export default async function ContaDetalhePage({ params }: { params: { id: strin
         notasInternas={a.notasInternas ?? ''}
         valorSugerido={valorSugerido}
         planos={planos.map((p) => ({ slug: p.slug, nome: p.nome }))}
+        parceiroCode={a.parceiro?.code ?? ''}
       />
 
       {/* Cobranças */}

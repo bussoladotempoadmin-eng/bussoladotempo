@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { rodarMaquinaBilling } from '@/lib/billing-state-machine';
+import { liberarComissoes } from '@/lib/comissoes';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -19,5 +20,6 @@ export async function GET(req: Request) {
   }
 
   const r = await rodarMaquinaBilling();
-  return NextResponse.json({ ok: true, ...r });
+  const comissoesLiberadas = await liberarComissoes();
+  return NextResponse.json({ ok: true, ...r, comissoesLiberadas });
 }
