@@ -4,6 +4,16 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Sparkles, Loader2, X, Lightbulb, Check } from 'lucide-react';
 import { isoWeekLabel } from '@/lib/iso-week';
+import type { StatusCota } from '@/lib/cota-ia';
+
+function msgCota(cota?: StatusCota): string | null {
+  if (!cota) return null;
+  if (cota.motivo === 'semana')
+    return 'Você já gerou esta semana — o gerador libera de novo na próxima (ideal: sex/sáb/dom).';
+  if (cota.motivo === 'mes')
+    return `Limite de ${cota.limiteMes} gerações no mês atingido. Renova no mês que vem.`;
+  return `${cota.restantesMes} de ${cota.limiteMes} gerações disponíveis este mês.`;
+}
 
 type Frente = { id: string; nome: string; icone: string; cor: string };
 type PropostaBloco = {
@@ -41,13 +51,16 @@ export function AgendaIAView({
   frentes,
   semanas,
   semanaUnica = false,
+  cota,
 }: {
   frentes: Frente[];
   semanas: { iso: string; label: string }[];
   // Modo "esta semana": sem seletor de semana nem repetição (usado na semana vazia).
   semanaUnica?: boolean;
+  cota?: StatusCota;
 }) {
   const frenteById = React.useMemo(() => new Map(frentes.map((f) => [f.id, f])), [frentes]);
+  const bloqueado = Boolean(cota && !cota.podeGerar);
 
   // Default: próxima semana (índice 1), que é o caso de uso mais comum.
   const [alvo, setAlvo] = React.useState(semanas[1]?.iso ?? semanas[0]?.iso ?? '');
@@ -166,7 +179,7 @@ export function AgendaIAView({
           <button
             type="button"
             onClick={gerar}
-            disabled={loading || !alvo}
+            disabled={loading || !alvo || bloqueado}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-md disabled:opacity-60"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -174,6 +187,14 @@ export function AgendaIAView({
           </button>
         )}
       </div>
+      {!proposta && msgCota(cota) && (
+        <p
+          className={`mt-2 text-[11px] font-medium ${bloqueado ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}
+        >
+          {bloqueado ? '⏳ ' : '✨ '}
+          {msgCota(cota)}
+        </p>
+      )}
 
       {loading && (
         <p className="mt-3 text-sm text-muted-foreground">
@@ -278,28 +299,24 @@ export function AgendaIAView({
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-semibold text-muted-foreground">Aplicar em:</span>
             <div className="inline-flex rounded-lg border border-border p-0.5 text-xs font-semibold">
-              <button
-                type="button"
-                onClick={() => setRepetir(1)}
-                className={
-                  repetir === 1
-                    ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground'
-                    : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'
-                }
-              >
-                Só esta semana
-              </button>
-              <button
-                type="button"
-                onClick={() => setRepetir(4)}
-                className={
-                  repetir === 4
-                    ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground'
-                    : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'
-                }
-              >
-                Próximas 4 semanas (mês)
-              </button>
+              {[
+                { v: 1, label: 'Só esta' },
+                { v: 2, label: '2 semanas' },
+                { v: 4, label: '4 (mês)' },
+              ].map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => setRepetir(o.v)}
+                  className={
+                    repetir === o.v
+                      ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground'
+                      : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'
+                  }
+                >
+                  {o.label}
+                </button>
+              ))}
             </div>
           </div>
           )}

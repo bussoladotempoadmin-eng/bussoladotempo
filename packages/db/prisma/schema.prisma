@@ -166,6 +166,8 @@ model Workspace {
   horaDormir    String       @default("22:30")
   horaAlmocoIni String       @default("12:00")
   horaAlmocoFim String       @default("13:30")
+  // Cota de IA: gerações extras compradas (além das 6/mês grátis). Billing-ready.
+  geracoesExtras Int         @default(0)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
@@ -174,8 +176,26 @@ model Workspace {
   compromissos CompromissoFixo[]
   semanas      SemanaPlano[]
   fechamentos  FechamentoDia[]
+  geracoesIA   GeracaoIA[]
 
   @@index([userId])
+}
+
+// Registro de cada geração de IA (1 chamada = 1 linha). Aplicar em 2/4 semanas
+// continua sendo 1 geração. Reabrir resultado salvo NÃO conta.
+// Trava: 1 por semana ISO; teto: 6 por mês (+ geracoesExtras compradas).
+model GeracaoIA {
+  id               String   @id @default(cuid())
+  workspaceId      String
+  isoWeek          String // semana ISO em que gerou (trava semanal)
+  mesRef           String // "YYYY-MM" (cota mensal)
+  semanasAplicadas Int      @default(1)
+  criadoEm         DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, mesRef])
+  @@index([workspaceId, isoWeek])
 }
 
 model Frente {

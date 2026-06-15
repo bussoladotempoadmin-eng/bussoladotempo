@@ -19,6 +19,7 @@ import { Compass, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { BlocoDTO, FrenteOption } from './blocos-manager';
 import { SemanaView } from './semana-view';
 import { AgendaIAView } from '@/app/agenda-padrao/agenda-ia-view';
+import { statusCota } from '@/lib/cota-ia';
 
 export const metadata = {
   title: 'Semana · Bússola do Tempo',
@@ -75,6 +76,11 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
     icone: f.icone,
     cor: f.cor,
   }));
+
+  const cotaSemana =
+    initialBlocos.length === 0 && frenteOptions.length > 0
+      ? await statusCota(workspace.id)
+      : null;
 
   const semanaAnterior = shiftIsoWeek(iso, -1);
   const proximaSemana = shiftIsoWeek(iso, 1);
@@ -134,6 +140,7 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
               frentes={frenteOptions}
               semanas={[{ iso, label: isoWeekRangeLabel(iso) }]}
               semanaUnica
+              cota={cotaSemana ?? undefined}
             />
           </div>
         )}

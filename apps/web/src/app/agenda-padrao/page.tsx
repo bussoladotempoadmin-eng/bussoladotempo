@@ -10,6 +10,7 @@ import { UserMenu } from '@/components/user-menu';
 import { Compass, ArrowLeft } from 'lucide-react';
 import { AgendaPadraoView } from './agenda-padrao-view';
 import { AgendaIAView } from './agenda-ia-view';
+import { statusCota } from '@/lib/cota-ia';
 
 export const metadata = {
   title: 'Agenda padrão · Bússola do Tempo',
@@ -33,6 +34,8 @@ export default async function AgendaPadraoPage() {
         }),
       ])
     : [0, 0, []];
+
+  const cota = workspace ? await statusCota(workspace.id) : null;
 
   const atualIso = currentIsoWeek();
   // Gerador determinístico: semana atual + próxima (ponto de partida simples).
@@ -78,7 +81,7 @@ export default async function AgendaPadraoPage() {
 
         {frentesCount > 0 && (
           <div className="mt-8">
-            <AgendaIAView frentes={frentes} semanas={semanasIA} />
+            <AgendaIAView frentes={frentes} semanas={semanasIA} cota={cota ?? undefined} />
           </div>
         )}
 

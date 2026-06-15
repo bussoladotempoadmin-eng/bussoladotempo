@@ -6,6 +6,7 @@ import { Sparkles, Loader2, X, Lightbulb, Check, Calendar, Pencil, Plus } from '
 import { shiftIsoWeek, isoWeekLabel } from '@/lib/iso-week';
 import { BlocoForm, type FormState, type FrenteOption } from '../../semana/[iso]/blocos-manager';
 import type { DiaSemana, Categoria } from '@/lib/schemas/compromisso';
+import type { StatusCota } from '@/lib/cota-ia';
 
 type Frente = FrenteOption;
 type PropostaBloco = {
@@ -62,16 +63,28 @@ function toMin(hhmm: string): number {
   return h * 60 + m;
 }
 
+function msgCota(cota?: StatusCota): string | null {
+  if (!cota) return null;
+  if (cota.motivo === 'semana')
+    return 'Você já gerou esta semana — o gerador libera de novo na próxima (ideal: sex/sáb/dom).';
+  if (cota.motivo === 'mes')
+    return `Limite de ${cota.limiteMes} gerações no mês atingido. Renova no mês que vem.`;
+  return `${cota.restantesMes} de ${cota.limiteMes} gerações disponíveis este mês.`;
+}
+
 export function RitualIA({
   semanaIso,
   frentes,
   inicial,
+  cota,
 }: {
   semanaIso: string;
   frentes: Frente[];
   inicial?: Resultado | null;
+  cota?: StatusCota;
 }) {
   const frenteById = React.useMemo(() => new Map(frentes.map((f) => [f.id, f])), [frentes]);
+  const bloqueado = Boolean(cota && !cota.podeGerar);
 
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -172,7 +185,7 @@ export function RitualIA({
           <button
             type="button"
             onClick={() => gerar(false)}
-            disabled={loading}
+            disabled={loading || bloqueado}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:shadow-md disabled:opacity-60"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
@@ -189,6 +202,14 @@ export function RitualIA({
       <p className="mt-1 text-xs text-muted-foreground">
         Num comando só: a IA analisa esta semana e propõe a próxima, aprendendo do que rolou.
       </p>
+      {!res && msgCota(cota) && (
+        <p
+          className={`mt-1 text-[11px] font-medium ${bloqueado ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}
+        >
+          {bloqueado ? '⏳ ' : '✨ '}
+          {msgCota(cota)}
+        </p>
+      )}
       {res && !loading && (
         <p className="mt-1 text-[11px] text-muted-foreground">
           ✓ Resultado guardado — reabrir não gasta crédito. A IA fica disponível de novo na
@@ -310,20 +331,24 @@ export function RitualIA({
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-muted-foreground">Aplicar em:</span>
                 <div className="inline-flex rounded-lg border border-border p-0.5 text-xs font-semibold">
-                  <button
-                    type="button"
-                    onClick={() => setRepetir(1)}
-                    className={repetir === 1 ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground' : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'}
-                  >
-                    Próxima semana
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRepetir(4)}
-                    className={repetir === 4 ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground' : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'}
-                  >
-                    Próximas 4 (mês)
-                  </button>
+                  {[
+                    { v: 1, label: 'Próxima semana' },
+                    { v: 2, label: '2 próximas' },
+                    { v: 4, label: '4 próximas (mês)' },
+                  ].map((o) => (
+                    <button
+                      key={o.v}
+                      type="button"
+                      onClick={() => setRepetir(o.v)}
+                      className={
+                        repetir === o.v
+                          ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground'
+                          : 'rounded-md px-3 py-1 text-muted-foreground hover:text-foreground'
+                      }
+                    >
+                      {o.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 

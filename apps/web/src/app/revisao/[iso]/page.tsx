@@ -23,6 +23,7 @@ import { RevisaoForm, type RevisaoData } from './revisao-form';
 import { EspelhoPainel } from './espelho-painel';
 import { RitualIA } from './ritual-ia';
 import { lerRitualCache } from '@/lib/ai-agenda';
+import { statusCota } from '@/lib/cota-ia';
 
 export const metadata = { title: 'Revisão · Bússola do Tempo' };
 
@@ -54,6 +55,7 @@ export default async function RevisaoPage({ params }: { params: { iso: string } 
 
   // Cache do ritual de IA (se já gerou, mostra na hora, sem re-gastar crédito).
   const ritualInicial = blocos.length > 0 ? await lerRitualCache(workspace.id, iso) : null;
+  const cota = blocos.length > 0 ? await statusCota(workspace.id) : null;
 
   const espelho = calcEspelho(
     blocos.map(
@@ -176,7 +178,7 @@ export default async function RevisaoPage({ params }: { params: { iso: string } 
         {/* ✨ Comando combinado da IA */}
         {blocos.length > 0 && (
           <div className="mt-8">
-            <RitualIA semanaIso={iso} frentes={frentes} inicial={ritualInicial} />
+            <RitualIA semanaIso={iso} frentes={frentes} inicial={ritualInicial} cota={cota ?? undefined} />
           </div>
         )}
 

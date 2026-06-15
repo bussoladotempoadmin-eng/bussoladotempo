@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getCurrentWorkspace } from '@/lib/workspace';
 import { isIsoWeek } from '@/lib/semana';
-import { revisarEPlanejarComCache, SemChaveIA } from '@/lib/ai-agenda';
+import { revisarEPlanejarComCache, lerRitualCache, SemChaveIA } from '@/lib/ai-agenda';
+import { statusCota, registrarGeracao, mensagemCota } from '@/lib/cota-ia';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -20,8 +21,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Semana inválida' }, { status: 400 });
   }
 
+  const force = Boolean(body?.force);
+
   try {
-    const r = await revisarEPlanejarComCache(workspace.id, semanaIso, Boolean(body?.force));
+    // Reabrir o resultado salvo é grátis (não checa cota nem conta).
+    // Só verifica/consome a cota quando vai REALMENTE gerar (cache vazio ou force).
+    const cache = await lerRitualCache(workspace.id, semanaIso);
+    if (!cache || force) {
+      const cota = await statusCota(workspace.id);
+      if (!cota.podeGerar) {
+        return NextResponse.json({ error: mensagemCota(cota), motivo: cota.motivo }, { status: 429 });
+      }
+    }
+    const r = await revisarEPlanejarComCache(workspace.id, semanaIso, force);
+    if (!r.cacheado) await registrarGeracao(workspace.id);
     return NextResponse.json(r);
   } catch (e) {
     if (e instanceof SemChaveIA) {

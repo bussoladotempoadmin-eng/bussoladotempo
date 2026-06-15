@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentWorkspace } from '@/lib/workspace';
 import { isIsoWeek } from '@/lib/semana';
 import { gerarAgendaIA, SemChaveIA } from '@/lib/ai-agenda';
+import { statusCota, registrarGeracao, mensagemCota } from '@/lib/cota-ia';
 
 // Geração com IA pode levar alguns segundos — dá folga no timeout serverless.
 export const maxDuration = 60;
@@ -22,8 +23,15 @@ export async function POST(req: Request) {
   }
   const semanasHistorico = Math.min(Math.max(Number(body?.semanasHistorico) || 4, 1), 8);
 
+  // Trava de cota: 1 geração/semana, 6/mês. Bloqueia ANTES de gastar IA.
+  const cota = await statusCota(workspace.id);
+  if (!cota.podeGerar) {
+    return NextResponse.json({ error: mensagemCota(cota), motivo: cota.motivo }, { status: 429 });
+  }
+
   try {
     const proposta = await gerarAgendaIA(workspace.id, semanaIso, semanasHistorico);
+    await registrarGeracao(workspace.id);
     return NextResponse.json(proposta);
   } catch (e) {
     if (e instanceof SemChaveIA) {
