@@ -77,16 +77,41 @@ export function useBlocoMutations(setBlocos: SetBlocos, semanaIso: string) {
   );
 
   const registrarRealizado = React.useCallback(
-    async (id: string, resultado: 'SIM' | 'URGENTE' | 'DISPERSO') => {
+    async (id: string, resultado: 'SIM' | 'URGENTE' | 'DISPERSO', concluidoEm?: string) => {
       const res = await fetch(`/api/blocos/${id}/realizado`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resultado }),
+        body: JSON.stringify({ resultado, concluidoEm }),
       });
       if (!res.ok) return false;
       const at: BlocoDTO = await res.json();
       setBlocos((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, categoriaRealizada: at.categoriaRealizada } : b)),
+        prev.map((b) =>
+          b.id === id
+            ? {
+                ...b,
+                categoriaRealizada: at.categoriaRealizada,
+                concluido: at.concluido,
+                concluidoEm: at.concluidoEm,
+              }
+            : b,
+        ),
+      );
+      return true;
+    },
+    [setBlocos],
+  );
+
+  const reabrirBloco = React.useCallback(
+    async (id: string) => {
+      const res = await fetch(`/api/blocos/${id}/realizado`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reabrir: true }),
+      });
+      if (!res.ok) return false;
+      setBlocos((prev) =>
+        prev.map((b) => (b.id === id ? { ...b, concluido: false, concluidoEm: null } : b)),
       );
       return true;
     },
@@ -163,6 +188,7 @@ export function useBlocoMutations(setBlocos: SetBlocos, semanaIso: string) {
     deleteBloco,
     togglePrioridade,
     registrarRealizado,
+    reabrirBloco,
     addTarefa,
     toggleTarefa,
     deleteTarefa,

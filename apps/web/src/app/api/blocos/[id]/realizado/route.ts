@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@bussola/db';
 import { getCurrentWorkspace } from '@/lib/workspace';
 
-// PATCH /api/blocos/[id]/realizado — registro rápido do que aconteceu no bloco.
-// body: { resultado: 'SIM' | 'URGENTE' | 'DISPERSO' }
-//  - SIM      → realizado = planejado (fez como planejou)
+// PATCH /api/blocos/[id]/realizado — concluir o bloco (ou reabrir).
+// body p/ concluir: { resultado: 'SIM'|'URGENTE'|'DISPERSO', concluidoEm?: ISO }
+//  - SIM      → realizado = planejado (saiu como planejou)
 //  - URGENTE  → realizado = Urgente (algo urgente atropelou → invadido)
 //  - DISPERSO → realizado = Disperso
+// body p/ reabrir: { reabrir: true }  → volta pra não-concluído.
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const workspace = await getCurrentWorkspace();
   if (!workspace) {
@@ -21,8 +22,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   const body = await req.json().catch(() => null);
-  const resultado = body?.resultado;
 
+  // Reabrir: desfaz a conclusão (mantém a categoria realizada como histórico).
+  if (body?.reabrir) {
+    const reaberto = await prisma.bloco.update({
+      where: { id: params.id },
+      data: { concluido: false, concluidoEm: null },
+    });
+    return NextResponse.json(reaberto);
+  }
+
+  const resultado = body?.resultado;
   let categoriaRealizada: 'IMPORTANTE' | 'URGENTE' | 'DISPERSO';
   let invadido = false;
   if (resultado === 'SIM') {
@@ -36,9 +46,16 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: 'Resultado inválido' }, { status: 422 });
   }
 
+  // Data/hora da conclusão: a informada (se válida) ou agora.
+  let concluidoEm = new Date();
+  if (typeof body?.concluidoEm === 'string') {
+    const d = new Date(body.concluidoEm);
+    if (!Number.isNaN(d.getTime())) concluidoEm = d;
+  }
+
   const atualizado = await prisma.bloco.update({
     where: { id: params.id },
-    data: { categoriaRealizada, invadido },
+    data: { categoriaRealizada, invadido, concluido: true, concluidoEm },
   });
   return NextResponse.json(atualizado);
 }

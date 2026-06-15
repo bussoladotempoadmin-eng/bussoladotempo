@@ -69,24 +69,31 @@ export function CompromissosManager({
     return parsed.data;
   }
 
-  async function handleCreate(form: FormState) {
+  async function handleCreate(form: FormState, diasExtras: DiaSemana[] = []) {
     setError(null);
     const data = validate(form);
     if (!data) return;
+    // Dia base + os dias marcados pra repetir (sem duplicar).
+    const dias = Array.from(new Set<DiaSemana>([form.diaSemana, ...diasExtras]));
     setBusy(true);
-    const res = await fetch('/api/compromissos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    setBusy(false);
-    if (!res.ok) {
-      const d = await res.json().catch(() => null);
-      setError(d?.error ?? 'Não consegui criar o compromisso.');
-      return;
+    const criados: CompromissoDTO[] = [];
+    for (const dia of dias) {
+      const res = await fetch('/api/compromissos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...data, diaSemana: dia }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => null);
+        setError(d?.error ?? 'Não consegui criar o compromisso.');
+        setBusy(false);
+        if (criados.length) setItems((prev) => [...prev, ...criados]);
+        return;
+      }
+      criados.push(await res.json());
     }
-    const novo: CompromissoDTO = await res.json();
-    setItems((prev) => [...prev, novo]);
+    setBusy(false);
+    setItems((prev) => [...prev, ...criados]);
     setAdding(false);
   }
 
@@ -185,6 +192,7 @@ export function CompromissosManager({
           initial={emptyForm}
           frentes={frentes}
           busy={busy}
+          multiDia
           onSubmit={handleCreate}
           onCancel={() => {
             setAdding(false);
@@ -284,19 +292,26 @@ function CompromissoForm({
   initial,
   frentes,
   busy,
+  multiDia = false,
   onSubmit,
   onCancel,
 }: {
   initial: FormState;
   frentes: FrenteOption[];
   busy: boolean;
-  onSubmit: (form: FormState) => void;
+  multiDia?: boolean;
+  onSubmit: (form: FormState, diasExtras: DiaSemana[]) => void;
   onCancel: () => void;
 }) {
   const [form, setForm] = React.useState<FormState>(initial);
+  const [extras, setExtras] = React.useState<DiaSemana[]>([]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function toggleExtra(d: DiaSemana) {
+    setExtras((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
   }
 
   const fieldClass =
@@ -306,7 +321,10 @@ function CompromissoForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSubmit(form);
+        onSubmit(
+          form,
+          extras.filter((d) => d !== form.diaSemana),
+        );
       }}
       className="rounded-xl border border-primary/40 bg-card p-4 shadow-sm"
     >
@@ -388,6 +406,35 @@ function CompromissoForm({
           </select>
         </label>
       </div>
+
+      {multiDia && (
+        <div className="mt-4">
+          <span className="text-xs font-semibold text-muted-foreground">
+            Repetir também em (cria uma cópia em cada dia)
+          </span>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {diaSemanaValues
+              .filter((d) => d !== form.diaSemana)
+              .map((d) => {
+                const on = extras.includes(d);
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => toggleExtra(d)}
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                      on
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-muted-foreground hover:bg-muted'
+                    }`}
+                  >
+                    {diaSemanaLabel[d]}
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 flex items-center justify-end gap-2">
         <button

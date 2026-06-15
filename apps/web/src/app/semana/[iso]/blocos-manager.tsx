@@ -39,6 +39,8 @@ export type BlocoDTO = {
   frenteId: string;
   categoriaPlanejada: Categoria;
   categoriaRealizada: Categoria;
+  concluido: boolean;
+  concluidoEm: string | null;
   prioridadeSemana: number | null;
   subtarefas: SubTarefa[];
 };
@@ -454,7 +456,7 @@ function BlocoRow({
   const [aberto, setAberto] = React.useState(false);
   const [novaTarefa, setNovaTarefa] = React.useState('');
   const [novaHora, setNovaHora] = React.useState('');
-  const desviou = b.categoriaPlanejada !== b.categoriaRealizada;
+  const desviou = b.concluido && b.categoriaPlanejada !== b.categoriaRealizada;
   const prioridade = b.prioridadeSemana;
   const total = b.subtarefas.length;
   const feitas = b.subtarefas.filter((t) => t.feito).length;
@@ -526,6 +528,14 @@ function BlocoRow({
             >
               {categoriaLabel[b.categoriaPlanejada]}
             </span>
+            {b.concluido && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-700 dark:text-emerald-400"
+                title="Demanda concluída"
+              >
+                <Check className="h-3 w-3" /> concluído
+              </span>
+            )}
             {temConflito && (
               <span
                 className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 font-semibold text-amber-700 dark:text-amber-400"
@@ -765,7 +775,7 @@ export function BlocoForm({
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="text-xs font-semibold text-muted-foreground">Planejada</span>
+          <span className="text-xs font-semibold text-muted-foreground">Categoria planejada</span>
           <select
             value={form.categoriaPlanejada}
             onChange={(e) => set('categoriaPlanejada', e.target.value as Categoria)}
@@ -778,22 +788,11 @@ export function BlocoForm({
             ))}
           </select>
         </label>
-
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-semibold text-muted-foreground">Realizada</span>
-          <select
-            value={form.categoriaRealizada}
-            onChange={(e) => set('categoriaRealizada', e.target.value as Categoria)}
-            className={fieldClass}
-          >
-            {categoriaValues.map((c) => (
-              <option key={c} value={c}>
-                {categoriaLabel[c]}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        Como a tarefa <b>realmente</b> foi (importante / urgente / disperso) você marca depois, ao
+        concluir — no botão “Concluir” do bloco.
+      </p>
 
       <div className="mt-4 flex items-center justify-end gap-2">
         <button

@@ -52,9 +52,13 @@ export async function nudgeRevisao(workspaceId: string): Promise<NudgeRevisao | 
   // Já concluída? Trava — não cobra mais.
   const semana = await prisma.semanaPlano.findUnique({
     where: { workspaceId_semanaIso: { workspaceId, semanaIso: iso } },
-    include: { revisao: { select: { fechadaEm: true } } },
+    include: { revisao: { select: { fechadaEm: true } }, _count: { select: { blocos: true } } },
   });
   if (semana?.revisao?.fechadaEm) return null;
+
+  // Sem semana montada (ou sem nenhum bloco) = nada pra revisar.
+  // Evita cobrar revisão de quem acabou de entrar e ainda não usou a 1ª semana.
+  if (!semana || semana._count.blocos === 0) return null;
 
   const titulo =
     tom === 'grace'

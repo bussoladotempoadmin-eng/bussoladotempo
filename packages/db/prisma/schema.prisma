@@ -76,6 +76,7 @@ model User {
   image         String?
   senhaHash     String? // login por e-mail/senha (null = só Google/link mágico)
   superAdmin    Boolean       @default(false) // acesso ao painel de gestão do produto
+  onboardingVisto Boolean     @default(false) // já viu o tour guiado inicial
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -289,6 +290,8 @@ model Bloco {
   categoriaPlanejada Categoria
   categoriaRealizada Categoria
   motivoDesvio       String?     @db.Text
+  concluido          Boolean     @default(false) // demanda marcada como concluída
+  concluidoEm        DateTime?   // quando foi concluída (data/hora real)
   prioridadeSemana   Int?        // 1, 2 ou 3
   invadido           Boolean     @default(false)
   fonteOrigem        FonteOrigem @default(MANUAL)

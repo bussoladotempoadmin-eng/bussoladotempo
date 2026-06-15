@@ -85,10 +85,33 @@ export function BlocoModal({
   }
 
   const realizadoBtns: { r: 'SIM' | 'URGENTE' | 'DISPERSO'; label: string; icon: React.ReactNode; cls: string }[] = [
-    { r: 'SIM', label: 'Fiz', icon: <Check className="h-4 w-4" />, cls: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400' },
+    { r: 'SIM', label: 'Como planejado', icon: <Check className="h-4 w-4" />, cls: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400' },
     { r: 'URGENTE', label: 'Virou urgente', icon: <Flame className="h-4 w-4" />, cls: 'bg-triade-urgente-soft text-triade-urgente' },
     { r: 'DISPERSO', label: 'Foi disperso', icon: <Wind className="h-4 w-4" />, cls: 'bg-triade-disperso-soft text-triade-disperso' },
   ];
+
+  // datetime-local: "YYYY-MM-DDTHH:mm" no fuso local.
+  function paraInputLocal(d: Date): string {
+    const off = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - off).toISOString().slice(0, 16);
+  }
+  const [quando, setQuando] = React.useState<string>(() =>
+    paraInputLocal(b.concluidoEm ? new Date(b.concluidoEm) : new Date()),
+  );
+
+  async function concluir(r: 'SIM' | 'URGENTE' | 'DISPERSO') {
+    const iso = quando ? new Date(quando).toISOString() : undefined;
+    await mut.registrarRealizado(b.id, r, iso);
+  }
+
+  const concluidoLabel = b.concluidoEm
+    ? new Date(b.concluidoEm).toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : null;
 
   return (
     <div
@@ -138,30 +161,64 @@ export function BlocoModal({
           />
         ) : (
           <>
-            {/* Como foi (realizado) */}
-            <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              Como foi
-            </p>
-            <div className="mb-4 grid grid-cols-3 gap-2">
-              {realizadoBtns.map((rb) => (
-                <button
-                  key={rb.r}
-                  type="button"
-                  onClick={() => mut.registrarRealizado(b.id, rb.r)}
-                  className={cn(
-                    'flex flex-col items-center gap-1 rounded-xl p-2.5 text-xs font-bold transition-all',
-                    rb.cls,
-                    // realça o atual
+            {/* Concluir a demanda */}
+            <div className="mb-4 rounded-xl border border-border p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {b.concluido ? 'Concluído' : 'Concluir'}
+                </p>
+                {b.concluido && concluidoLabel && (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    <Check className="h-3.5 w-3.5" /> em {concluidoLabel}
+                  </span>
+                )}
+              </div>
+
+              <label className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="shrink-0">Quando concluiu</span>
+                <input
+                  type="datetime-local"
+                  value={quando}
+                  onChange={(e) => setQuando(e.target.value)}
+                  className="flex-1 rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground"
+                />
+              </label>
+
+              <p className="mb-1.5 text-xs text-muted-foreground">Como realmente foi?</p>
+              <div className="grid grid-cols-3 gap-2">
+                {realizadoBtns.map((rb) => {
+                  const ativo =
+                    b.concluido &&
                     ((rb.r === 'SIM' && b.categoriaRealizada === b.categoriaPlanejada) ||
                       (rb.r === 'URGENTE' && b.categoriaRealizada === 'URGENTE') ||
-                      (rb.r === 'DISPERSO' && b.categoriaRealizada === 'DISPERSO')) &&
-                      'ring-2 ring-offset-1 ring-current',
-                  )}
+                      (rb.r === 'DISPERSO' && b.categoriaRealizada === 'DISPERSO'));
+                  return (
+                    <button
+                      key={rb.r}
+                      type="button"
+                      onClick={() => concluir(rb.r)}
+                      className={cn(
+                        'flex flex-col items-center gap-1 rounded-xl p-2.5 text-xs font-bold transition-all',
+                        rb.cls,
+                        ativo && 'ring-2 ring-offset-1 ring-current',
+                      )}
+                    >
+                      {rb.icon}
+                      {rb.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {b.concluido && (
+                <button
+                  type="button"
+                  onClick={() => mut.reabrirBloco(b.id)}
+                  className="mt-2.5 text-xs font-semibold text-muted-foreground underline-offset-2 hover:underline"
                 >
-                  {rb.icon}
-                  {rb.label}
+                  Reabrir (marcar como não concluído)
                 </button>
-              ))}
+              )}
             </div>
 
             {/* Checklist */}

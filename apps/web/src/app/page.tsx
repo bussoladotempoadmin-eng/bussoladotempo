@@ -16,6 +16,7 @@ import { AtivarLembretes } from '@/components/ativar-lembretes';
 import { garantirAssinatura, getEntitlements } from '@/lib/assinatura';
 import { BLOQUEIO_ATIVO } from '@/lib/acesso';
 import { AvisoPlano } from './aviso-plano';
+import { OnboardingTour } from './onboarding-tour';
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -35,6 +36,12 @@ export default async function Home() {
   if (BLOQUEIO_ATIVO && ent.temAssinatura && !ent.ativa) {
     redirect('/conta-suspensa');
   }
+
+  // Tour guiado inicial (mostra uma vez).
+  const conta = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { onboardingVisto: true },
+  });
 
   const workspace = await getCurrentWorkspace();
   const iso = currentIsoWeek();
@@ -114,6 +121,8 @@ export default async function Home() {
           <UserMenu />
         </div>
       </header>
+
+      {!conta?.onboardingVisto && <OnboardingTour />}
 
       {ent.temAssinatura && !ent.planoConfirmado && (
         <AvisoPlano planoNome={ent.planoNome ?? 'plano Essencial'} diasRestantes={ent.diasRestantesTrial} />
