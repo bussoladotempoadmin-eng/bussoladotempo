@@ -18,7 +18,7 @@ export default async function UnidadesPage() {
   const { empresas, orgId, escopo } = ctx;
 
   return (
-    <ComercialShell empresas={empresas} empresaAtualId={orgId}>
+    <ComercialShell empresas={empresas} empresaAtualId={orgId} podeGerenciar={escopo.podeGerenciarAcessos}>
       <h1 className="text-2xl font-extrabold tracking-tight">Unidades · {escopo.org.nome}</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         As cidades / unidades desta empresa.

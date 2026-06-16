@@ -57,7 +57,7 @@ export default async function ComercialPage({
   const maxCPL = Math.max(1, ...tiposComLead.map((t) => t.custoPorLead ?? 0));
 
   return (
-    <ComercialShell empresas={empresas} empresaAtualId={orgId}>
+    <ComercialShell empresas={empresas} empresaAtualId={orgId} podeGerenciar={escopo.podeGerenciarAcessos}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight">Painel · {escopo.org.nome}</h1>

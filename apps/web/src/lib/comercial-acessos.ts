@@ -61,10 +61,13 @@ export async function resolverAcessoComercial(
   }
 
   const [acesso, legadas] = await Promise.all([
-    prisma.acessoComercial.findUnique({
-      where: { organizacaoId_userId: { organizacaoId: orgId, userId } },
-      include: { unidades: { select: { unidadeId: true } } },
-    }),
+    // Defensivo: se a migration ainda não rodou, a tabela não existe — cai no legado.
+    prisma.acessoComercial
+      .findUnique({
+        where: { organizacaoId_userId: { organizacaoId: orgId, userId } },
+        include: { unidades: { select: { unidadeId: true } } },
+      })
+      .catch(() => null),
     // Legado: coordenador de unidades (sempre EDITAR nessas unidades).
     prisma.unidade.findMany({
       where: { organizacaoId: orgId, coordenadorId: userId },

@@ -31,7 +31,7 @@ export default async function AcaoDetailPage({ params }: { params: { id: string 
   const tipos = await listarTipos(orgId);
 
   return (
-    <ComercialShell empresas={empresas} empresaAtualId={orgId}>
+    <ComercialShell empresas={empresas} empresaAtualId={orgId} podeGerenciar={escopo.podeGerenciarAcessos}>
       <Link
         href="/comercial/acoes"
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"

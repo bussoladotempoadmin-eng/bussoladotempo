@@ -6,6 +6,7 @@
  * Isolado do core (agenda pessoal). Sem reflexão pessoal aqui — é setor.
  */
 import { prisma, type StatusAcao } from '@bussola/db';
+import { resolverAcessoComercial } from './comercial-acessos';
 
 // Listas fixas (objetivo/resultado). Tipo de ação é editável pelo diretor.
 export const OBJETIVOS = [
@@ -48,6 +49,9 @@ export type EmpresaInfo = { id: string; nome: string; ehDono: boolean };
 export type EscopoComercial = {
   org: { id: string; nome: string };
   ehDono: boolean;
+  corporativo: boolean; // vê todas as unidades (dono ou acesso corporativo)
+  podeGerenciarAcessos: boolean; // dono ou admin
+  somenteLeitura: boolean; // nível VER (não edita nada)
   unidades: UnidadeInfo[];
 };
 
@@ -65,12 +69,25 @@ export async function getEmpresasAcessiveis(userId: string): Promise<EmpresaInfo
     orderBy: { createdAt: 'asc' },
     select: { organizacao: { select: { id: true, nome: true } } },
   });
+  // Acessos pelo novo modelo (defensivo: tabela pode não existir antes da migration).
+  const acessos = await prisma.acessoComercial
+    .findMany({
+      where: { userId, organizacao: { comercialAtivo: true } },
+      orderBy: { createdAt: 'asc' },
+      select: { organizacao: { select: { id: true, nome: true } } },
+    })
+    .catch(() => [] as { organizacao: { id: string; nome: string } }[]);
 
   const mapa = new Map<string, EmpresaInfo>();
   for (const o of donas) mapa.set(o.id, { id: o.id, nome: o.nome, ehDono: true });
   for (const u of coord) {
     if (!mapa.has(u.organizacao.id)) {
       mapa.set(u.organizacao.id, { id: u.organizacao.id, nome: u.organizacao.nome, ehDono: false });
+    }
+  }
+  for (const a of acessos) {
+    if (!mapa.has(a.organizacao.id)) {
+      mapa.set(a.organizacao.id, { id: a.organizacao.id, nome: a.organizacao.nome, ehDono: false });
     }
   }
   return Array.from(mapa.values());
@@ -134,46 +151,234 @@ export async function getEscopoComercial(
   userId: string,
   orgId: string,
 ): Promise<EscopoComercial | null> {
-  const papel = await papelNaOrg(userId, orgId);
-  if (!papel) return null;
-  const org = await prisma.organizacao.findUnique({ where: { id: orgId }, select: { id: true, nome: true } });
+  const org = await prisma.organizacao.findFirst({
+    where: { id: orgId, comercialAtivo: true },
+    select: { id: true, nome: true },
+  });
   if (!org) return null;
 
-  const where =
-    papel === 'dono'
-      ? { organizacaoId: orgId }
-      : { organizacaoId: orgId, coordenadorId: userId };
+  const acesso = await resolverAcessoComercial(userId, orgId);
+  if (!acesso.temAcesso) return null;
+
   const unidades = await prisma.unidade.findMany({
-    where,
+    where: acesso.corporativo
+      ? { organizacaoId: orgId }
+      : { organizacaoId: orgId, id: { in: acesso.unidadesIds } },
     orderBy: { createdAt: 'asc' },
     include: { coordenador: { select: { name: true, email: true } } },
   });
 
-  return { org, ehDono: papel === 'dono', unidades: unidades.map(mapUnidade) };
+  return {
+    org,
+    ehDono: acesso.dono,
+    corporativo: acesso.corporativo,
+    podeGerenciarAcessos: acesso.dono || acesso.admin,
+    somenteLeitura: acesso.nivel === 'VER' && !acesso.dono,
+    unidades: unidades.map(mapUnidade),
+  };
 }
 
-/** IDs de unidades acessíveis numa empresa (dono = todas; coordenador = as suas). */
+/** IDs de unidades acessíveis numa empresa (corporativo = todas; senão o escopo). */
 async function idsDaOrg(userId: string, orgId: string): Promise<string[]> {
-  const papel = await papelNaOrg(userId, orgId);
-  if (!papel) return [];
-  const where =
-    papel === 'dono' ? { organizacaoId: orgId } : { organizacaoId: orgId, coordenadorId: userId };
-  const us = await prisma.unidade.findMany({ where, select: { id: true } });
-  return us.map((u) => u.id);
+  const acesso = await resolverAcessoComercial(userId, orgId);
+  if (!acesso.temAcesso) return [];
+  if (acesso.corporativo) {
+    const us = await prisma.unidade.findMany({ where: { organizacaoId: orgId }, select: { id: true } });
+    return us.map((u) => u.id);
+  }
+  return acesso.unidadesIds;
 }
 
-/** Pode ver/editar esta unidade? (em qualquer empresa que ele acesse) */
-async function podeAcessarUnidade(userId: string, unidadeId: string): Promise<boolean> {
+async function escopoDaUnidade(unidadeId: string) {
   const u = await prisma.unidade.findUnique({
     where: { id: unidadeId },
-    select: { coordenadorId: true, organizacao: { select: { ownerId: true, comercialAtivo: true } } },
+    select: { organizacaoId: true, organizacao: { select: { comercialAtivo: true } } },
   });
-  if (!u || !u.organizacao.comercialAtivo) return false;
-  return u.organizacao.ownerId === userId || u.coordenadorId === userId;
+  if (!u || !u.organizacao.comercialAtivo) return null;
+  return u.organizacaoId;
+}
+
+/** Pode VER esta unidade? */
+async function podeAcessarUnidade(userId: string, unidadeId: string): Promise<boolean> {
+  const orgId = await escopoDaUnidade(unidadeId);
+  if (!orgId) return false;
+  return (await resolverAcessoComercial(userId, orgId)).podeVer(unidadeId);
+}
+
+/** Pode EDITAR esta unidade? (nível EDITAR — bloqueia o consultor/VER) */
+async function podeEditarUnidade(userId: string, unidadeId: string): Promise<boolean> {
+  const orgId = await escopoDaUnidade(unidadeId);
+  if (!orgId) return false;
+  return (await resolverAcessoComercial(userId, orgId)).podeEditar(unidadeId);
 }
 
 async function ehDonoDaOrg(userId: string, orgId: string): Promise<boolean> {
   return (await papelNaOrg(userId, orgId)) === 'dono';
+}
+
+// ---- Acessos do Comercial (RBAC) ----
+
+export type AcessoComercialInfo = {
+  id: string;
+  userId: string;
+  nome: string;
+  email: string;
+  nivel: 'VER' | 'EDITAR';
+  todasUnidades: boolean;
+  admin: boolean;
+  rotulo: string | null;
+  unidadesIds: string[];
+};
+
+/** userIds com QUALQUER acesso à org (dono + time + comercial + coordenador legado). */
+async function idsComAcesso(orgId: string): Promise<Set<string>> {
+  const org = await prisma.organizacao.findUnique({ where: { id: orgId }, select: { ownerId: true } });
+  const ids = new Set<string>();
+  if (org) ids.add(org.ownerId);
+  const [membros, acessos, coords] = await Promise.all([
+    prisma.membroEquipe.findMany({ where: { organizacaoId: orgId }, select: { userId: true } }),
+    prisma.acessoComercial
+      .findMany({ where: { organizacaoId: orgId }, select: { userId: true } })
+      .catch(() => [] as { userId: string }[]),
+    prisma.unidade.findMany({
+      where: { organizacaoId: orgId, coordenadorId: { not: null } },
+      select: { coordenadorId: true },
+    }),
+  ]);
+  membros.forEach((m) => ids.add(m.userId));
+  acessos.forEach((a) => ids.add(a.userId));
+  coords.forEach((c) => c.coordenadorId && ids.add(c.coordenadorId));
+  return ids;
+}
+
+/** Assentos USADOS (Opção A: todo acesso conta como 1). */
+export async function assentosUsados(orgId: string): Promise<number> {
+  return (await idsComAcesso(orgId)).size;
+}
+
+async function assentosContratados(orgId: string): Promise<number | null> {
+  const org = await prisma.organizacao.findUnique({ where: { id: orgId }, select: { ownerId: true } });
+  if (!org) return null;
+  const a = await prisma.assinatura.findUnique({
+    where: { ownerUserId: org.ownerId },
+    select: { assentos: true },
+  });
+  return a?.assentos ?? null;
+}
+
+/** Cabe um novo acesso? (usuário já contado = sempre cabe; sem plano = sem limite) */
+export async function cabeNovoAcesso(
+  orgId: string,
+  novoUserId?: string,
+): Promise<{ cabe: boolean; usados: number; assentos: number | null }> {
+  const assentos = await assentosContratados(orgId);
+  const ids = await idsComAcesso(orgId);
+  const usados = ids.size;
+  if (novoUserId && ids.has(novoUserId)) return { cabe: true, usados, assentos };
+  if (assentos == null) return { cabe: true, usados, assentos };
+  return { cabe: usados < assentos, usados, assentos };
+}
+
+export async function listarAcessosComercial(
+  userId: string,
+  orgId: string,
+): Promise<AcessoComercialInfo[] | null> {
+  const quem = await resolverAcessoComercial(userId, orgId);
+  if (!quem.dono && !quem.admin) return null; // só dono/admin gerencia
+  const linhas = await prisma.acessoComercial
+    .findMany({
+      where: { organizacaoId: orgId },
+      include: { user: { select: { name: true, email: true } }, unidades: { select: { unidadeId: true } } },
+      orderBy: { createdAt: 'asc' },
+    })
+    .catch(() => []);
+  return linhas.map((l) => ({
+    id: l.id,
+    userId: l.userId,
+    nome: l.user.name?.trim() || l.user.email,
+    email: l.user.email,
+    nivel: l.nivel,
+    todasUnidades: l.todasUnidades,
+    admin: l.admin,
+    rotulo: l.rotulo,
+    unidadesIds: l.unidades.map((u) => u.unidadeId),
+  }));
+}
+
+export async function salvarAcessoComercial(
+  userId: string,
+  orgId: string,
+  input: {
+    email: string;
+    nivel: 'VER' | 'EDITAR';
+    todasUnidades: boolean;
+    unidadeIds: string[];
+    admin: boolean;
+    rotulo?: string;
+  },
+): Promise<{ ok: boolean; erro?: string }> {
+  const quem = await resolverAcessoComercial(userId, orgId);
+  if (!quem.dono && !quem.admin) return { ok: false, erro: 'Sem permissão.' };
+
+  const email = input.email.toLowerCase().trim();
+  const alvo = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  if (!alvo) return { ok: false, erro: 'A pessoa precisa ter entrado no app pelo menos uma vez.' };
+
+  const org = await prisma.organizacao.findUnique({ where: { id: orgId }, select: { ownerId: true } });
+  if (alvo.id === org?.ownerId) return { ok: false, erro: 'O dono já tem acesso total.' };
+
+  const cap = await cabeNovoAcesso(orgId, alvo.id);
+  if (!cap.cabe) {
+    return { ok: false, erro: `Você usou todos os ${cap.assentos} assentos. Aumente o plano pra adicionar mais.` };
+  }
+
+  let unidadeIds = input.todasUnidades ? [] : input.unidadeIds;
+  if (!input.todasUnidades) {
+    const validas = await prisma.unidade.findMany({
+      where: { id: { in: unidadeIds }, organizacaoId: orgId },
+      select: { id: true },
+    });
+    unidadeIds = validas.map((u) => u.id);
+    if (unidadeIds.length === 0) return { ok: false, erro: 'Escolha ao menos uma unidade (ou marque "todas").' };
+  }
+
+  const acesso = await prisma.acessoComercial.upsert({
+    where: { organizacaoId_userId: { organizacaoId: orgId, userId: alvo.id } },
+    create: {
+      organizacaoId: orgId,
+      userId: alvo.id,
+      nivel: input.nivel,
+      todasUnidades: input.todasUnidades,
+      admin: input.admin,
+      rotulo: input.rotulo?.trim() || null,
+    },
+    update: {
+      nivel: input.nivel,
+      todasUnidades: input.todasUnidades,
+      admin: input.admin,
+      rotulo: input.rotulo?.trim() || null,
+    },
+    select: { id: true },
+  });
+  await prisma.acessoComercialUnidade.deleteMany({ where: { acessoId: acesso.id } });
+  if (unidadeIds.length > 0) {
+    await prisma.acessoComercialUnidade.createMany({
+      data: unidadeIds.map((unidadeId) => ({ acessoId: acesso.id, unidadeId })),
+      skipDuplicates: true,
+    });
+  }
+  return { ok: true };
+}
+
+export async function removerAcessoComercial(
+  userId: string,
+  orgId: string,
+  acessoId: string,
+): Promise<boolean> {
+  const quem = await resolverAcessoComercial(userId, orgId);
+  if (!quem.dono && !quem.admin) return false;
+  const r = await prisma.acessoComercial.deleteMany({ where: { id: acessoId, organizacaoId: orgId } });
+  return r.count > 0;
 }
 
 // ---- Unidades (cadastro — só dono) ----
@@ -302,8 +507,8 @@ export async function criarAcao(
   userId: string,
   input: AcaoInput,
 ): Promise<{ ok: boolean; erro?: string; id?: string }> {
-  if (!(await podeAcessarUnidade(userId, input.unidadeId))) {
-    return { ok: false, erro: 'Você não tem acesso a essa unidade.' };
+  if (!(await podeEditarUnidade(userId, input.unidadeId))) {
+    return { ok: false, erro: 'Você não tem permissão para editar essa unidade.' };
   }
   const ini = parseDia(input.dataInicio);
   const fim = parseDia(input.dataFim || input.dataInicio);
@@ -329,18 +534,21 @@ export async function criarAcao(
   return { ok: true, id: a.id };
 }
 
-async function acaoAcessivel(userId: string, acaoId: string) {
+async function acaoAcessivel(userId: string, acaoId: string, precisaEditar = false) {
   const a = await prisma.acaoComercial.findUnique({
     where: { id: acaoId },
     include: { unidade: { select: { id: true, nome: true } } },
   });
   if (!a) return null;
-  if (!(await podeAcessarUnidade(userId, a.unidadeId))) return null;
+  const ok = precisaEditar
+    ? await podeEditarUnidade(userId, a.unidadeId)
+    : await podeAcessarUnidade(userId, a.unidadeId);
+  if (!ok) return null;
   return a;
 }
 
 export async function getAcao(userId: string, acaoId: string) {
-  return acaoAcessivel(userId, acaoId);
+  return acaoAcessivel(userId, acaoId); // leitura
 }
 
 export async function atualizarAcao(
@@ -348,7 +556,7 @@ export async function atualizarAcao(
   acaoId: string,
   input: Partial<AcaoInput>,
 ): Promise<boolean> {
-  const a = await acaoAcessivel(userId, acaoId);
+  const a = await acaoAcessivel(userId, acaoId, true); // mutação exige editar
   if (!a) return false;
   const data: Record<string, unknown> = {};
   if (input.tipo !== undefined) data.tipo = input.tipo.trim();
@@ -382,7 +590,7 @@ export async function registrarResultado(
   acaoId: string,
   input: ResultadoInput,
 ): Promise<boolean> {
-  const a = await acaoAcessivel(userId, acaoId);
+  const a = await acaoAcessivel(userId, acaoId, true); // mutação exige editar
   if (!a) return false;
   await prisma.acaoComercial.update({
     where: { id: acaoId },
@@ -403,7 +611,7 @@ export async function reagendar(
   dataInicio: string,
   dataFim: string,
 ): Promise<boolean> {
-  const a = await acaoAcessivel(userId, acaoId);
+  const a = await acaoAcessivel(userId, acaoId, true); // mutação exige editar
   if (!a) return false;
   const ini = parseDia(dataInicio);
   const fim = parseDia(dataFim || dataInicio);
@@ -421,12 +629,12 @@ export async function realocar(
   acaoId: string,
   destino: { unidadeId?: string; responsaveis?: string },
 ): Promise<{ ok: boolean; erro?: string }> {
-  const a = await acaoAcessivel(userId, acaoId);
+  const a = await acaoAcessivel(userId, acaoId, true); // realocar exige editar
   if (!a) return { ok: false, erro: 'Ação não encontrada.' };
   const data: Record<string, unknown> = {};
   if (destino.unidadeId && destino.unidadeId !== a.unidadeId) {
-    if (!(await podeAcessarUnidade(userId, destino.unidadeId))) {
-      return { ok: false, erro: 'Você não tem acesso à unidade de destino.' };
+    if (!(await podeEditarUnidade(userId, destino.unidadeId))) {
+      return { ok: false, erro: 'Você não tem permissão para editar a unidade de destino.' };
     }
     data.unidadeId = destino.unidadeId;
   }
@@ -437,7 +645,7 @@ export async function realocar(
 }
 
 export async function removerAcao(userId: string, acaoId: string): Promise<boolean> {
-  const a = await acaoAcessivel(userId, acaoId);
+  const a = await acaoAcessivel(userId, acaoId, true); // mutação exige editar
   if (!a) return false;
   await prisma.acaoComercial.delete({ where: { id: acaoId } });
   return true;

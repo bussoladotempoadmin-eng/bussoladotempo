@@ -7,6 +7,7 @@
 import { randomBytes } from 'crypto';
 import { prisma } from '@bussola/db';
 import { sendAcessoCriadoEmail } from './email';
+import { cabeNovoAcesso } from './comercial';
 
 export type MembroInfo = {
   membroId: string; // id do vínculo MembroEquipe
@@ -124,28 +125,21 @@ export async function convidarMembro(
     return { ok: false, erro: 'E-mail inválido.' };
   }
 
-  // Limite de assentos: vale o plano do DONO do time (gestor).
-  const assinatura = await prisma.assinatura.findUnique({
-    where: { ownerUserId: gestorId },
-    select: { assentos: true },
-  });
-  if (assinatura) {
-    const membrosAtuais = await prisma.membroEquipe.count({ where: { organizacaoId: org.id } });
-    // Conta o dono + os membros como acessos usados.
-    if (1 + membrosAtuais >= assinatura.assentos) {
-      return {
-        ok: false,
-        erro: `Você contratou ${assinatura.assentos} assento(s) e já usou todos. Fale com a gente pra adicionar mais.`,
-      };
-    }
-  }
-
-  // Acha ou cria a conta da pessoa.
+  // Acha (ou vai criar) a conta da pessoa.
   let alvo = await prisma.user.findUnique({
     where: { email: emailLimpo },
     select: { id: true, senhaHash: true },
   });
   let convidado = false;
+
+  // Limite de assentos (Opção A: todo acesso conta). Pessoa já contada = cabe.
+  const cap = await cabeNovoAcesso(org.id, alvo?.id);
+  if (!cap.cabe) {
+    return {
+      ok: false,
+      erro: `Você usou todos os ${cap.assentos} assentos. Aumente o plano pra adicionar mais.`,
+    };
+  }
 
   if (!alvo) {
     const novo = await prisma.user.create({

@@ -10,10 +10,12 @@ import type { EmpresaInfo } from '@/lib/comercial';
 export function ComercialShell({
   empresas,
   empresaAtualId,
+  podeGerenciar = false,
   children,
 }: {
   empresas: EmpresaInfo[];
   empresaAtualId: string;
+  podeGerenciar?: boolean;
   children: React.ReactNode;
 }) {
   return (
@@ -33,7 +35,7 @@ export function ComercialShell({
       </header>
 
       <div className="container">
-        <ComercialNav />
+        <ComercialNav podeGerenciar={podeGerenciar} />
       </div>
 
       <section className="container py-7">{children}</section>

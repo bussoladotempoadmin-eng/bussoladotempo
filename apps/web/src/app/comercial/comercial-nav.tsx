@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, ClipboardList, Wallet, Building2, Tags } from 'lucide-react';
+import { BarChart3, ClipboardList, Wallet, Building2, Tags, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ITENS = [
@@ -13,11 +13,14 @@ const ITENS = [
   { href: '/comercial/tipos', label: 'Tipos', icon: Tags },
 ];
 
-export function ComercialNav() {
+export function ComercialNav({ podeGerenciar = false }: { podeGerenciar?: boolean }) {
   const path = usePathname();
+  const itens = podeGerenciar
+    ? [...ITENS, { href: '/comercial/equipe', label: 'Equipe', icon: UserCog, exact: false }]
+    : ITENS;
   return (
     <nav className="flex gap-1 overflow-x-auto border-b border-border pb-px">
-      {ITENS.map((it) => {
+      {itens.map((it) => {
         const ativo = it.exact ? path === it.href : path.startsWith(it.href);
         const Icon = it.icon;
         return (

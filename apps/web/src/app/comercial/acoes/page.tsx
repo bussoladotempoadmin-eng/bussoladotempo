@@ -46,7 +46,7 @@ export default async function AcoesPage({
   const sel = 'rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold outline-none';
 
   return (
-    <ComercialShell empresas={empresas} empresaAtualId={orgId}>
+    <ComercialShell empresas={empresas} empresaAtualId={orgId} podeGerenciar={escopo.podeGerenciarAcessos}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-extrabold tracking-tight">Ações comerciais</h1>
         <Link

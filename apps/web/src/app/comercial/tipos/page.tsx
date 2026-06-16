@@ -21,7 +21,7 @@ export default async function TiposPage() {
   const tipos = await listarTipos(orgId);
 
   return (
-    <ComercialShell empresas={empresas} empresaAtualId={orgId}>
+    <ComercialShell empresas={empresas} empresaAtualId={orgId} podeGerenciar={escopo.podeGerenciarAcessos}>
       <h1 className="text-2xl font-extrabold tracking-tight">Tipos de ação · {escopo.org.nome}</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         Crie os tipos que fazem sentido pra esta empresa — eles aparecem no formulário de ação e

@@ -23,7 +23,7 @@ export default async function RelatoriosPage({
   if (!user) redirect('/login');
   const ctx = await carregarComercial(user.id);
   if (!ctx) redirect('/comercial');
-  const { empresas, orgId } = ctx;
+  const { empresas, orgId, escopo } = ctx;
 
   const def = mesCorrente();
   const de = searchParams.de || def.de;
@@ -49,7 +49,7 @@ export default async function RelatoriosPage({
   );
 
   return (
-    <ComercialShell empresas={empresas} empresaAtualId={orgId}>
+    <ComercialShell empresas={empresas} empresaAtualId={orgId} podeGerenciar={escopo.podeGerenciarAcessos}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h1 className="text-2xl font-extrabold tracking-tight">Relatórios</h1>
         <DateFilter de={de} ate={ate} extras={{ tipo }} />
