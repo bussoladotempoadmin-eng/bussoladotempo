@@ -92,6 +92,7 @@ model User {
   resetTokens        PasswordResetToken[]
   assinatura         Assinatura?         @relation("AssinaturaDono")
   parceiro           Parceiro?
+  acessosComercial   AcessoComercial[]
 }
 
 // Token de "esqueci a senha" — uso único, com validade curta.
@@ -373,11 +374,12 @@ model Organizacao {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  owner      User               @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  membros    MembroEquipe[]
-  unidades   Unidade[]
-  tiposAcao  TipoAcaoComercial[]
-  assinatura Assinatura?
+  owner            User                @relation("OrgOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  membros          MembroEquipe[]
+  unidades         Unidade[]
+  tiposAcao        TipoAcaoComercial[]
+  assinatura       Assinatura?
+  acessosComercial AcessoComercial[]
 
   @@index([ownerId])
 }
@@ -448,9 +450,10 @@ model Unidade {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  organizacao Organizacao     @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
-  coordenador User?           @relation("UnidadeCoord", fields: [coordenadorId], references: [id], onDelete: SetNull)
-  acoes       AcaoComercial[]
+  organizacao      Organizacao              @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  coordenador      User?                    @relation("UnidadeCoord", fields: [coordenadorId], references: [id], onDelete: SetNull)
+  acoes            AcaoComercial[]
+  acessosComercial AcessoComercialUnidade[]
 
   @@index([organizacaoId])
   @@index([coordenadorId])
@@ -499,6 +502,52 @@ model AcaoComercial {
 
   @@index([unidadeId])
   @@index([status])
+}
+
+// ============================================================
+// COMERCIAL — Controle de acesso (RBAC) — Fase 1
+// Cada pessoa tem um acesso ao Comercial de uma organização, com NÍVEL
+// (ver/editar), ESCOPO (todas as unidades = corporativo, ou unidades
+// específicas) e flag ADMIN (gerencia acessos/usuários). `rotulo` é só nome
+// visual (Coordenador, Consultor, Diretor de unidade, Gerente...).
+// Aditivo: convive com o legado Unidade.coordenadorId; nada existente muda.
+// ============================================================
+
+enum NivelComercial {
+  VER    // só visualiza
+  EDITAR // visualiza e edita
+}
+
+model AcessoComercial {
+  id            String         @id @default(cuid())
+  organizacaoId String
+  userId        String
+  nivel         NivelComercial @default(EDITAR)
+  todasUnidades Boolean        @default(false) // corporativo: todas as unidades
+  admin         Boolean        @default(false) // pode gerenciar acessos/usuários
+  rotulo        String? // papel (só visual)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  organizacao Organizacao              @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  user        User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  unidades    AcessoComercialUnidade[]
+
+  @@unique([organizacaoId, userId])
+  @@index([organizacaoId])
+  @@index([userId])
+}
+
+// Quais unidades um acesso NÃO-corporativo abrange (1 linha por unidade).
+model AcessoComercialUnidade {
+  acessoId  String
+  unidadeId String
+
+  acesso  AcessoComercial @relation(fields: [acessoId], references: [id], onDelete: Cascade)
+  unidade Unidade         @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+
+  @@id([acessoId, unidadeId])
+  @@index([unidadeId])
 }
 
 // ============================================================

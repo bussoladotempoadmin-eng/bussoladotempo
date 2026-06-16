@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Treinamento Comercial — Coordenador de Unidade · Bússola do Tempo</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --fg:#0f172a; --card:#fff; --muted:#64748b; --border:#e2e8f0;
+    --primary:#2563eb; --primary-soft:#eff4ff; --soft:#f8fafc;
+    --ok:#10b981; --ok-soft:rgba(16,185,129,.13);
+    --amber:#f59e0b; --amber-soft:rgba(245,158,11,.15);
+    --red:#ef4444; --red-soft:rgba(239,68,68,.12);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6;font-size:16px}
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px}
+  a{color:var(--primary)}
+
+  .cover{background:linear-gradient(135deg,#0f766e,#0e7490);color:#fff;padding:46px 0 38px}
+  .cover .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.16);padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:16px}
+  .cover h1{font-size:32px;line-height:1.15;margin:0 0 8px;font-weight:800}
+  .cover p{font-size:16px;opacity:.93;margin:0;max-width:600px}
+
+  .toc{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;margin:-26px 0 34px;box-shadow:0 8px 30px rgba(15,23,42,.06)}
+  .toc h2{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  .toc li{margin-bottom:7px;break-inside:avoid}
+  .toc a{text-decoration:none;font-weight:600}
+  @media(max-width:620px){.toc ol{columns:1}}
+
+  .mod{margin-bottom:42px}
+  .mod-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+  .num{flex-shrink:0;width:40px;height:40px;border-radius:12px;background:#0e7490;color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px}
+  .mod-head h2{margin:0;font-size:23px;font-weight:800}
+  .mod-head .sub{color:var(--muted);font-size:14px;margin-top:2px}
+  .lead{background:var(--primary-soft);border-left:4px solid var(--primary);border-radius:0 12px 12px 0;padding:12px 16px;margin:0 0 18px;font-size:15px}
+  .lead b{color:var(--primary)}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+
+  h3{font-size:15px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 10px}
+  ol.steps,ul.steps{margin:0;padding-left:20px}
+  ol.steps li,ul.steps li{margin-bottom:9px}
+  b{color:var(--fg)}
+  .tip{margin-top:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;font-size:14px}
+  .tip b{color:#b45309}
+  .warn{margin-top:14px;background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:12px 14px;font-size:14px}
+  .warn b{color:#b91c1c}
+
+  /* tabela 5W2H */
+  table.w5{width:100%;border-collapse:collapse;font-size:14px;margin-top:4px}
+  table.w5 th,table.w5 td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border)}
+  table.w5 th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  table.w5 td:first-child{font-weight:700;white-space:nowrap}
+  table.w5 .campo{display:inline-block;background:var(--soft);border:1px solid var(--border);border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700}
+
+  /* TELA mock */
+  .tela{background:#0b1220;border-radius:24px;padding:10px;box-shadow:0 14px 40px rgba(15,23,42,.18)}
+  .tela .screen{background:var(--bg);border-radius:16px;overflow:hidden}
+  .t-head{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:#fff;border-bottom:1px solid var(--border)}
+  .t-logo{display:flex;align-items:center;gap:6px;font-weight:800;font-size:12px}
+  .t-av{width:22px;height:22px;border-radius:50%;background:#0e7490;color:#fff;display:grid;place-items:center;font-size:9px;font-weight:700}
+  .t-body{padding:13px}
+  .t-cap{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  .st{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
+  .st-plan{background:#e2e8f0;color:#475569}.st-fim{background:var(--ok-soft);color:#059669}.st-adi{background:var(--amber-soft);color:#b45309}.st-canc{background:var(--red-soft);color:#dc2626}
+  .acao{background:#fff;border:1px solid var(--border);border-radius:11px;padding:10px;margin-bottom:9px}
+  .acao .tt{font-weight:700;font-size:13px}
+  .acao .meta{font-size:10px;color:var(--muted);margin-top:3px}
+  .fld{margin-bottom:8px}
+  .fld .l{font-size:10px;color:var(--muted);margin-bottom:3px}
+  .fld .v{border:1px solid var(--border);border-radius:7px;padding:7px;font-size:11px;background:#fff}
+  .fld .v.ph{color:var(--muted)}
+  .row2{display:flex;gap:6px}.row2>*{flex:1}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;background:#0e7490;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:700;font-size:13px}
+  .legenda{font-size:11px;color:var(--muted);text-align:center;margin-top:8px}
+  .verba{display:flex;align-items:center;justify-content:space-between;background:var(--soft);border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;margin-top:8px}
+  .badge-ok{background:var(--ok-soft);color:#059669;border-radius:999px;padding:1px 7px;font-size:10px}
+
+  footer{background:#0f172a;color:#cbd5e1;padding:28px 0;font-size:13px;margin-top:24px}
+  footer b{color:#fff}
+  .fab{position:fixed;right:18px;bottom:18px;z-index:50;background:#0e7490;color:#fff;border:none;border-radius:999px;padding:12px 20px;font-weight:700;font-size:14px;box-shadow:0 8px 24px rgba(14,116,144,.4);cursor:pointer}
+  hr.sep{border:none;border-top:1px solid var(--border);margin:0 0 42px}
+
+  @media print{
+    body{background:#fff;font-size:12px}
+    .fab{display:none}
+    .cover{background:#0f766e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .st,.lead,.tip,.warn,.num,.btn,.badge-ok,table.w5 .campo{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .mod,.tela{break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <div class="wrap">
+    <span class="badge">📣 Módulo Comercial · Treinamento do Coordenador</span>
+    <h1>Coordenador de Unidade</h1>
+    <p>Como planejar, executar e registrar as ações de captação da sua cidade/unidade — do plano ao resultado.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <nav class="toc">
+    <h2>O que você vai aprender</h2>
+    <ol>
+      <li><a href="#m1">Seu papel como coordenador</a></li>
+      <li><a href="#m2">Acessar o Comercial</a></li>
+      <li><a href="#m3">O quadro de ações</a></li>
+      <li><a href="#m4">Criar uma ação (planejamento 5W2H)</a></li>
+      <li><a href="#m5">Acompanhar e ajustar</a></li>
+      <li><a href="#m6">Registrar o resultado</a></li>
+      <li><a href="#m7">Filtrar por período</a></li>
+      <li><a href="#m8">Relatórios da sua unidade</a></li>
+      <li><a href="#m9">Rotina recomendada</a></li>
+    </ol>
+  </nav>
+
+  <div class="lead" style="margin-bottom:38px">
+    <b>Em 1 frase:</b> você é o dono das ações de captação da <b>sua unidade</b>. Cada ação tem duas partes:
+    o <b>planejamento</b> (o que vai fazer, onde, quem, quando e quanto vai custar) e o <b>resultado</b>
+    (o que realmente aconteceu — leads, verba gasta, status). Você cuida das duas.
+  </div>
+
+  <!-- M1 -->
+  <section class="mod" id="m1">
+    <div class="mod-head"><div class="num">1</div><div><h2>Seu papel como coordenador</h2><div class="sub">O que é seu, o que é do diretor</div></div></div>
+    <div class="grid">
+      <div>
+        <h3>O que VOCÊ faz</h3>
+        <ul class="steps">
+          <li><b>Planeja</b> as ações de captação da sua unidade (visitas, eventos, ações em condomínio…).</li>
+          <li><b>Executa e registra</b> o resultado de cada ação.</li>
+          <li>Acompanha o <b>quadro</b> e os <b>números</b> da sua cidade.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>O que é do DIRETOR</h3>
+        <ul class="steps">
+          <li>Criar as <b>unidades</b> (cidades) e definir o coordenador de cada uma.</li>
+          <li>Definir os <b>tipos de ação</b> disponíveis (ex.: Visita em empresa, Ação condomínio…).</li>
+          <li>Ver o consolidado de <b>todas</b> as unidades.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="tip"><b>Importante:</b> você enxerga e edita <b>só a sua unidade</b>. As ações das outras cidades não aparecem pra você — e as suas não se misturam com as delas.</div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M2 -->
+  <section class="mod" id="m2">
+    <div class="mod-head"><div class="num">2</div><div><h2>Acessar o Comercial</h2><div class="sub">Onde fica</div></div></div>
+    <ol class="steps">
+      <li>Entre na sua conta (e-mail e senha, Google ou link mágico).</li>
+      <li>No menu do seu nome (canto superior), toque em <b>Comercial</b>.</li>
+      <li>Você cai direto no quadro da <b>sua unidade</b>.</li>
+    </ol>
+    <div class="tip"><b>Dica:</b> em qualquer tela, o <b>“?”</b> no topo abre um tour rápido mostrando onde fica cada botão.</div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M3 -->
+  <section class="mod" id="m3">
+    <div class="mod-head"><div class="num">3</div><div><h2>O quadro de ações</h2><div class="sub">A visão geral da sua unidade</div></div></div>
+    <p class="lead"><b>Pra que serve:</b> ver, num lugar só, todas as ações da sua unidade e em que pé cada uma está.</p>
+    <div class="grid">
+      <div>
+        <h3>Os 4 status</h3>
+        <ul class="steps">
+          <li><span class="st st-plan">Em planejamento</span> — ainda vai acontecer.</li>
+          <li><span class="st st-fim">Finalizado</span> — aconteceu e foi registrada.</li>
+          <li><span class="st st-adi">Adiado</span> — empurrada pra frente.</li>
+          <li><span class="st st-canc">Cancelado</span> — não vai acontecer.</li>
+        </ul>
+        <h3 style="margin-top:16px">Como usar</h3>
+        <ul class="steps">
+          <li>Filtre por <b>status</b> e por <b>período</b> no topo.</li>
+          <li>Toque numa ação pra ver os detalhes ou registrar o resultado.</li>
+          <li>Botão <b>＋ Nova ação</b> pra criar.</li>
+        </ul>
+      </div>
+      <div class="tela">
+        <div class="screen">
+          <div class="t-head"><span class="t-logo">📣 Comercial · Serra</span><span class="t-av">C</span></div>
+          <div class="t-body">
+            <div class="acao">
+              <div style="display:flex;justify-content:space-between;align-items:start"><div class="tt">Visita — Construtora X</div><span class="st st-plan">Em planejamento</span></div>
+              <div class="meta">📍 Serra · 👥 Mariana · 🗓️ 18–18/06</div>
+            </div>
+            <div class="acao">
+              <div style="display:flex;justify-content:space-between;align-items:start"><div class="tt">Ação condomínio Vila Velha</div><span class="st st-fim">Finalizado</span></div>
+              <div class="meta">📍 Cond. Aurora · 👥 Regina · ✅ 38 leads</div>
+            </div>
+            <div style="border:1px dashed var(--border);border-radius:10px;padding:9px;text-align:center;font-size:12px;font-weight:700;color:#0e7490">＋ Nova ação</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M4 -->
+  <section class="mod" id="m4">
+    <div class="mod-head"><div class="num">4</div><div><h2>Criar uma ação (planejamento)</h2><div class="sub">O método 5W2H, campo por campo</div></div></div>
+    <p class="lead"><b>Pra que serve:</b> planejar a ação antes de fazer. Cada campo responde uma pergunta do método <b>5W2H</b> — assim nada importante fica de fora.</p>
+    <div class="grid">
+      <div>
+        <h3>Cada campo = uma pergunta</h3>
+        <table class="w5">
+          <tr><th>Pergunta</th><th>Campo no app</th></tr>
+          <tr><td>O quê?</td><td><span class="campo">Tipo</span> (ex.: Visita em empresa)</td></tr>
+          <tr><td>Por quê?</td><td><span class="campo">Objetivo</span> (Captação de lead…)</td></tr>
+          <tr><td>Onde?</td><td><span class="campo">Local</span></td></tr>
+          <tr><td>Quem?</td><td><span class="campo">Responsáveis</span></td></tr>
+          <tr><td>Quando?</td><td><span class="campo">Data início / fim</span></td></tr>
+          <tr><td>Como?</td><td><span class="campo">Detalhe</span> (planejamento)</td></tr>
+          <tr><td>Quanto?</td><td><span class="campo">Valor solicitado</span> (verba)</td></tr>
+        </table>
+        <div class="tip"><b>Dica:</b> capriche no <b>Detalhe</b> — materiais, pessoas, logística. É o que faz a ação sair do papel sem improviso.</div>
+      </div>
+      <div class="tela">
+        <div class="screen">
+          <div class="t-head"><span class="t-logo">📣 Nova ação</span><span>✕</span></div>
+          <div class="t-body">
+            <div class="row2"><div class="fld"><div class="l">Tipo</div><div class="v">Visita em empresa ▾</div></div><div class="fld"><div class="l">Objetivo</div><div class="v">Captação de lead ▾</div></div></div>
+            <div class="fld"><div class="l">Local</div><div class="v ph">Onde vai acontecer</div></div>
+            <div class="fld"><div class="l">Responsáveis</div><div class="v ph">Ex: Mariana, Regina</div></div>
+            <div class="row2"><div class="fld"><div class="l">Início</div><div class="v">18/06</div></div><div class="fld"><div class="l">Fim</div><div class="v">18/06</div></div></div>
+            <div class="fld"><div class="l">Valor solicitado (R$)</div><div class="v ph">0,00</div></div>
+            <div class="fld"><div class="l">Detalhe / como vai ser</div><div class="v ph" style="min-height:34px">Materiais, abordagem, logística…</div></div>
+            <div class="btn">Salvar ação</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <h3 style="margin-top:20px">Passo a passo</h3>
+    <ol class="steps">
+      <li>No quadro, toque em <b>＋ Nova ação</b>.</li>
+      <li>Escolha o <b>Tipo</b> e o <b>Objetivo</b> (listas prontas).</li>
+      <li>Preencha <b>Local</b>, <b>Responsáveis</b> e as <b>datas</b> (início e fim).</li>
+      <li>Informe a <b>verba solicitada</b> (quanto você precisa).</li>
+      <li>Descreva o <b>Detalhe</b> (o "como") e toque em <b>Salvar</b>.</li>
+      <li>A ação nasce <span class="st st-plan">Em planejamento</span> no quadro.</li>
+    </ol>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M5 -->
+  <section class="mod" id="m5">
+    <div class="mod-head"><div class="num">5</div><div><h2>Acompanhar e ajustar</h2><div class="sub">Mudou o plano? Sem problema</div></div></div>
+    <ul class="steps">
+      <li>Toque na ação pra abrir os detalhes.</li>
+      <li>Dá pra <b>editar</b> qualquer campo do planejamento enquanto ela não foi finalizada.</li>
+      <li>Mudou a data? É só ajustar — vale como <b>reagendamento</b>, não como erro.</li>
+    </ul>
+    <div class="tip"><b>Dica:</b> mantenha as datas atualizadas. O quadro e os relatórios se baseiam nelas pra organizar o que está por vir.</div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M6 -->
+  <section class="mod" id="m6">
+    <div class="mod-head"><div class="num">6</div><div><h2>Registrar o resultado</h2><div class="sub">O que realmente aconteceu</div></div></div>
+    <p class="lead"><b>Pra que serve:</b> depois que a ação acontece, você registra o resultado. É isso que vira número no relatório — quantos leads, quanto custou, como foi.</p>
+    <div class="grid">
+      <div class="tela">
+        <div class="screen">
+          <div class="t-head"><span class="t-logo">📣 Resultado</span><span>✕</span></div>
+          <div class="t-body">
+            <div class="t-cap">O que aconteceu na ação</div>
+            <div class="row2"><div class="fld"><div class="l">Status</div><div class="v">Finalizado ▾</div></div><div class="fld"><div class="l">Resultado</div><div class="v">Lead ▾</div></div></div>
+            <div class="row2"><div class="fld"><div class="l">Quantitativo</div><div class="v">38</div></div><div class="fld"><div class="l">Valor gasto</div><div class="v">1.200,00</div></div></div>
+            <div class="verba"><span>Solicitado R$1.500 → gasto R$1.200</span><span class="badge-ok">economia R$300 ✓</span></div>
+            <div class="fld" style="margin-top:8px"><div class="l">Comentários</div><div class="v ph" style="min-height:30px">Como foi, próximos passos…</div></div>
+            <div class="btn">Salvar resultado</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>Cada campo</h3>
+        <ul class="steps">
+          <li><b>Status:</b> normalmente <span class="st st-fim">Finalizado</span> (ou Adiado/Cancelado).</li>
+          <li><b>Resultado:</b> o tipo (Lead, Relacionamento, Reforço de marca, Outro).</li>
+          <li><b>Quantitativo:</b> o número (ex.: <b>38</b> leads).</li>
+          <li><b>Valor gasto:</b> quanto custou de verdade. O app compara com o solicitado e mostra <b>economia</b> ou <b>estouro</b>.</li>
+          <li><b>Comentários:</b> como foi, contatos firmados, próximos passos.</li>
+        </ul>
+        <div class="tip"><b>Dica:</b> registre <b>logo após</b> a ação, com os números fresquinhos. É rápido e mantém o relatório confiável.</div>
+      </div>
+    </div>
+    <h3 style="margin-top:18px">Passo a passo</h3>
+    <ol class="steps">
+      <li>Abra a ação e toque em <b>Registrar resultado</b>.</li>
+      <li>Marque o <b>Status</b> e o <b>Resultado</b>.</li>
+      <li>Preencha o <b>quantitativo</b> e o <b>valor gasto</b>.</li>
+      <li>Escreva os <b>comentários</b> e toque em <b>Salvar resultado</b>.</li>
+    </ol>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M7 -->
+  <section class="mod" id="m7">
+    <div class="mod-head"><div class="num">7</div><div><h2>Filtrar por período</h2><div class="sub">Foque no que importa agora</div></div></div>
+    <ul class="steps">
+      <li>No topo do quadro/relatórios, use o filtro de <b>data</b> (de / até).</li>
+      <li>Combine com o filtro de <b>status</b> pra ver, por exemplo, só o que está <b>em planejamento</b> deste mês.</li>
+    </ul>
+    <div class="tip"><b>Dica:</b> no começo da semana, filtre pelo período e veja o que está por vir — assim nada te pega de surpresa.</div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M8 -->
+  <section class="mod" id="m8">
+    <div class="mod-head"><div class="num">8</div><div><h2>Relatórios da sua unidade</h2><div class="sub">Seus números, no detalhe</div></div></div>
+    <p class="lead"><b>Pra que serve:</b> acompanhar o desempenho da sua cidade — em <b>resultados (leads)</b> e em <b>verba</b>.</p>
+    <ul class="steps">
+      <li><b>Resultados (leads):</b> total de leads/resultados das ações no período.</li>
+      <li><b>Verba:</b> quanto foi <b>solicitado</b> vs <b>gasto</b>, ação por ação, com economia/estouro.</li>
+      <li>Tudo filtrável por <b>período</b> — e sempre só da <b>sua</b> unidade.</li>
+    </ul>
+    <div class="tip"><b>Dica:</b> use o relatório de verba pra mostrar ao diretor que sua unidade entrega resultado dentro do orçamento.</div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M9 -->
+  <section class="mod" id="m9">
+    <div class="mod-head"><div class="num">9</div><div><h2>Rotina recomendada</h2><div class="sub">O hábito que mantém tudo redondo</div></div></div>
+    <table class="w5">
+      <tr><th>Quando</th><th>O que fazer</th></tr>
+      <tr><td>Início da semana</td><td>Planejar as ações da semana (criar no app) e revisar o que está por vir.</td></tr>
+      <tr><td>No dia da ação</td><td>Conferir o Detalhe e os responsáveis. Executar.</td></tr>
+      <tr><td>Logo após cada ação</td><td>Registrar o resultado (leads, verba gasta, comentários).</td></tr>
+      <tr><td>Fim da semana</td><td>Olhar os relatórios da unidade e ajustar o que não funcionou.</td></tr>
+    </table>
+    <div class="tip"><b>Resumo:</b> <b>planejou → executou → registrou</b>. Quanto mais fiel o registro, melhores ficam seus números e mais fácil mostrar o valor do seu trabalho. 📈</div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <b>Bússola do Tempo — Módulo Comercial</b><br/>
+    Treinamento do Coordenador de Unidade. Dúvidas? Fale com o seu diretor ou com o suporte. 🚀
+  </div>
+</footer>
+
+<button class="fab" onclick="window.print()">⬇ Baixar PDF</button>
+
+</body>
+</html>
