@@ -16,8 +16,9 @@ export const config = {
   matcher: [
     // Protege tudo, exceto:
     // - rotas internas do Next (_next) e da API de auth
+    // - webhooks e crons (autenticam por assinatura/secret, não por sessão)
     // - qualquer arquivo estático (tem ponto: sw.js, manifest.webmanifest, ícones, favicon)
     // - páginas públicas de auth (login, cadastro, esqueci/redefinir senha) e /sobre
-    '/((?!_next|api/auth|login|cadastro|esqueci-senha|redefinir-senha|auth|sobre|.*\\..*|$).*)',
+    '/((?!_next|api/auth|api/webhooks|api/cron|login|cadastro|esqueci-senha|redefinir-senha|auth|sobre|.*\\..*|$).*)',
   ],
 };
