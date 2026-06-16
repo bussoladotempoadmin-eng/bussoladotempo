@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { signIn, getProviders } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { Compass, Mail, Lock, Loader2 } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function LoginPage() {
   const searchParams = useSearchParams();
@@ -66,10 +67,13 @@ export default function LoginPage() {
       </div>
 
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 shadow-lg">
-        <Link href="/" className="mb-8 flex items-center gap-2 text-lg font-bold">
-          <Compass className="h-6 w-6 text-primary" />
-          <span>Bússola do Tempo</span>
-        </Link>
+        <div className="mb-8 flex items-center justify-between gap-2">
+          <Link href="/" className="flex items-center gap-2 text-lg font-bold">
+            <Compass className="h-6 w-6 text-primary" />
+            <span>Bússola do Tempo</span>
+          </Link>
+          <ThemeToggle />
+        </div>
 
         <h1 className="text-2xl font-extrabold tracking-tight">Entrar na sua conta</h1>
         <p className="mt-1 text-sm text-muted-foreground">
