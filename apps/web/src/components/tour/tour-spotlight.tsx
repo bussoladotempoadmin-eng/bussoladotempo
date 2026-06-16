@@ -23,6 +23,11 @@ export function TourSpotlight({ steps, onClose }: { steps: Passo[]; onClose: () 
   const [i, setI] = React.useState(0);
   const [rect, setRect] = React.useState<DOMRect | null>(null);
   const [montado, setMontado] = React.useState(false);
+  const [popStyle, setPopStyle] = React.useState<React.CSSProperties>({
+    left: '50%',
+    top: '50%',
+    transform: 'translate(-50%, -50%)',
+  });
   const popRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => setMontado(true), []);
@@ -76,20 +81,17 @@ export function TourSpotlight({ steps, onClose }: { steps: Passo[]; onClose: () 
     const ph = pop.offsetHeight;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+    // Sem alvo → centralizado (via transform, sempre visível).
     if (!rect) {
-      pop.style.left = Math.round((vw - pw) / 2) + 'px';
-      pop.style.top = Math.round((vh - ph) / 2) + 'px';
+      setPopStyle({ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' });
       return;
     }
     const espacoAbaixo = vh - rect.bottom;
-    let top: number;
-    if (espacoAbaixo > ph + 24) top = rect.bottom + 14;
-    else top = Math.max(12, rect.top - ph - 14);
+    const top = espacoAbaixo > ph + 24 ? rect.bottom + 14 : Math.max(12, rect.top - ph - 14);
     let left = rect.left + rect.width / 2 - pw / 2;
     left = Math.max(12, Math.min(left, vw - pw - 12));
-    pop.style.left = Math.round(left) + 'px';
-    pop.style.top = Math.round(top) + 'px';
-  }, [rect, i]);
+    setPopStyle({ left: Math.round(left), top: Math.round(top), transform: 'none' });
+  }, [rect, i, montado]);
 
   function fim() {
     if (menuAberto()) botaoMenu()?.click();
@@ -102,8 +104,9 @@ export function TourSpotlight({ steps, onClose }: { steps: Passo[]; onClose: () 
     <>
       {rect ? (
         <div
-          className="pointer-events-none fixed z-[60] rounded-xl border-2 border-primary transition-all duration-300"
+          className="pointer-events-none fixed rounded-xl border-2 border-primary transition-all duration-300"
           style={{
+            zIndex: 9998,
             left: rect.left - PAD,
             top: rect.top - PAD,
             width: rect.width + PAD * 2,
@@ -112,12 +115,13 @@ export function TourSpotlight({ steps, onClose }: { steps: Passo[]; onClose: () 
           }}
         />
       ) : (
-        <div className="fixed inset-0 z-[60] bg-black/65" />
+        <div className="fixed inset-0" style={{ zIndex: 9998, background: 'rgba(0,0,0,.65)' }} />
       )}
 
       <div
         ref={popRef}
-        className="fixed z-[61] w-[300px] max-w-[calc(100vw-24px)] rounded-2xl border border-border bg-card p-5 shadow-2xl transition-all duration-300"
+        style={{ zIndex: 9999, ...popStyle }}
+        className="fixed w-[300px] max-w-[calc(100vw-24px)] rounded-2xl border border-border bg-card p-5 shadow-2xl transition-[top,left] duration-300"
       >
         <div className="mb-2 flex items-start justify-between">
           <span className="text-[11px] font-bold uppercase tracking-wide text-primary">
