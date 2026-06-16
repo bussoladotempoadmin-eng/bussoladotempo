@@ -124,9 +124,9 @@ export async function convidarMembro(
     return { ok: false, erro: 'E-mail inválido.' };
   }
 
-  // Limite de assentos (se a empresa tem plano com assentos definidos).
+  // Limite de assentos: vale o plano do DONO do time (gestor).
   const assinatura = await prisma.assinatura.findUnique({
-    where: { organizacaoId: org.id },
+    where: { ownerUserId: gestorId },
     select: { assentos: true },
   });
   if (assinatura) {

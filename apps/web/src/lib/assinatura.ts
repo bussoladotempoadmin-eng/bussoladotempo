@@ -71,14 +71,15 @@ type AssinaturaComPlano = Assinatura & { plano: Plano };
  * cobre (vem primeiro). Só então cai na assinatura própria (donos/solo).
  */
 export async function resolveAssinatura(userId: string): Promise<AssinaturaComPlano | null> {
-  // 1. Coberto por uma empresa: é membro de uma org que tem assinatura.
+  // 1. Coberto por uma empresa: é membro de um time → vale o plano do DONO do time.
   const vinculo = await prisma.membroEquipe.findFirst({
-    where: { userId, organizacao: { assinatura: { isNot: null } } },
-    select: { organizacaoId: true },
+    where: { userId },
+    select: { organizacao: { select: { ownerId: true } } },
   });
-  if (vinculo) {
+  const donoId = vinculo?.organizacao?.ownerId;
+  if (donoId && donoId !== userId) {
     const doTime = await prisma.assinatura.findUnique({
-      where: { organizacaoId: vinculo.organizacaoId },
+      where: { ownerUserId: donoId },
       include: { plano: true },
     });
     if (doTime) return doTime;
