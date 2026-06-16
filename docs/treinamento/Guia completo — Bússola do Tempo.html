@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Guia completo — Bússola do Tempo</title>
+<style>
+  :root{
+    --bg:#f6f8fb; --fg:#0f172a; --card:#fff; --muted:#64748b; --border:#e2e8f0;
+    --primary:#2563eb; --primary-soft:#eff4ff; --soft:#f8fafc;
+    --imp:#10b981; --imp-soft:rgba(16,185,129,.13);
+    --urg:#ef4444; --urg-soft:rgba(239,68,68,.12);
+    --dis:#94a3b8; --dis-soft:rgba(148,163,184,.16);
+    --f1:#3b82f6; --f2:#f97316; --f3:#a855f7; --f4:#22c55e;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.6;font-size:16px}
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px}
+  a{color:var(--primary)}
+
+  /* capa */
+  .cover{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:48px 0 40px}
+  .cover .badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.15);padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;margin-bottom:18px}
+  .cover h1{font-size:34px;line-height:1.15;margin:0 0 8px;font-weight:800}
+  .cover p{font-size:16px;opacity:.92;margin:0;max-width:560px}
+
+  /* índice */
+  .toc{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;margin:-26px 0 36px;box-shadow:0 8px 30px rgba(15,23,42,.06)}
+  .toc h2{margin:0 0 12px;font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+  .toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+  .toc li{margin-bottom:7px;break-inside:avoid}
+  .toc a{text-decoration:none;font-weight:600}
+  @media(max-width:620px){.toc ol{columns:1}}
+
+  /* módulos */
+  .mod{margin-bottom:44px}
+  .mod-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+  .num{flex-shrink:0;width:40px;height:40px;border-radius:12px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:800;font-size:18px}
+  .mod-head h2{margin:0;font-size:23px;font-weight:800}
+  .mod-head .sub{color:var(--muted);font-size:14px;margin-top:2px}
+  .lead{background:var(--primary-soft);border-left:4px solid var(--primary);border-radius:0 12px 12px 0;padding:12px 16px;margin:0 0 18px;font-size:15px}
+  .lead b{color:var(--primary)}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+
+  h3{font-size:15px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 10px}
+  ol.steps{margin:0;padding-left:20px}
+  ol.steps li{margin-bottom:9px}
+  ol.steps b{color:var(--fg)}
+  .tip{margin-top:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;font-size:14px}
+  .tip b{color:#b45309}
+
+  /* TELA mock (moldura de celular) */
+  .tela{background:#0b1220;border-radius:26px;padding:10px;box-shadow:0 14px 40px rgba(15,23,42,.18)}
+  .tela .screen{background:var(--bg);border-radius:18px;overflow:hidden}
+  .t-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:#fff;border-bottom:1px solid var(--border)}
+  .t-logo{display:flex;align-items:center;gap:6px;font-weight:800;font-size:13px}
+  .t-av{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:10px;font-weight:700}
+  .t-body{padding:14px}
+  .t-cap{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+  .t-h{font-size:18px;font-weight:800;margin:2px 0}
+  .t-sub{font-size:11px;color:var(--muted);margin-bottom:12px}
+
+  .chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px}
+  .c-imp{background:var(--imp-soft);color:#059669}.c-urg{background:var(--urg-soft);color:#dc2626}.c-dis{background:var(--dis-soft);color:#64748b}
+  .bloco{background:#fff;border:1px solid var(--border);border-left:4px solid var(--f1);border-radius:12px;padding:10px;margin-bottom:9px}
+  .bloco .time{font-family:ui-monospace,monospace;font-size:10px;font-weight:700;background:var(--soft);border:1px solid var(--border);padding:2px 6px;border-radius:6px}
+  .bloco .tt{font-weight:700;font-size:13px;margin-top:5px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;background:var(--primary);color:#fff;border:none;border-radius:11px;padding:11px;font-weight:700;font-size:13px}
+  .btn-soft{background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;width:auto;padding:7px 12px;font-size:12px}
+  .frente{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:11px;padding:9px 11px;margin-bottom:8px}
+  .dot{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:13px}
+  .legenda{font-size:11px;color:var(--muted);text-align:center;margin-top:8px}
+
+  .nota{font-size:13px;color:var(--muted)}
+  .pill-row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+  .gestor{background:#f5f3ff;border:1px solid #ddd6fe;border-radius:14px;padding:16px 18px;margin-top:10px}
+  .gestor h4{margin:0 0 6px;color:#6d28d9;font-size:15px}
+
+  footer{background:#0f172a;color:#cbd5e1;padding:30px 0;font-size:13px;margin-top:30px}
+  footer b{color:#fff}
+
+  .fab{position:fixed;right:18px;bottom:18px;z-index:50;background:var(--primary);color:#fff;border:none;border-radius:999px;padding:12px 20px;font-weight:700;font-size:14px;box-shadow:0 8px 24px rgba(37,99,235,.4);cursor:pointer}
+
+  hr.sep{border:none;border-top:1px solid var(--border);margin:0 0 44px}
+
+  @media print{
+    body{background:#fff;font-size:12px}
+    .fab{display:none}
+    .cover{background:#1e3a8a!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .chip,.c-imp,.c-urg,.c-dis,.lead,.tip,.gestor,.num,.btn,.btn-soft{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .mod{break-inside:avoid}
+    .tela{break-inside:avoid}
+    .toc ol{columns:2}
+  }
+</style>
+</head>
+<body>
+
+<!-- CAPA -->
+<header class="cover">
+  <div class="wrap">
+    <span class="badge">🧭 Guia completo de uso</span>
+    <h1>Bússola do Tempo</h1>
+    <p>Aprenda, função por função, a planejar sua semana, executar com foco e descobrir para onde seu tempo realmente vai.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ÍNDICE -->
+  <nav class="toc">
+    <h2>O que você vai aprender</h2>
+    <ol>
+      <li><a href="#m1">Entrar na sua conta</a></li>
+      <li><a href="#m2">Frentes (suas áreas)</a></li>
+      <li><a href="#m3">Compromissos fixos</a></li>
+      <li><a href="#m4">Montar a semana com IA</a></li>
+      <li><a href="#m5">A tela da Semana</a></li>
+      <li><a href="#m6">Concluir uma demanda</a></li>
+      <li><a href="#m7">Tarefas dentro do bloco</a></li>
+      <li><a href="#m8">Revisão semanal</a></li>
+      <li><a href="#m9">Fechamento da noite</a></li>
+      <li><a href="#m10">Meu Plano</a></li>
+      <li><a href="#m11">Meu Time (gestor)</a></li>
+      <li><a href="#m12">Ajuda e tour guiado</a></li>
+    </ol>
+  </nav>
+
+  <!-- conceito -->
+  <div class="lead" style="margin-bottom:40px">
+    <b>A ideia em 1 frase:</b> você organiza seu tempo por <b>Frentes</b> (suas áreas) e classifica cada bloco em
+    <span class="chip c-imp">🎯 Importante</span> <span class="chip c-urg">🔥 Urgente</span> <span class="chip c-dis">💨 Disperso</span>.
+    No fim, a Bússola te mostra para onde seu tempo foi de verdade — e a IA aprende com isso pra montar semanas cada vez melhores.
+  </div>
+
+  <!-- M1 -->
+  <section class="mod" id="m1">
+    <div class="mod-head">
+      <div class="num">1</div>
+      <div><h2>Entrar na sua conta</h2><div class="sub">Login por e-mail e senha, Google ou link mágico</div></div>
+    </div>
+    <p class="lead"><b>Pra que serve:</b> é a porta de entrada. Você pode entrar de 3 jeitos — escolha o que for mais fácil.</p>
+    <div class="grid">
+      <div class="tela">
+        <div class="screen">
+          <div class="t-head"><span class="t-logo">🧭 Bússola do Tempo</span><span>🌙</span></div>
+          <div class="t-body">
+            <div class="t-h">Entrar na sua conta</div>
+            <div class="t-sub">Com e-mail e senha, Google, ou link mágico.</div>
+            <div class="btn" style="background:#fff;color:#0f172a;border:1px solid var(--border);margin-bottom:10px">G &nbsp;Entrar com Google</div>
+            <div style="font-size:11px;color:var(--muted);margin:6px 0">E-mail</div>
+            <div style="border:1px solid var(--border);border-radius:9px;padding:9px;font-size:12px;color:var(--muted);margin-bottom:8px">seu@email.com</div>
+            <div style="font-size:11px;color:var(--muted);margin:6px 0">Senha</div>
+            <div style="border:1px solid var(--border);border-radius:9px;padding:9px;font-size:12px;color:var(--muted);margin-bottom:10px">••••••••</div>
+            <div class="btn">Entrar</div>
+            <div class="legenda">Esqueceu a senha? Use “link mágico por e-mail”.</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>Como usar</h3>
+        <ol class="steps">
+          <li><b>Com Google:</b> 1 toque, sem senha.</li>
+          <li><b>E-mail e senha:</b> digite e clique em <b>Entrar</b>.</li>
+          <li><b>Sem senha:</b> use <b>“Receber link mágico”</b> — chega um link no e-mail que já te loga.</li>
+          <li>Recebeu um <b>convite por e-mail</b>? Clique nele e crie sua senha — você já entra dentro do time.</li>
+        </ol>
+        <div class="tip"><b>Dica:</b> não lembra a senha? “Esqueci a senha” manda um link pra criar uma nova em 1 minuto.</div>
+      </div>
+    </div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M2 -->
+  <section class="mod" id="m2">
+    <div class="mod-head">
+      <div class="num">2</div>
+      <div><h2>Frentes — suas áreas</h2><div class="sub">O alicerce de tudo: comece por aqui</div></div>
+    </div>
+    <p class="lead"><b>Pra que serve:</b> Frentes são as áreas que você toca (sua empresa, um projeto, estudos, saúde…). <b>Tudo</b> na sua semana é organizado por elas — e você define quantas horas quer dar a cada uma.</p>
+    <div class="grid">
+      <div class="tela">
+        <div class="screen">
+          <div class="t-head"><span class="t-logo">🧭 Frentes</span><span class="t-av">L</span></div>
+          <div class="t-body">
+            <div class="frente"><span class="dot" style="background:rgba(59,130,246,.15)">🏢</span><div style="flex:1"><div style="font-weight:700;font-size:13px">Doctum</div><div style="font-size:10px;color:var(--muted)">36 h / semana</div></div></div>
+            <div class="frente" style="border-left:none"><span class="dot" style="background:rgba(249,115,22,.15)">🛒</span><div style="flex:1"><div style="font-weight:700;font-size:13px">Tribo</div><div style="font-size:10px;color:var(--muted)">18 h / semana</div></div></div>
+            <div class="frente"><span class="dot" style="background:rgba(168,85,247,.15)">🎓</span><div style="flex:1"><div style="font-weight:700;font-size:13px">Dra. Bruna</div><div style="font-size:10px;color:var(--muted)">3 h / semana</div></div></div>
+            <div style="border:1px dashed var(--border);border-radius:11px;padding:9px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);margin-top:4px">＋ Nova frente</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>Como usar</h3>
+        <ol class="steps">
+          <li>Toque em <b>＋ Nova frente</b>.</li>
+          <li>Dê um <b>nome</b>, escolha um <b>ícone</b> e uma <b>cor</b> (ajuda a bater o olho).</li>
+          <li>Defina o <b>orçamento de horas/semana</b> daquela frente.</li>
+          <li>Repita pras suas 3–5 áreas principais. Pronto: é a base da sua semana.</li>
+        </ol>
+        <div class="tip"><b>Dica:</b> o orçamento de horas é levado a sério pela IA — ela tenta distribuir sua semana perto desse número, sem estourar.</div>
+      </div>
+    </div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M3 -->
+  <section class="mod" id="m3">
+    <div class="mod-head">
+      <div class="num">3</div>
+      <div><h2>Compromissos fixos</h2><div class="sub">O que se repete toda semana</div></div>
+    </div>
+    <p class="lead"><b>Pra que serve:</b> cadastre o que acontece sempre (treino, reuniões, lives, aulas). Eles entram automaticamente na sua agenda e a IA os respeita.</p>
+    <div class="grid">
+      <div>
+        <h3>Como usar</h3>
+        <ol class="steps">
+          <li>Toque em <b>Novo compromisso</b>.</li>
+          <li>Escolha o <b>dia</b>, o <b>horário</b> (início e fim) e a <b>descrição</b>.</li>
+          <li>Opcional: ligue a uma <b>frente</b> e a uma <b>categoria</b>.</li>
+          <li><b>Repetir em vários dias:</b> marque os outros dias em “Repetir também em” — ele cria uma cópia em cada um (ex.: treino de segunda a sexta de uma vez).</li>
+        </ol>
+        <div class="tip"><b>Dica:</b> cada dia vira um compromisso independente — dá pra editar ou apagar o de terça sem mexer no de segunda.</div>
+      </div>
+      <div class="tela">
+        <div class="screen">
+          <div class="t-head"><span class="t-logo">🧭 Compromissos</span><span class="t-av">L</span></div>
+          <div class="t-body">
+            <div class="t-cap">Novo compromisso</div>
+            <div style="display:flex;gap:6px;margin-bottom:8px"><div style="flex:1;border:1px solid var(--border);border-radius:8px;padding:7px;font-size:11px">Seg ▾</div><div style="border:1px solid var(--border);border-radius:8px;padding:7px;font-size:11px">07:00</div><div style="border:1px solid var(--border);border-radius:8px;padding:7px;font-size:11px">08:00</div></div>
+            <div style="border:1px solid var(--border);border-radius:8px;padding:7px;font-size:11px;color:var(--muted);margin-bottom:10px">Treino</div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Repetir também em</div>
+            <div class="pill-row">
+              <span class="chip" style="border:1px solid var(--primary);color:var(--primary)">Ter</span>
+              <span class="chip" style="border:1px solid var(--primary);color:var(--primary)">Qua</span>
+              <span class="chip" style="border:1px solid var(--primary);color:var(--primary)">Qui</span>
+              <span class="chip" style="border:1px solid var(--primary);color:var(--primary)">Sex</span>
+              <span class="chip" style="border:1px solid var(--border);color:var(--muted)">Sáb</span>
+            </div>
+            <div class="btn" style="margin-top:6px">Salvar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M4 -->
+  <section class="mod" id="m4">
+    <div class="mod-head">
+      <div class="num">4</div>
+      <div><h2>Montar a semana com IA</h2><div class="sub">A mágica: sua semana pronta em segundos</div></div>
+    </div>
+    <p class="lead"><b>Pra que serve:</b> com as frentes e compromissos prontos, a IA monta sua semana inteira — distribuindo os blocos perto do orçamento de cada frente e aprendendo com o que já funcionou pra você.</p>
+    <div class="grid">
+      <div class="tela">
+        <div class="screen">
+          <div class="t-head"><span class="t-logo">🧭 Semana</span><span class="t-av">L</span></div>
+          <div class="t-body">
+            <div class="t-h" style="font-size:15px">Semana de 15–21 jun</div>
+            <div class="t-sub">Vamos montar com a IA</div>
+            <div class="btn">✨ Montar minha semana com IA</div>
+            <div class="legenda">A IA respeita seu sono, almoço e compromissos fixos.</div>
+            <div style="margin-top:12px;font-size:11px;color:var(--muted)">Você revisa a proposta e ajusta o que quiser antes de aplicar.</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>Como usar</h3>
+        <ol class="steps">
+          <li>Vá em <b>Semana</b> e toque em <b>✨ Montar com IA</b>.</li>
+          <li>Escolha o alcance: <b>próxima semana</b>, <b>2</b> ou <b>4 semanas</b> de uma vez.</li>
+          <li>A IA devolve uma <b>proposta</b> — você revisa, edita e <b>aplica</b>.</li>
+          <li>Nada é salvo até você confirmar. É um rascunho.</li>
+        </ol>
+        <div class="tip"><b>Dica:</b> você tem <b>1 geração por semana</b> (e um teto mensal). Reabrir um resultado já gerado é sempre grátis. Aplicar a mesma proposta em 2 ou 4 semanas conta como 1 geração só.</div>
+      </div>
+    </div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M5 -->
+  <section class="mod" id="m5">
+    <div class="mod-head">
+      <div class="num">5</div>
+      <div><h2>A tela da Semana</h2><div class="sub">Onde sua semana vive</div></div>
+    </div>
+    <p class="lead"><b>Pra que serve:</b> ver e ajustar todos os blocos, dia a dia. Cada bloco é uma demanda, com horário, frente e categoria.</p>
+    <div class="grid">
+      <div>
+        <h3>O que você vê em cada bloco</h3>
+        <ol class="steps">
+          <li><b>Horário</b> (início–fim) e a <b>frente</b> (cor à esquerda).</li>
+          <li>A <b>categoria planejada:</b> <span class="chip c-imp">🎯 Importante</span> <span class="chip c-urg">🔥 Urgente</span> <span class="chip c-dis">💨 Disperso</span>.</li>
+          <li><b>⭐ Prioridade da semana</b> (até 3 blocos que não podem falhar).</li>
+          <li><b>Checklist</b> de tarefas e o contador (ex.: 2/5 feitas).</li>
+          <li>Aviso de <b>conflito</b> se dois blocos se sobrepõem no mesmo dia.</li>
+        </ol>
+        <div class="tip"><b>Importante:</b> se você precisar <b>mudar o horário antes de começar</b> (replanejamento), é só <b>editar o bloco</b>. Isso vira o novo plano — não conta como “falha”.</div>
+      </div>
+      <div class="tela">
+        <div class="screen">
+          <div class="t-head"><span class="t-logo">🧭 Segunda</span><span class="t-av">L</span></div>
+          <div class="t-body">
+            <div class="bloco"><span class="time">08:00–12:00</span><div class="tt">Revisar pipeline + estratégia</div><div style="margin-top:6px"><span class="chip c-imp">🎯 Importante</span> &nbsp;<span style="font-size:10px;color:var(--muted)">✓ 0/1</span></div></div>
+            <div class="bloco" style="border-left-color:var(--f1)"><span class="time">13:30–18:00</span><div class="tt">1:1 com vendedores</div><div style="margin-top:6px"><span class="chip c-urg">🔥 Urgente</span></div></div>
+            <div class="bloco" style="border-left-color:var(--f2)"><span class="time">18:30–21:30</span><div class="tt">Mentoria ao vivo</div><div style="margin-top:6px"><span class="chip c-imp">🎯 Importante</span></div></div>
+            <div style="border:1px dashed var(--border);border-radius:10px;padding:8px;text-align:center;font-size:11px;font-weight:600;color:var(--muted)">＋ Novo bloco</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M6 -->
+  <section class="mod" id="m6">
+    <div class="mod-head">
+      <div class="num">6</div>
+      <div><h2>Concluir uma demanda</h2><div class="sub">O coração da inteligência da Bússola</div></div>
+    </div>
+    <p class="lead"><b>Pra que serve:</b> ao terminar um bloco, você registra <b>quando</b> concluiu, <b>como realmente foi</b> e — se executou fora do horário — o <b>horário real</b>. É isso que mostra para onde seu tempo foi de verdade e alimenta o Coach e a IA.</p>
+    <div class="grid">
+      <div class="tela">
+        <div class="screen">
+          <div class="t-head"><span class="t-logo">🧭 Concluir bloco</span><span>✕</span></div>
+          <div class="t-body">
+            <div class="t-cap">Concluir</div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Quando concluiu</div>
+            <div style="border:1px solid var(--border);border-radius:8px;padding:7px;font-size:11px;margin-bottom:10px">15/06 18:44</div>
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Como realmente foi?</div>
+            <div style="display:flex;gap:6px;margin-bottom:10px">
+              <div class="chip c-imp" style="flex:1;justify-content:center;padding:8px">✓ Como planejado</div>
+              <div class="chip c-urg" style="flex:1;justify-content:center;padding:8px">🔥 Virou urgente</div>
+              <div class="chip c-dis" style="flex:1;justify-content:center;padding:8px">💨 Disperso</div>
+            </div>
+            <div style="background:var(--soft);border-radius:9px;padding:8px;font-size:11px;color:var(--muted)">⚠️ Horário real <b style="color:#0f172a">09:00 – 13:30</b> &nbsp;(planejado 08:00–12:00)</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>Como usar</h3>
+        <ol class="steps">
+          <li>Toque no bloco e em <b>Concluir</b>.</li>
+          <li>Confirme <b>quando concluiu</b> (já vem com agora).</li>
+          <li>Diga <b>como foi</b>: saiu como planejado, virou urgente ou foi disperso.</li>
+          <li><b>Executou em outro horário?</b> Ajuste o <b>“Horário real”</b> (início–fim). Se não mudou, deixe como está — 1 toque e pronto.</li>
+        </ol>
+        <div class="tip"><b>Por que importa:</b> o sistema registra <b>planejado × real</b>. Se um bloco sempre “desliza” (planejado de manhã, mas sempre feito à tarde), a IA aprende e já propõe no horário que funciona pra você.</div>
+      </div>
+    </div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M7 -->
+  <section class="mod" id="m7">
+    <div class="mod-head">
+      <div class="num">7</div>
+      <div><h2>Tarefas dentro do bloco</h2><div class="sub">Quebre o bloco em passos</div></div>
+    </div>
+    <p class="lead"><b>Pra que serve:</b> dentro de cada bloco você lista as tarefas (“O que fazer”), com <b>início e fim</b> opcionais, e vai marcando conforme conclui.</p>
+    <div class="grid">
+      <div>
+        <h3>Como usar</h3>
+        <ol class="steps">
+          <li>Abra o bloco → seção <b>“O que fazer”</b>.</li>
+          <li>Digite a tarefa e, se quiser, o <b>Início</b> e o <b>Fim</b> dela.</li>
+          <li>Toque no <b>quadradinho</b> pra marcar como feita.</li>
+          <li>O contador do bloco mostra o progresso (ex.: 3/5).</li>
+        </ol>
+        <div class="tip"><b>Dica:</b> não precisa preencher horário em toda tarefa — use só quando ajuda a organizar o dia.</div>
+      </div>
+      <div class="tela">
+        <div class="screen">
+          <div class="t-head"><span class="t-logo">🧭 O que fazer</span><span>✕</span></div>
+          <div class="t-body">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="color:#059669">☑</span><span class="time">08:00–09:00</span><span style="flex:1;font-size:12px;text-decoration:line-through;color:var(--muted)">Revisar metas</span></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="color:var(--muted)">☐</span><span class="time">09:00–10:30</span><span style="flex:1;font-size:12px">Reunião comitê</span></div>
+            <div style="display:flex;align-items:center;gap:6px;border-top:1px solid var(--border);padding-top:8px"><span class="time">– : –</span><span class="time">– : –</span><span style="flex:1;border:1px solid var(--border);border-radius:7px;padding:6px;font-size:11px;color:var(--muted)">Adicionar tarefa…</span><span style="background:var(--primary);color:#fff;border-radius:7px;padding:4px 8px;font-size:12px">＋</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M8 -->
+  <section class="mod" id="m8">
+    <div class="mod-head">
+      <div class="num">8</div>
+      <div><h2>Revisão semanal</h2><div class="sub">O ritual que faz tudo funcionar</div></div>
+    </div>
+    <p class="lead"><b>Pra que serve:</b> de <b>sexta a domingo</b>, você fecha a semana — vê como foi e já planeja a próxima. É o hábito que separa quem larga de quem evolui.</p>
+    <div class="grid">
+      <div>
+        <h3>Como usar</h3>
+        <ol class="steps">
+          <li>Você recebe um <b>lembrete</b> (no app e, se ativar, no celular).</li>
+          <li>Responda 3 perguntas rápidas: o que <b>funcionou</b>, o que <b>não</b>, o que <b>mudar</b>.</li>
+          <li>Veja os <b>insights</b>: horas por frente, desvios, o que virou urgente/disperso.</li>
+          <li>Já <b>monte a próxima semana</b> com a IA, com tudo isso considerado.</li>
+        </ol>
+        <div class="tip"><b>Dica:</b> ative os <b>lembretes do ritual</b> na home — um toque no domingo, mesmo com o app fechado.</div>
+      </div>
+      <div class="tela">
+        <div class="screen">
+          <div class="t-head"><span class="t-logo">🧭 Revisão</span><span class="t-av">L</span></div>
+          <div class="t-body">
+            <div class="t-cap">Como foi a semana</div>
+            <div style="background:var(--imp-soft);border-radius:9px;padding:8px;font-size:11px;margin-bottom:7px"><b>Doctum</b> · 34h de 36h planejadas ✅</div>
+            <div style="background:var(--urg-soft);border-radius:9px;padding:8px;font-size:11px;margin-bottom:7px">3 blocos <b>viraram urgentes</b> nas tardes de quarta</div>
+            <div style="background:var(--soft);border-radius:9px;padding:8px;font-size:11px;margin-bottom:10px">Manhãs renderam mais que as tardes</div>
+            <div class="btn">Planejar próxima semana →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M9 -->
+  <section class="mod" id="m9">
+    <div class="mod-head">
+      <div class="num">9</div>
+      <div><h2>Fechamento da noite</h2><div class="sub">2 minutos antes de dormir</div></div>
+    </div>
+    <p class="lead"><b>Pra que serve:</b> um registro rápido do dia — o que foi bom e o que dá pra melhorar amanhã. Pouco esforço, muito aprendizado ao longo do tempo.</p>
+    <ol class="steps">
+      <li>Abra <b>Fechamento da noite</b> (no menu).</li>
+      <li>Anote um <b>destaque</b> do dia e um <b>aprendizado</b>.</li>
+      <li>Dê uma <b>nota</b> de 1 a 5 pra como foi o dia.</li>
+    </ol>
+    <div class="tip"><b>Dica:</b> essas anotações são <b>suas e privadas</b> — nem o gestor de time as enxerga.</div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M10 -->
+  <section class="mod" id="m10">
+    <div class="mod-head">
+      <div class="num">10</div>
+      <div><h2>Meu Plano</h2><div class="sub">Seu teste, seu plano e a cobrança</div></div>
+    </div>
+    <p class="lead"><b>Pra que serve:</b> ver em qual plano você está, quantos dias de teste restam e escolher o plano ideal.</p>
+    <ol class="steps">
+      <li>No menu (seu nome) → <b>Meu Plano</b>.</li>
+      <li>Veja seu plano atual e os <b>dias de teste grátis</b> restantes.</li>
+      <li>Escolha um plano (Essencial / Pro / Enterprise) — a equipe combina a ativação com você.</li>
+    </ol>
+    <div class="tip"><b>Dica:</b> no começo todo mundo entra com <b>14 dias grátis</b> no Essencial. É só escolher o plano antes do fim do teste pra não ter interrupção.</div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M11 -->
+  <section class="mod" id="m11">
+    <div class="mod-head">
+      <div class="num">11</div>
+      <div><h2>Meu Time</h2><div class="sub">Para quem gerencia uma equipe</div></div>
+    </div>
+    <p class="lead"><b>Pra que serve:</b> se você lidera um time, aqui você convida as pessoas, organiza a hierarquia e acompanha a distribuição de tempo de cada um (sem ver as reflexões pessoais delas).</p>
+    <div class="gestor">
+      <h4>👥 Como montar seu time</h4>
+      <ol class="steps">
+        <li>Garanta um plano de time (<b>Pro</b> ou <b>Enterprise</b>) com os <b>assentos</b> que precisa.</li>
+        <li>Vá em <b>Meu time</b> → dê um nome ao time.</li>
+        <li><b>Convide por e-mail.</b> Quem não tem conta é criado e recebe o convite pra criar a senha — já entra dentro do time.</li>
+        <li>Cada membro é <b>coberto pelo plano da empresa</b> (sem cobrança individual).</li>
+      </ol>
+      <div class="tip" style="background:#fff;border-color:#ddd6fe"><b>Privacidade:</b> o gestor vê a <b>distribuição de horas</b> dos membros — nunca as reflexões e anotações pessoais deles.</div>
+    </div>
+  </section>
+  <hr class="sep"/>
+
+  <!-- M12 -->
+  <section class="mod" id="m12">
+    <div class="mod-head">
+      <div class="num">12</div>
+      <div><h2>Ajuda e tour guiado</h2><div class="sub">Nunca fica perdido</div></div>
+    </div>
+    <p class="lead"><b>Pra que serve:</b> a qualquer momento, um tour mostra onde fica cada coisa — direto na tela em que você está.</p>
+    <ol class="steps">
+      <li>Toque no <b>“?”</b> no topo da tela → o tour daquela tela começa, iluminando cada botão.</li>
+      <li>Use <b>Avançar / Voltar</b> ou <b>Pular</b> quando quiser.</li>
+      <li>Pra rever a apresentação geral: <b>Configurações → Rever tour guiado</b>.</li>
+    </ol>
+    <div class="tip"><b>Dica:</b> mandou alguém novo pra equipe? Peça pra clicar no “?” em cada tela — é a forma mais rápida de aprender na prática.</div>
+  </section>
+
+  <div class="lead" style="margin:10px 0 40px;font-size:16px">
+    <b>Resumo do hábito que funciona:</b> monte a semana (IA) → execute e <b>conclua</b> cada bloco dizendo como foi → na sexta, <b>revise</b> e planeje a próxima. Repita. Em poucas semanas a Bússola já conhece seus padrões e te ajuda a proteger seu tempo. 🧭
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <b>Bússola do Tempo</b> — onde seu tempo realmente vai.<br/>
+    Dúvidas? Fale com a gente. Bons primeiros 14 dias! 🚀
+  </div>
+</footer>
+
+<button class="fab" onclick="window.print()">⬇ Baixar PDF</button>
+
+</body>
+</html>

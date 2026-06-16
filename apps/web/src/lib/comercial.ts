@@ -199,6 +199,39 @@ export async function criarUnidade(
   return { ok: true };
 }
 
+/** Edita nome e/ou coordenador de uma unidade. coordenadorEmail vazio = remove o coordenador. */
+export async function editarUnidade(
+  userId: string,
+  unidadeId: string,
+  patch: { nome?: string; coordenadorEmail?: string | null },
+): Promise<{ ok: boolean; erro?: string }> {
+  const alvo = await prisma.unidade.findUnique({
+    where: { id: unidadeId },
+    select: { organizacao: { select: { ownerId: true } } },
+  });
+  if (!alvo || alvo.organizacao.ownerId !== userId) return { ok: false, erro: 'Sem permissão nesta empresa.' };
+
+  const data: { nome?: string; coordenadorId?: string | null } = {};
+  if (patch.nome !== undefined) {
+    const nomeLimpo = patch.nome.trim();
+    if (!nomeLimpo) return { ok: false, erro: 'Dê um nome à unidade.' };
+    data.nome = nomeLimpo;
+  }
+  if (patch.coordenadorEmail !== undefined) {
+    const email = patch.coordenadorEmail?.toLowerCase().trim();
+    if (email) {
+      const c = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+      if (!c) return { ok: false, erro: 'O coordenador precisa ter entrado no app pelo menos uma vez.' };
+      data.coordenadorId = c.id;
+    } else {
+      data.coordenadorId = null; // remover coordenador
+    }
+  }
+  if (Object.keys(data).length === 0) return { ok: false, erro: 'Nada para alterar.' };
+  await prisma.unidade.update({ where: { id: unidadeId }, data });
+  return { ok: true };
+}
+
 export async function removerUnidade(userId: string, unidadeId: string): Promise<boolean> {
   const u = await prisma.unidade.findUnique({
     where: { id: unidadeId },
