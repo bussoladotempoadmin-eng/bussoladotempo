@@ -77,7 +77,7 @@ export function OnboardingWizard({
     });
     setBusy(false);
     if (!res.ok) {
-      setError('Confira os horários (dormir depois de acordar, fim do almoço depois do início).');
+      setError('Confira os horários (o fim do almoço precisa ser depois do início).');
       return false;
     }
     return true;

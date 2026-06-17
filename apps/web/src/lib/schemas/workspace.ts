@@ -8,6 +8,11 @@ const hhmm = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Use um horário no formato HH:mm');
 
+const emMin = (s: string): number => {
+  const [h, m] = s.split(':').map(Number);
+  return h * 60 + m;
+};
+
 export const timezones = [
   'America/Sao_Paulo',
   'America/Bahia',
@@ -31,11 +36,12 @@ export const workspaceSchema = z
     horaAlmocoIni: hhmm,
     horaAlmocoFim: hhmm,
   })
-  .refine((d) => d.horaDormir > d.horaAcordar, {
-    message: 'A hora de dormir precisa ser depois de acordar',
+  // Dormir pode ser depois da meia-noite (vira o dia): só não pode ser igual a acordar.
+  .refine((d) => emMin(d.horaDormir) !== emMin(d.horaAcordar), {
+    message: 'A hora de dormir não pode ser igual à de acordar',
     path: ['horaDormir'],
   })
-  .refine((d) => d.horaAlmocoFim > d.horaAlmocoIni, {
+  .refine((d) => emMin(d.horaAlmocoFim) > emMin(d.horaAlmocoIni), {
     message: 'O fim do almoço precisa ser depois do início',
     path: ['horaAlmocoFim'],
   });
