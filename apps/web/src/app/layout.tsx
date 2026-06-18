@@ -7,6 +7,7 @@ import { SessionProvider } from '@/components/session-provider';
 import { PwaRegister } from '@/components/pwa-register';
 import { ToastProvider } from '@/components/toast';
 import { BottomNav } from '@/components/bottom-nav';
+import { AppShell } from '@/components/app-shell';
 import { TourHost } from '@/components/tour/tour-host';
 import { authOptions } from '@/lib/auth';
 
@@ -47,7 +48,7 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
             <ToastProvider>
-              {children}
+              <AppShell>{children}</AppShell>
               <BottomNav />
               <TourHost />
             </ToastProvider>

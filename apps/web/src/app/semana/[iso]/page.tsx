@@ -97,7 +97,7 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
 
   return (
     <main className="min-h-screen">
-      <header className="container flex items-center justify-between py-6">
+      <header className="container flex items-center justify-between py-6 lg:hidden">
         <Link href="/" className="flex items-center gap-2 text-lg font-bold">
           <Compass className="h-6 w-6 text-primary" />
           <span>Bússola do Tempo</span>

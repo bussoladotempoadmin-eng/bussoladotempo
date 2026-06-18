@@ -29,7 +29,7 @@ export default async function ComercialPage({
   if (!ctx) {
     return (
       <main className="min-h-screen">
-        <header className="container flex items-center justify-between py-5">
+        <header className="container flex items-center justify-between py-5 lg:hidden">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold">
             <Compass className="h-6 w-6 text-primary" />
             <span>Bússola do Tempo</span>

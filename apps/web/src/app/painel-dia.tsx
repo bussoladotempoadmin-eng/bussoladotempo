@@ -99,7 +99,9 @@ export function PainelDia({
   const modalBloco = modalId ? blocos.find((b) => b.id === modalId) : null;
 
   return (
-    <section className="container max-w-3xl py-8">
+    <section className="container max-w-5xl py-8">
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:gap-8">
+        <div className="min-w-0">
       <p className="text-sm text-muted-foreground">
         {saudacao}
         {nome ? `, ${nome.split(' ')[0]}` : ''} 👋
@@ -252,10 +254,38 @@ export function PainelDia({
         )}
       </div>
 
-      <div className="mt-8 grid grid-cols-3 gap-3">
+      {/* Atalhos no mobile: grid embaixo */}
+      <div className="mt-8 grid grid-cols-3 gap-3 lg:hidden">
         <QuickAction href={`/semana/${semanaIso}`} icon={<CalendarDays className="h-5 w-5" />} label="Semana" />
         <QuickAction href={`/revisao/${semanaIso}`} icon={<ClipboardCheck className="h-5 w-5" />} label="Revisão" />
         <QuickAction href="/frentes" icon={<Compass className="h-5 w-5" />} label="Frentes" />
+      </div>
+        </div>
+
+        {/* Atalhos no desktop: trilho à direita, cards maiores */}
+        <aside className="hidden lg:block">
+          <h2 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Atalhos
+          </h2>
+          <RailCard
+            href={`/semana/${semanaIso}`}
+            icon={<CalendarDays className="h-6 w-6" />}
+            titulo="Semana"
+            desc="Monte e ajuste sua semana com a IA"
+          />
+          <RailCard
+            href={`/revisao/${semanaIso}`}
+            icon={<ClipboardCheck className="h-6 w-6" />}
+            titulo="Revisão"
+            desc="Feche a semana e planeje a próxima"
+          />
+          <RailCard
+            href="/frentes"
+            icon={<Compass className="h-6 w-6" />}
+            titulo="Frentes"
+            desc="Suas áreas e orçamento de horas"
+          />
+        </aside>
       </div>
 
       {/* Modal completo (igual ao da Semana): editar + concluir + checklist */}
@@ -288,6 +318,31 @@ function QuickAction({
     >
       {icon}
       {label}
+    </Link>
+  );
+}
+
+function RailCard({
+  href,
+  icon,
+  titulo,
+  desc,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  titulo: string;
+  desc: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="mb-3 flex flex-col gap-2 rounded-2xl border border-border bg-card p-4 transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+    >
+      <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        {icon}
+      </span>
+      <span className="text-base font-bold">{titulo}</span>
+      <span className="text-xs text-muted-foreground">{desc}</span>
     </Link>
   );
 }

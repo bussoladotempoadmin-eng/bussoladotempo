@@ -128,7 +128,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen">
-      <header className="container flex items-center justify-between py-6">
+      <header className="container flex items-center justify-between py-6 lg:hidden">
         <div className="flex items-center gap-2 text-lg font-bold">
           <Compass className="h-6 w-6 text-primary" />
           <span>Bússola do Tempo</span>
@@ -139,6 +139,8 @@ export default async function Home() {
           <UserMenu />
         </div>
       </header>
+
+      <div className="hidden lg:block lg:pt-4" aria-hidden />
 
       {!conta?.onboardingVisto && <FirstRun />}
 
