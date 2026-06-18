@@ -7,10 +7,6 @@ import {
   ClipboardCheck,
   Compass,
   Check,
-  Flame,
-  Wind,
-  Clock3,
-  X,
   ListChecks,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -21,22 +17,12 @@ import {
   type DiaSemana,
   type Categoria,
 } from '@/lib/schemas/compromisso';
+import type { BlocoDTO, FrenteOption } from './semana/[iso]/blocos-manager';
+import { useBlocoMutations } from './semana/[iso]/use-bloco-mutations';
+import { BlocoModal } from './semana/[iso]/bloco-modal';
 
-export type PainelFrente = { id: string; nome: string; icone: string; cor: string };
-export type PainelBloco = {
-  id: string;
-  diaSemana: DiaSemana;
-  horaInicio: string;
-  horaFim: string;
-  tarefa: string;
-  frenteId: string;
-  categoriaPlanejada: Categoria;
-  categoriaRealizada: Categoria;
-  tarefasTotal: number;
-  tarefasFeitas: number;
-};
-
-type Resultado = 'SIM' | 'URGENTE' | 'DISPERSO';
+export type PainelFrente = FrenteOption;
+export type PainelBloco = BlocoDTO;
 
 const JS_TO_DIA: DiaSemana[] = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
 
@@ -49,12 +35,6 @@ const categoriaClasses: Record<Categoria, string> = {
 function toMin(hhmm: string): number {
   const [h, m] = hhmm.split(':').map(Number);
   return h * 60 + m;
-}
-
-function realizadaDe(b: PainelBloco, r: Resultado): Categoria {
-  if (r === 'SIM') return b.categoriaPlanejada;
-  if (r === 'URGENTE') return 'URGENTE';
-  return 'DISPERSO';
 }
 
 export type PainelPrioridade = {
@@ -77,12 +57,13 @@ export function PainelDia({
   semanaIso: string;
   prioridades: string[];
   prioridadeBlocos: PainelPrioridade[];
-  blocos: PainelBloco[];
-  frentes: PainelFrente[];
+  blocos: BlocoDTO[];
+  frentes: FrenteOption[];
 }) {
-  const [blocos, setBlocos] = React.useState<PainelBloco[]>(blocosIniciais);
+  const [blocos, setBlocos] = React.useState<BlocoDTO[]>(blocosIniciais);
   const [modalId, setModalId] = React.useState<string | null>(null);
   const [agora, setAgora] = React.useState<{ dia: DiaSemana; min: number } | null>(null);
+  const mut = useBlocoMutations(setBlocos, semanaIso);
 
   React.useEffect(() => {
     const tick = () => {
@@ -106,36 +87,6 @@ export function PainelDia({
         : [],
     [blocos, diaHoje],
   );
-
-  async function registrar(id: string, resultado: Resultado) {
-    setModalId(null);
-    const alvo = blocos.find((b) => b.id === id);
-    if (!alvo) return;
-    const anterior = alvo.categoriaRealizada;
-    const nova = realizadaDe(alvo, resultado);
-    setBlocos((prev) => prev.map((b) => (b.id === id ? { ...b, categoriaRealizada: nova } : b)));
-
-    const res = await fetch(`/api/blocos/${id}/realizado`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ resultado }),
-    });
-    if (!res.ok) {
-      // reverte em caso de erro
-      setBlocos((prev) =>
-        prev.map((b) => (b.id === id ? { ...b, categoriaRealizada: anterior } : b)),
-      );
-    }
-  }
-
-  // Auto-fechar o modal em 60s = "Fiz" (default suave da Tela 4).
-  const registrarRef = React.useRef(registrar);
-  registrarRef.current = registrar;
-  React.useEffect(() => {
-    if (!modalId) return;
-    const t = setTimeout(() => registrarRef.current(modalId, 'SIM'), 60_000);
-    return () => clearTimeout(t);
-  }, [modalId]);
 
   const saudacao = !agora
     ? 'Olá'
@@ -228,6 +179,8 @@ export function PainelDia({
               const ativo = agora.min >= toMin(b.horaInicio) && agora.min < toMin(b.horaFim);
               const passou = agora.min >= toMin(b.horaFim);
               const desviou = b.categoriaRealizada !== b.categoriaPlanejada;
+              const tarefasTotal = b.subtarefas.length;
+              const tarefasFeitas = b.subtarefas.filter((t) => t.feito).length;
               return (
                 <li key={b.id}>
                   <button
@@ -266,17 +219,22 @@ export function PainelDia({
                             → {categoriaLabel[b.categoriaRealizada]}
                           </span>
                         )}
-                        {b.tarefasTotal > 0 && (
+                        {b.concluido && (
+                          <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-2 py-0.5 font-semibold text-emerald-700 dark:text-emerald-400">
+                            <Check className="h-3 w-3" /> concluído
+                          </span>
+                        )}
+                        {tarefasTotal > 0 && (
                           <span
                             className={cn(
                               'inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 font-semibold',
-                              b.tarefasFeitas === b.tarefasTotal
+                              tarefasFeitas === tarefasTotal
                                 ? 'bg-emerald-500/15 text-emerald-600'
                                 : 'bg-muted text-muted-foreground',
                             )}
                           >
                             <ListChecks className="h-3 w-3" />
-                            {b.tarefasFeitas}/{b.tarefasTotal}
+                            {tarefasFeitas}/{tarefasTotal}
                           </span>
                         )}
                       </p>
@@ -300,86 +258,17 @@ export function PainelDia({
         <QuickAction href="/frentes" icon={<Compass className="h-5 w-5" />} label="Frentes" />
       </div>
 
-      {/* Modal de swipe rápido */}
+      {/* Modal completo (igual ao da Semana): editar + concluir + checklist */}
       {modalBloco && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
-          onClick={() => setModalId(null)}
-        >
-          <div
-            className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-1 flex items-start justify-between gap-2">
-              <p className="font-bold">{modalBloco.tarefa}</p>
-              <button
-                type="button"
-                onClick={() => setModalId(null)}
-                aria-label="Fechar"
-                className="rounded-lg p-1 text-muted-foreground hover:bg-muted"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <p className="mb-4 text-xs text-muted-foreground">
-              Como foi esse bloco? (sem resposta em 60s = “Fiz”)
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              <SwipeButton
-                onClick={() => registrar(modalBloco.id, 'SIM')}
-                icon={<Check className="h-5 w-5" />}
-                label="Fiz"
-                className="bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/25 dark:text-emerald-400"
-              />
-              <SwipeButton
-                onClick={() => registrar(modalBloco.id, 'URGENTE')}
-                icon={<Flame className="h-5 w-5" />}
-                label="Virou urgente"
-                className="bg-triade-urgente-soft text-triade-urgente hover:opacity-80"
-              />
-              <SwipeButton
-                onClick={() => registrar(modalBloco.id, 'DISPERSO')}
-                icon={<Wind className="h-5 w-5" />}
-                label="Foi disperso"
-                className="bg-triade-disperso-soft text-triade-disperso hover:opacity-80"
-              />
-              <SwipeButton
-                onClick={() => setModalId(null)}
-                icon={<Clock3 className="h-5 w-5" />}
-                label="Depois"
-                className="bg-muted text-muted-foreground hover:opacity-80"
-              />
-            </div>
-          </div>
-        </div>
+        <BlocoModal
+          bloco={modalBloco}
+          frente={frenteById.get(modalBloco.frenteId)}
+          frentes={frentes}
+          mut={mut}
+          onClose={() => setModalId(null)}
+        />
       )}
     </section>
-  );
-}
-
-function SwipeButton({
-  onClick,
-  icon,
-  label,
-  className,
-}: {
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-  className: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'flex flex-col items-center gap-1.5 rounded-xl p-4 text-sm font-bold transition-all',
-        className,
-      )}
-    >
-      {icon}
-      {label}
-    </button>
   );
 }
 

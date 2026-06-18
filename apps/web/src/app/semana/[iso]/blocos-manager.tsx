@@ -88,17 +88,21 @@ export function BlocosManager({
   blocos,
   setBlocos,
   frentes,
+  onSelectBloco,
 }: {
   semanaIso: string;
   blocos: BlocoDTO[];
   setBlocos: React.Dispatch<React.SetStateAction<BlocoDTO[]>>;
   frentes: FrenteOption[];
+  onSelectBloco?: (id: string) => void;
 }) {
   const { toast } = useToast();
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [adding, setAdding] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
+  // Filtro de dia da lista: 'TODOS' mostra a semana inteira; senão só o dia escolhido.
+  const [filtroDia, setFiltroDia] = React.useState<DiaSemana | 'TODOS'>('TODOS');
 
   const frenteById = React.useMemo(
     () => new Map(frentes.map((f) => [f.id, f])),
@@ -324,8 +328,41 @@ export function BlocosManager({
         </div>
       )}
 
+      {/* Filtro de dia: deixa a pessoa ver só um dia da semana na lista. */}
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          type="button"
+          onClick={() => setFiltroDia('TODOS')}
+          className={cn(
+            'rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+            filtroDia === 'TODOS'
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-border text-muted-foreground hover:bg-muted',
+          )}
+        >
+          Todos
+        </button>
+        {diaSemanaValues.map((dia) => (
+          <button
+            key={dia}
+            type="button"
+            onClick={() => setFiltroDia(dia)}
+            className={cn(
+              'rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+              filtroDia === dia
+                ? 'border-primary bg-primary text-primary-foreground'
+                : 'border-border text-muted-foreground hover:bg-muted',
+            )}
+          >
+            {diaSemanaLabel[dia]}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-5">
-        {diaSemanaValues.map((dia) => {
+        {diaSemanaValues
+          .filter((dia) => filtroDia === 'TODOS' || dia === filtroDia)
+          .map((dia) => {
           const doDia = blocos
             .filter((b) => b.diaSemana === dia)
             .sort((a, b) => toMin(a.horaInicio) - toMin(b.horaInicio));
@@ -358,6 +395,7 @@ export function BlocosManager({
                       bloco={b}
                       frente={frenteById.get(b.frenteId)}
                       temConflito={conflitoIds.has(b.id)}
+                      onSelect={onSelectBloco ? () => onSelectBloco(b.id) : undefined}
                       onEdit={() => {
                         setEditingId(b.id);
                         setAdding(false);
@@ -437,6 +475,7 @@ function BlocoRow({
   bloco: b,
   frente,
   temConflito,
+  onSelect,
   onEdit,
   onDelete,
   onTogglePrioridade,
@@ -448,6 +487,7 @@ function BlocoRow({
   bloco: BlocoDTO;
   frente?: FrenteOption;
   temConflito: boolean;
+  onSelect?: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onTogglePrioridade: () => void;
@@ -507,13 +547,23 @@ function BlocoRow({
           )}
         </button>
 
-        <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-2.5 py-1 font-mono text-xs font-semibold">
-          <Clock className="h-3 w-3" />
-          {b.horaInicio}–{b.horaFim}
-        </span>
+        <button
+          type="button"
+          onClick={onSelect}
+          disabled={!onSelect}
+          title={onSelect ? 'Abrir para editar / concluir' : undefined}
+          className={cn(
+            'flex min-w-0 flex-1 items-center gap-3 text-left',
+            onSelect && 'cursor-pointer',
+          )}
+        >
+          <span className="inline-flex items-center gap-1 rounded-lg bg-muted px-2.5 py-1 font-mono text-xs font-semibold">
+            <Clock className="h-3 w-3" />
+            {b.horaInicio}–{b.horaFim}
+          </span>
 
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold">{b.tarefa}</p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-semibold">{b.tarefa}</p>
           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
             {frente && (
               <span
@@ -560,7 +610,8 @@ function BlocoRow({
               </span>
             )}
           </div>
-        </div>
+          </div>
+        </button>
 
         <button
           type="button"

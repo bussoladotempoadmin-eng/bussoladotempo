@@ -7,7 +7,8 @@ import { currentIsoWeek } from '@/lib/semana';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { Compass } from 'lucide-react';
-import { PainelDia, type PainelBloco, type PainelFrente } from './painel-dia';
+import { PainelDia } from './painel-dia';
+import type { BlocoDTO, FrenteOption } from './semana/[iso]/blocos-manager';
 import { NudgeBanner } from './nudge-banner';
 import { nudgeRevisao } from '@/lib/nudge-revisao';
 import { SugestoesGestor } from './sugestoes-gestor';
@@ -64,7 +65,12 @@ export default async function Home() {
         semana
           ? prisma.bloco.findMany({
               where: { semanaPlanoId: semana.id },
-              include: { subtarefas: { select: { feito: true } } },
+              include: {
+                subtarefas: {
+                  select: { id: true, texto: true, feito: true, hora: true, horaFim: true },
+                  orderBy: { ordem: 'asc' },
+                },
+              },
             })
           : Promise.resolve([]),
         prisma.frente.findMany({
@@ -74,7 +80,7 @@ export default async function Home() {
       ])
     : [[], []];
 
-  const painelBlocos: PainelBloco[] = blocos.map((b) => ({
+  const painelBlocos: BlocoDTO[] = blocos.map((b) => ({
     id: b.id,
     diaSemana: b.diaSemana,
     horaInicio: b.horaInicio,
@@ -83,10 +89,20 @@ export default async function Home() {
     frenteId: b.frenteId,
     categoriaPlanejada: b.categoriaPlanejada,
     categoriaRealizada: b.categoriaRealizada,
-    tarefasTotal: b.subtarefas.length,
-    tarefasFeitas: b.subtarefas.filter((t) => t.feito).length,
+    concluido: b.concluido,
+    concluidoEm: b.concluidoEm ? b.concluidoEm.toISOString() : null,
+    horaRealInicio: b.horaRealInicio,
+    horaRealFim: b.horaRealFim,
+    prioridadeSemana: b.prioridadeSemana,
+    subtarefas: b.subtarefas.map((t) => ({
+      id: t.id,
+      texto: t.texto,
+      feito: t.feito,
+      hora: t.hora,
+      horaFim: t.horaFim,
+    })),
   }));
-  const painelFrentes: PainelFrente[] = frentes.map((f) => ({
+  const painelFrentes: FrenteOption[] = frentes.map((f) => ({
     id: f.id,
     nome: f.nome,
     icone: f.icone,

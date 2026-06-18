@@ -249,7 +249,13 @@ export function SemanaView({
       </div>
 
       {view === 'lista' ? (
-        <BlocosManager semanaIso={semanaIso} blocos={blocos} setBlocos={setBlocos} frentes={frentes} />
+        <BlocosManager
+          semanaIso={semanaIso}
+          blocos={blocos}
+          setBlocos={setBlocos}
+          frentes={frentes}
+          onSelectBloco={setSelectedId}
+        />
       ) : (
         <BlocosCalendario
           blocos={blocos}

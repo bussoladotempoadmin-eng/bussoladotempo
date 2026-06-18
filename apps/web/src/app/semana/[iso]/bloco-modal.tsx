@@ -370,7 +370,7 @@ export function BlocoModal({
               <button
                 type="button"
                 onClick={() => setEditando(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-primary bg-primary/10 px-3 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/15"
               >
                 <Pencil className="h-4 w-4" />
                 Editar
