@@ -88,14 +88,13 @@ export async function getCaixaUnidade(
   const lista: LancamentoItem[] = [];
 
   for (const l of todos) {
-    if (l.tipo === 'ENTRADA') {
-      saldo += l.valor;
-      totalEntradas += l.valor;
-    } else {
-      saldo -= l.valor;
-      totalSaidas += l.valor;
-    }
+    const entrada = l.tipo === 'ENTRADA';
+    // saldo corrente acumula SEMPRE (saldo real = todo o histórico).
+    saldo += entrada ? l.valor : -l.valor;
+    // fora do filtro: conta pro saldo, mas não aparece nem soma nos totais do período.
     if ((de && l.data < de) || (ate && l.data > ate)) continue;
+    if (entrada) totalEntradas += l.valor;
+    else totalSaidas += l.valor;
     lista.push({
       id: l.id,
       data: iso(l.data),
@@ -115,6 +114,51 @@ export async function getCaixaUnidade(
     totalSaidas: Math.round(totalSaidas * 100) / 100,
     lancamentos: lista,
   };
+}
+
+// ---- consolidado (diretor / coordenador multi-unidade) ----
+
+export type CaixaTotais = {
+  total: number;
+  porUnidade: { unidadeId: string; nome: string; saldo: number }[];
+};
+
+/**
+ * Saldo consolidado das unidades que o usuário acessa numa empresa.
+ * Usado só quando há mais de uma unidade visível (diretor/corporativo ou
+ * coordenador de várias) — coordenador de uma só vê apenas a sua.
+ */
+export async function getCaixaTotais(userId: string, orgId: string): Promise<CaixaTotais | null> {
+  const acesso = await resolverAcessoComercial(userId, orgId);
+  if (!acesso.temAcesso) return null;
+
+  const unidades = await prisma.unidade.findMany({
+    where: acesso.corporativo
+      ? { organizacaoId: orgId }
+      : { organizacaoId: orgId, id: { in: acesso.unidadesIds } },
+    select: { id: true, nome: true },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (unidades.length === 0) return { total: 0, porUnidade: [] };
+
+  const grupos = await prisma.lancamentoCaixa.groupBy({
+    by: ['unidadeId', 'tipo'],
+    where: { unidadeId: { in: unidades.map((u) => u.id) } },
+    _sum: { valor: true },
+  });
+  const saldos = new Map<string, number>();
+  for (const g of grupos) {
+    const v = g._sum.valor ?? 0;
+    saldos.set(g.unidadeId, (saldos.get(g.unidadeId) ?? 0) + (g.tipo === 'ENTRADA' ? v : -v));
+  }
+
+  const porUnidade = unidades.map((u) => ({
+    unidadeId: u.id,
+    nome: u.nome,
+    saldo: Math.round((saldos.get(u.id) ?? 0) * 100) / 100,
+  }));
+  const total = Math.round(porUnidade.reduce((s, u) => s + u.saldo, 0) * 100) / 100;
+  return { total, porUnidade };
 }
 
 // ---- mutações ----
@@ -175,7 +219,8 @@ export async function sincronizarLancamentoAcao(acaoId: string): Promise<void> {
   });
   if (!a) return;
 
-  const deveDebitar = a.status === 'FINALIZADO' && a.valorGasto != null && a.valorGasto > 0;
+  // Debita sempre que houver gasto registrado, exceto se a ação foi cancelada.
+  const deveDebitar = a.status !== 'CANCELADO' && a.valorGasto != null && a.valorGasto > 0;
 
   if (!deveDebitar) {
     await prisma.lancamentoCaixa.deleteMany({ where: { acaoId } });
