@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSuperAdmin } from '@/lib/super-admin';
 import {
   editarAssinatura,
+  editarDadosOwner,
   estenderTrial,
   criarCobrancaManual,
 } from '@/lib/admin-billing';
@@ -51,6 +52,15 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     });
     if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
     return NextResponse.json({ ok: true, cobrancaId: r.cobrancaId });
+  }
+
+  if (tipo === 'editar_owner') {
+    const r = await editarDadosOwner(params.id, {
+      name: typeof body?.name === 'string' ? body.name : undefined,
+      email: typeof body?.email === 'string' ? body.email : undefined,
+    });
+    if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
+    return NextResponse.json({ ok: true });
   }
 
   if (tipo === 'vincular_parceiro') {

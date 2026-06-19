@@ -35,11 +35,17 @@ export function AcoesConta(props: {
   valorSugerido: number;
   planos: { slug: string; nome: string }[];
   parceiroCode: string;
+  ownerName: string;
+  ownerEmail: string;
 }) {
   const router = useRouter();
   const { toast } = useToast();
   const [busy, setBusy] = React.useState<string | null>(null);
   const [parceiroCode, setParceiroCode] = React.useState(props.parceiroCode);
+
+  // dados do dono da conta
+  const [ownerName, setOwnerName] = React.useState(props.ownerName);
+  const [ownerEmail, setOwnerEmail] = React.useState(props.ownerEmail);
 
   // edição da assinatura
   const [status, setStatus] = React.useState(props.status);
@@ -82,6 +88,41 @@ export function AcoesConta(props: {
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
+      <Card titulo="Dados da conta">
+        <div className="space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-xs text-muted-foreground">Nome</span>
+            <input className={INP} value={ownerName} onChange={(e) => setOwnerName(e.target.value)} placeholder="Nome do titular" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs text-muted-foreground">E-mail (login)</span>
+            <input
+              type="email"
+              className={INP}
+              value={ownerEmail}
+              onChange={(e) => setOwnerEmail(e.target.value)}
+              placeholder="email@exemplo.com"
+            />
+          </label>
+          <p className="text-xs text-muted-foreground">
+            O e-mail é o login da conta. Trocar afeta o acesso do usuário.
+          </p>
+          <button
+            onClick={() =>
+              call('owner', `/api/admin/contas/${props.assinaturaId}`, 'POST', {
+                tipo: 'editar_owner',
+                name: ownerName,
+                email: ownerEmail,
+              }).then((ok) => ok && toast('Dados da conta atualizados.'))
+            }
+            disabled={busy !== null}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            {busy === 'owner' && <Loader2 className="h-4 w-4 animate-spin" />} Salvar dados
+          </button>
+        </div>
+      </Card>
+
       <Card titulo="Assinatura">
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-2">

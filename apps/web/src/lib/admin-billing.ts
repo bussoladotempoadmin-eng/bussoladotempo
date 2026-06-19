@@ -296,6 +296,34 @@ export async function editarAssinatura(
   return { ok: true };
 }
 
+/** Edita nome e e-mail do dono da conta (User). E-mail precisa ser único. */
+export async function editarDadosOwner(
+  assinaturaId: string,
+  patch: { name?: string; email?: string },
+): Promise<{ ok: true } | { ok: false; erro: string }> {
+  const a = await prisma.assinatura.findUnique({
+    where: { id: assinaturaId },
+    select: { ownerUserId: true },
+  });
+  if (!a) return { ok: false, erro: 'Assinatura não encontrada' };
+
+  const data: { name?: string | null; email?: string } = {};
+  if (patch.name != null) data.name = patch.name.trim() || null;
+  if (patch.email != null) {
+    const email = patch.email.toLowerCase().trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, erro: 'E-mail inválido' };
+    const existente = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+    if (existente && existente.id !== a.ownerUserId) {
+      return { ok: false, erro: 'E-mail já usado por outra conta' };
+    }
+    data.email = email;
+  }
+  if (Object.keys(data).length === 0) return { ok: false, erro: 'Nada para alterar' };
+
+  await prisma.user.update({ where: { id: a.ownerUserId }, data });
+  return { ok: true };
+}
+
 /** Estende (ou encurta) o trial em N dias a partir de agora. */
 export async function estenderTrial(assinaturaId: string, dias: number) {
   await prisma.assinatura.update({
