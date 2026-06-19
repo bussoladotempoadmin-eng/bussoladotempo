@@ -20,6 +20,7 @@ export async function GET(req: Request) {
   const de = url.searchParams.get('de') || undefined;
   const ate = url.searchParams.get('ate') || undefined;
   const tipo = url.searchParams.get('tipo') === 'resultados' ? 'resultados' : 'verba';
+  const modo = url.searchParams.get('modo') === 'unificado' ? 'unificado' : 'detalhado';
 
   const orgId = await resolverEmpresaId(user.id, cookies().get(COOKIE_EMPRESA)?.value);
   if (!orgId) return new Response('Sem empresa', { status: 404 });
@@ -27,7 +28,32 @@ export async function GET(req: Request) {
 
   let header: string[];
   let linhas: string[][];
-  if (tipo === 'verba') {
+  if (modo === 'unificado') {
+    // Somatória por unidade.
+    const mapa = new Map<string, { nome: string; qtd: number; solicitado: number; gasto: number; leads: number }>();
+    for (const a of acoes) {
+      const cur = mapa.get(a.unidadeNome) ?? { nome: a.unidadeNome, qtd: 0, solicitado: 0, gasto: 0, leads: 0 };
+      cur.qtd += 1;
+      cur.solicitado += a.valorSolicitado ?? 0;
+      cur.gasto += a.valorGasto ?? 0;
+      cur.leads += a.resultadoQtd ?? 0;
+      mapa.set(a.unidadeNome, cur);
+    }
+    const linhasUni = Array.from(mapa.values()).sort((x, y) => y.gasto - x.gasto);
+    if (tipo === 'verba') {
+      header = ['Unidade', 'Ações', 'Solicitado', 'Gasto', 'Diferença'];
+      linhas = linhasUni.map((u) =>
+        [u.nome, u.qtd, u.solicitado, u.gasto, u.gasto - u.solicitado].map((x) => csvCell(x as string | number)),
+      );
+    } else {
+      header = ['Unidade', 'Ações', 'Leads', 'Gasto', 'Custo por lead'];
+      linhas = linhasUni.map((u) =>
+        [u.nome, u.qtd, u.leads, u.gasto, u.leads > 0 ? Math.round((u.gasto / u.leads) * 100) / 100 : ''].map((x) =>
+          csvCell(x as string | number),
+        ),
+      );
+    }
+  } else if (tipo === 'verba') {
     header = ['Unidade', 'Tipo', 'Responsável', 'Solicitado', 'Gasto', 'Diferença', 'Status'];
     linhas = acoes.map((a) => {
       const diff = a.valorGasto !== null && a.valorSolicitado !== null ? a.valorGasto - a.valorSolicitado : null;
@@ -62,7 +88,7 @@ export async function GET(req: Request) {
   return new Response(body, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="relatorio-comercial-${tipo}.csv"`,
+      'Content-Disposition': `attachment; filename="relatorio-comercial-${tipo}-${modo}.csv"`,
     },
   });
 }
