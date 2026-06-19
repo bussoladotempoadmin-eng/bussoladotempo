@@ -7,6 +7,7 @@
  */
 import { prisma, type StatusAcao } from '@bussola/db';
 import { resolverAcessoComercial } from './comercial-acessos';
+import { sincronizarLancamentoAcao } from './comercial-caixa';
 
 // Listas fixas (objetivo/resultado). Tipo de ação é editável pelo diretor.
 export const OBJETIVOS = [
@@ -574,6 +575,7 @@ export async function atualizarAcao(
     if (d) data.dataFim = d;
   }
   await prisma.acaoComercial.update({ where: { id: acaoId }, data });
+  await sincronizarLancamentoAcao(acaoId); // valor/data podem ter mudado
   return true;
 }
 
@@ -602,6 +604,7 @@ export async function registrarResultado(
       comentarios: input.comentarios?.trim() || null,
     },
   });
+  await sincronizarLancamentoAcao(acaoId); // reflete o gasto no caixa da unidade
   return true;
 }
 
@@ -620,6 +623,7 @@ export async function reagendar(
     where: { id: acaoId },
     data: { dataInicio: ini, dataFim: fim, status: 'EM_PLANEJAMENTO' },
   });
+  await sincronizarLancamentoAcao(acaoId); // voltou a planejar → remove o débito
   return true;
 }
 

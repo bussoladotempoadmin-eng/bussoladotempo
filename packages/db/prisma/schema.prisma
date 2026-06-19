@@ -454,6 +454,7 @@ model Unidade {
   coordenador      User?                    @relation("UnidadeCoord", fields: [coordenadorId], references: [id], onDelete: SetNull)
   acoes            AcaoComercial[]
   acessosComercial AcessoComercialUnidade[]
+  lancamentos      LancamentoCaixa[]
 
   @@index([organizacaoId])
   @@index([coordenadorId])
@@ -498,10 +499,39 @@ model AcaoComercial {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  unidade Unidade @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  unidade         Unidade          @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  lancamentoCaixa LancamentoCaixa?
 
   @@index([unidadeId])
   @@index([status])
+}
+
+enum TipoLancamento {
+  ENTRADA
+  SAIDA
+}
+
+// Caixa por unidade — extrato de entradas (verba recebida) e saídas (gastos).
+// Saídas podem ser AUTOMÁTICAS (vindas do valorGasto de uma ação finalizada,
+// vinculadas por acaoId, datadas na ação) ou MANUAIS (acaoId null). Entradas
+// são sempre manuais. Saldo da unidade = Σ entradas − Σ saídas.
+model LancamentoCaixa {
+  id          String         @id @default(cuid())
+  unidadeId   String
+  tipo        TipoLancamento
+  valor       Float
+  data        DateTime // data de competência no extrato
+  descricao   String
+  automatico  Boolean        @default(false) // gerado a partir de uma ação
+  acaoId      String?        @unique // ação de origem (saída automática)
+  criadoPorId String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  unidade Unidade        @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  acao    AcaoComercial? @relation(fields: [acaoId], references: [id], onDelete: Cascade)
+
+  @@index([unidadeId])
 }
 
 // ============================================================

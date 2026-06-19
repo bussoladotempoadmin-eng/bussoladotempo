@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, ClipboardList, Wallet, Building2, Tags, UserCog } from 'lucide-react';
+import { BarChart3, ClipboardList, Wallet, Banknote, Building2, Tags, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ITENS = [
   { href: '/comercial', label: 'Painel', icon: BarChart3, exact: true },
   { href: '/comercial/acoes', label: 'Ações', icon: ClipboardList },
+  { href: '/comercial/caixa', label: 'Caixa', icon: Banknote },
   { href: '/comercial/relatorios', label: 'Relatórios', icon: Wallet },
   { href: '/comercial/unidades', label: 'Unidades', icon: Building2 },
   { href: '/comercial/tipos', label: 'Tipos', icon: Tags },
