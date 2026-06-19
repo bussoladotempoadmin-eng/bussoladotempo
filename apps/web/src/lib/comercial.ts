@@ -5,7 +5,7 @@
  * Permissão: dono da empresa (diretor) vê tudo; coordenador vê só a unidade dele.
  * Isolado do core (agenda pessoal). Sem reflexão pessoal aqui — é setor.
  */
-import { prisma, type StatusAcao } from '@bussola/db';
+import { prisma, type StatusAcao, type MetodoRepasse, type TipoConta } from '@bussola/db';
 import { resolverAcessoComercial } from './comercial-acessos';
 import { sincronizarLancamentoAcao } from './comercial-caixa';
 
@@ -52,8 +52,20 @@ export type EscopoComercial = {
   ehDono: boolean;
   corporativo: boolean; // vê todas as unidades (dono ou acesso corporativo)
   podeGerenciarAcessos: boolean; // dono ou admin
+  podeConfigRepasse: boolean; // corporativo ou admin — configura repasse das unidades
   somenteLeitura: boolean; // nível VER (não edita nada)
   unidades: UnidadeInfo[];
+};
+
+export type RepasseUnidade = {
+  metodo: MetodoRepasse | null;
+  banco: string | null;
+  agencia: string | null;
+  conta: string | null;
+  tipoConta: TipoConta | null;
+  pix: string | null;
+  cpfCnpj: string | null;
+  titular: string | null;
 };
 
 // ---- Empresas (organizações com comercial ativo) ----
@@ -174,9 +186,106 @@ export async function getEscopoComercial(
     ehDono: acesso.dono,
     corporativo: acesso.corporativo,
     podeGerenciarAcessos: acesso.dono || acesso.admin,
+    podeConfigRepasse: acesso.corporativo || acesso.admin,
     somenteLeitura: acesso.nivel === 'VER' && !acesso.dono,
     unidades: unidades.map(mapUnidade),
   };
+}
+
+/** Dados de repasse por unidade da empresa. Só p/ corporativo/admin (senão {}). */
+export async function getRepasses(
+  userId: string,
+  orgId: string,
+): Promise<Record<string, RepasseUnidade>> {
+  const acesso = await resolverAcessoComercial(userId, orgId);
+  if (!acesso.temAcesso || !(acesso.corporativo || acesso.admin)) return {};
+  const us = await prisma.unidade.findMany({
+    where: { organizacaoId: orgId },
+    select: {
+      id: true,
+      repasseMetodo: true,
+      repasseBanco: true,
+      repasseAgencia: true,
+      repasseConta: true,
+      repasseTipoConta: true,
+      repassePix: true,
+      repasseCpfCnpj: true,
+      repasseTitular: true,
+    },
+  });
+  const out: Record<string, RepasseUnidade> = {};
+  for (const u of us) {
+    out[u.id] = {
+      metodo: u.repasseMetodo,
+      banco: u.repasseBanco,
+      agencia: u.repasseAgencia,
+      conta: u.repasseConta,
+      tipoConta: u.repasseTipoConta,
+      pix: u.repassePix,
+      cpfCnpj: u.repasseCpfCnpj,
+      titular: u.repasseTitular,
+    };
+  }
+  return out;
+}
+
+/**
+ * Salva o repasse de uma unidade. metodo null = não configurado (limpa tudo).
+ * CARTAO_CORPORATIVO = só o método; TRANSFERENCIA = método + dados bancários.
+ * Permissão: corporativo ou admin da empresa da unidade.
+ */
+export async function salvarRepasseUnidade(
+  userId: string,
+  unidadeId: string,
+  patch: {
+    metodo: MetodoRepasse | null;
+    banco?: string;
+    agencia?: string;
+    conta?: string;
+    tipoConta?: TipoConta | null;
+    pix?: string;
+    cpfCnpj?: string;
+    titular?: string;
+  },
+): Promise<{ ok: boolean; erro?: string }> {
+  const u = await prisma.unidade.findUnique({ where: { id: unidadeId }, select: { organizacaoId: true } });
+  if (!u) return { ok: false, erro: 'Unidade não encontrada.' };
+  const acesso = await resolverAcessoComercial(userId, u.organizacaoId);
+  if (!acesso.temAcesso || !(acesso.corporativo || acesso.admin)) {
+    return { ok: false, erro: 'Sem permissão para configurar repasse.' };
+  }
+
+  const limpo = (s?: string) => (s && s.trim() ? s.trim() : null);
+  const semBanco = {
+    repasseBanco: null,
+    repasseAgencia: null,
+    repasseConta: null,
+    repasseTipoConta: null,
+    repassePix: null,
+    repasseCpfCnpj: null,
+    repasseTitular: null,
+  };
+
+  let data: Record<string, unknown>;
+  if (patch.metodo == null) {
+    data = { repasseMetodo: null, ...semBanco };
+  } else if (patch.metodo === 'CARTAO_CORPORATIVO') {
+    data = { repasseMetodo: 'CARTAO_CORPORATIVO', ...semBanco };
+  } else {
+    data = {
+      repasseMetodo: 'TRANSFERENCIA',
+      repasseBanco: limpo(patch.banco),
+      repasseAgencia: limpo(patch.agencia),
+      repasseConta: limpo(patch.conta),
+      repasseTipoConta:
+        patch.tipoConta === 'CORRENTE' || patch.tipoConta === 'POUPANCA' ? patch.tipoConta : null,
+      repassePix: limpo(patch.pix),
+      repasseCpfCnpj: limpo(patch.cpfCnpj),
+      repasseTitular: limpo(patch.titular),
+    };
+  }
+  await prisma.unidade.update({ where: { id: unidadeId }, data });
+  return { ok: true };
 }
 
 /** IDs de unidades acessíveis numa empresa (corporativo = todas; senão o escopo). */

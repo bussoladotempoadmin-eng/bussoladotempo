@@ -441,6 +441,16 @@ enum StatusAcao {
   CANCELADO
 }
 
+enum MetodoRepasse {
+  CARTAO_CORPORATIVO
+  TRANSFERENCIA
+}
+
+enum TipoConta {
+  CORRENTE
+  POUPANCA
+}
+
 model Unidade {
   id            String   @id @default(cuid())
   organizacaoId String
@@ -449,6 +459,16 @@ model Unidade {
   ativa         Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  // Repasse — como a verba chega nesta unidade. metodo null = não configurado.
+  repasseMetodo    MetodoRepasse?
+  repasseBanco     String?
+  repasseAgencia   String?
+  repasseConta     String?
+  repasseTipoConta TipoConta?
+  repassePix       String?
+  repasseCpfCnpj   String?
+  repasseTitular   String? // nome completo / razão social
 
   organizacao      Organizacao              @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
   coordenador      User?                    @relation("UnidadeCoord", fields: [coordenadorId], references: [id], onDelete: SetNull)
