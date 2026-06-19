@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Download } from 'lucide-react';
 import { authOptions } from '@/lib/auth';
 import { getSessionUser } from '@/lib/workspace';
 import { listarAcoes, STATUS_LABEL } from '@/lib/comercial';
@@ -9,6 +8,7 @@ import { ComercialShell } from '../comercial-shell';
 import { DateFilter } from '../date-filter';
 import { carregarComercial } from '../contexto';
 import { fmtMoney, fmtNum, fmtPeriodo, mesCorrente } from '../fmt';
+import { ExportarRelatorio } from './exportar';
 
 export const metadata = { title: 'Relatórios · Comercial' };
 
@@ -76,13 +76,7 @@ export default async function RelatoriosPage({
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {btn(tipo === 'verba', qs({ tipo: 'verba' }), 'Verba')}
         {btn(tipo === 'resultados', qs({ tipo: 'resultados' }), 'Resultados (leads)')}
-        <a
-          href={expHref}
-          className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3.5 py-2 text-sm font-bold text-primary"
-        >
-          <Download className="h-4 w-4" />
-          Exportar CSV
-        </a>
+        <ExportarRelatorio expHref={expHref} orgId={orgId} de={de} ate={ate} podeRepasse={escopo.corporativo} />
       </div>
 
       {/* Detalhado (ação por ação) × Unificado (somatória por unidade) */}

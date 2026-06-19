@@ -4,10 +4,12 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
 import { ComercialNav } from './comercial-nav';
 import { EmpresaSelector } from './empresa-selector';
+import { getSessionUser } from '@/lib/workspace';
+import { resolverAcessoComercial } from '@/lib/comercial-acessos';
 import type { EmpresaInfo } from '@/lib/comercial';
 
 /** Casca padrão das telas do módulo Comercial (header + seletor de empresa + abas). */
-export function ComercialShell({
+export async function ComercialShell({
   empresas,
   empresaAtualId,
   podeGerenciar = false,
@@ -18,6 +20,11 @@ export function ComercialShell({
   podeGerenciar?: boolean;
   children: React.ReactNode;
 }) {
+  // Aba Repasses só p/ corporativo — resolvido aqui pra valer em todas as telas.
+  const user = await getSessionUser();
+  const acesso = user ? await resolverAcessoComercial(user.id, empresaAtualId) : null;
+  const podeRepasse = !!acesso?.corporativo;
+
   return (
     <main className="min-h-screen">
       <header className="container flex items-center justify-between py-5">
@@ -35,7 +42,7 @@ export function ComercialShell({
       </header>
 
       <div className="container">
-        <ComercialNav podeGerenciar={podeGerenciar} />
+        <ComercialNav podeGerenciar={podeGerenciar} podeRepasse={podeRepasse} />
       </div>
 
       <section className="container py-7">{children}</section>

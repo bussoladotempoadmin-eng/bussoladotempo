@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, ClipboardList, Wallet, Banknote, Building2, Tags, UserCog } from 'lucide-react';
+import { BarChart3, ClipboardList, Wallet, Banknote, HandCoins, Building2, Tags, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ITENS = [
@@ -14,11 +14,17 @@ const ITENS = [
   { href: '/comercial/tipos', label: 'Tipos', icon: Tags },
 ];
 
-export function ComercialNav({ podeGerenciar = false }: { podeGerenciar?: boolean }) {
+export function ComercialNav({
+  podeGerenciar = false,
+  podeRepasse = false,
+}: {
+  podeGerenciar?: boolean;
+  podeRepasse?: boolean;
+}) {
   const path = usePathname();
-  const itens = podeGerenciar
-    ? [...ITENS, { href: '/comercial/equipe', label: 'Equipe', icon: UserCog, exact: false }]
-    : ITENS;
+  const itens = [...ITENS];
+  if (podeRepasse) itens.push({ href: '/comercial/repasses', label: 'Repasses', icon: HandCoins });
+  if (podeGerenciar) itens.push({ href: '/comercial/equipe', label: 'Equipe', icon: UserCog, exact: false });
   return (
     <nav className="flex gap-1 overflow-x-auto border-b border-border pb-px">
       {itens.map((it) => {

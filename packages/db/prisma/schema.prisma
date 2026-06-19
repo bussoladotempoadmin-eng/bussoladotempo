@@ -380,6 +380,7 @@ model Organizacao {
   tiposAcao        TipoAcaoComercial[]
   assinatura       Assinatura?
   acessosComercial AcessoComercial[]
+  repasses         Repasse[]
 
   @@index([ownerId])
 }
@@ -475,6 +476,7 @@ model Unidade {
   acoes            AcaoComercial[]
   acessosComercial AcessoComercialUnidade[]
   lancamentos      LancamentoCaixa[]
+  repasses         Repasse[]
 
   @@index([organizacaoId])
   @@index([coordenadorId])
@@ -542,15 +544,51 @@ model LancamentoCaixa {
   valor       Float
   data        DateTime // data de competência no extrato
   descricao   String
-  automatico  Boolean        @default(false) // gerado a partir de uma ação
+  automatico  Boolean        @default(false) // gerado a partir de uma ação/repasse
   acaoId      String?        @unique // ação de origem (saída automática)
+  repasseId   String?        @unique // repasse de origem (entrada automática)
   criadoPorId String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
   unidade Unidade        @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
   acao    AcaoComercial? @relation(fields: [acaoId], references: [id], onDelete: Cascade)
+  repasse Repasse?       @relation(fields: [repasseId], references: [id], onDelete: Cascade)
 
+  @@index([unidadeId])
+}
+
+enum RepasseStatus {
+  PENDENTE
+  FEITO
+  PARCIAL
+  NAO_FEITO
+}
+
+// Relação de repasse — ponte Relatório → Caixa. Cada linha é o valor a repassar
+// para uma unidade num período. Ao marcar FEITO/PARCIAL, credita uma entrada no
+// caixa da unidade (lancamento vinculado). Guarda solicitado × pago p/ divergência.
+model Repasse {
+  id              String        @id @default(cuid())
+  organizacaoId   String
+  unidadeId       String
+  periodoDe       DateTime
+  periodoAte      DateTime
+  valorSolicitado Float // snapshot do solicitado da unidade no período
+  dataPrevista    DateTime // quando o repasse deve ser feito
+  status          RepasseStatus @default(PENDENTE)
+  valorPago       Float? // efetivamente pago (FEITO = solicitado; PARCIAL = editado)
+  dataPagamento   DateTime? // data real do pagamento
+  observacao      String?
+  criadoPorId     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  organizacao Organizacao      @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  unidade     Unidade          @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  lancamento  LancamentoCaixa?
+
+  @@index([organizacaoId])
   @@index([unidadeId])
 }
 
