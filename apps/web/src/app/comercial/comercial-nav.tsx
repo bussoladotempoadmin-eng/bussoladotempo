@@ -5,15 +5,6 @@ import { usePathname } from 'next/navigation';
 import { BarChart3, ClipboardList, Wallet, Banknote, HandCoins, Building2, Tags, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const ITENS = [
-  { href: '/comercial', label: 'Painel', icon: BarChart3, exact: true },
-  { href: '/comercial/acoes', label: 'Ações', icon: ClipboardList },
-  { href: '/comercial/caixa', label: 'Caixa', icon: Banknote },
-  { href: '/comercial/relatorios', label: 'Relatórios', icon: Wallet },
-  { href: '/comercial/unidades', label: 'Unidades', icon: Building2 },
-  { href: '/comercial/tipos', label: 'Tipos', icon: Tags },
-];
-
 export function ComercialNav({
   podeGerenciar = false,
   podeRepasse = false,
@@ -22,9 +13,16 @@ export function ComercialNav({
   podeRepasse?: boolean;
 }) {
   const path = usePathname();
-  const itens = [...ITENS];
-  if (podeRepasse) itens.push({ href: '/comercial/repasses', label: 'Repasses', icon: HandCoins });
-  if (podeGerenciar) itens.push({ href: '/comercial/equipe', label: 'Equipe', icon: UserCog, exact: false });
+  const itens = [
+    { href: '/comercial', label: 'Painel', icon: BarChart3, exact: true },
+    { href: '/comercial/acoes', label: 'Ações', icon: ClipboardList },
+    { href: '/comercial/relatorios', label: 'Relatórios', icon: Wallet },
+    ...(podeRepasse ? [{ href: '/comercial/repasses', label: 'Repasses', icon: HandCoins }] : []),
+    { href: '/comercial/caixa', label: 'Caixa', icon: Banknote },
+    { href: '/comercial/unidades', label: 'Unidades', icon: Building2 },
+    { href: '/comercial/tipos', label: 'Tipos', icon: Tags },
+    ...(podeGerenciar ? [{ href: '/comercial/equipe', label: 'Equipe', icon: UserCog, exact: false }] : []),
+  ];
   return (
     <nav className="flex gap-1 overflow-x-auto border-b border-border pb-px">
       {itens.map((it) => {
