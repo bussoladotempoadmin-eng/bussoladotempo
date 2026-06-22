@@ -33,7 +33,11 @@ export async function POST(req: Request) {
     const cache = await lerRitualCache(workspace.id, semanaIso);
     if (!cache || force) {
       const cota = await statusCota(workspace.id);
-      if (!cota.podeGerar) {
+      // Regeração explícita (force) ignora a trava SEMANAL — é re-rolar a mesma
+      // semana, não gerar uma nova. Só o teto MENSAL bloqueia. E como
+      // registrarGeracao é idempotente por semana, re-gerar não cobra de novo.
+      const bloqueado = force ? cota.motivo === 'mes' : !cota.podeGerar;
+      if (bloqueado) {
         return NextResponse.json({ error: mensagemCota(cota), motivo: cota.motivo }, { status: 429 });
       }
     }

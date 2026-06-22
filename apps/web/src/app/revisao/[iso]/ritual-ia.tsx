@@ -193,10 +193,24 @@ export function RitualIA({
           </button>
         )}
         {res && !loading && (
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-            <Check className="h-3.5 w-3.5" />
-            Gerado nesta semana
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              <Check className="h-3.5 w-3.5" />
+              Gerado nesta semana
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('Gerar a proposta de novo? Isto substitui a atual (não gasta crédito extra esta semana).')) {
+                  gerar(true);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              Gerar de novo
+            </button>
+          </div>
         )}
       </div>
       <p className="mt-1 text-xs text-muted-foreground">
