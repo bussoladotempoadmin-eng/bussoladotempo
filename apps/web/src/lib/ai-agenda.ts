@@ -16,6 +16,16 @@ import {
 
 const MODELO = 'claude-sonnet-4-6';
 
+// Timeout abaixo do maxDuration (60s) da função: a chamada falha de forma LIMPA
+// e capturável (vira JSON 500/504 tratado), em vez de estourar a função e voltar
+// um 504 sem corpo. maxRetries:0 evita que o SDK re-tente 2x e multiplique custo
+// de tokens e tempo (era a causa de "cobrou mais a cada tentativa").
+const TIMEOUT_IA_MS = 55_000;
+
+function criarClienteIA(apiKey: string): Anthropic {
+  return new Anthropic({ apiKey, maxRetries: 0, timeout: TIMEOUT_IA_MS });
+}
+
 // Sufixo "[real HH:mm-HH:mm]" quando o bloco foi executado fora do horário
 // planejado (Caso 2 — desvio de horário). Vazio quando saiu no horário.
 function sufixoHorarioReal(b: {
@@ -189,7 +199,7 @@ export async function gerarAgendaIA(
 
   const idsFrentes = frentes.map((f) => f.id);
 
-  const client = new Anthropic({ apiKey });
+  const client = criarClienteIA(apiKey);
   const response = await client.messages.create({
     model: MODELO,
     max_tokens: 8000,
@@ -311,7 +321,7 @@ export async function gerarInsightsSemana(
     ? `Reflexão: funcionou="${semana.revisao.retroFuncionou ?? '-'}" | não funcionou="${semana.revisao.retroNaoFuncionou ?? '-'}" | mudança="${semana.revisao.retroMudanca ?? '-'}" | sensação=${semana.revisao.sensacaoMedia ?? '-'}/5`
     : 'Sem reflexão escrita.';
 
-  const client = new Anthropic({ apiKey });
+  const client = criarClienteIA(apiKey);
   const response = await client.messages.create({
     model: MODELO,
     max_tokens: 1500,
@@ -458,7 +468,7 @@ export async function revisarEPlanejar(
     `Analise a semana ${semanaIsoRevisada} e proponha a ${proximaIso}.`,
   ].join('\n');
 
-  const client = new Anthropic({ apiKey });
+  const client = criarClienteIA(apiKey);
   const response = await client.messages.create({
     model: MODELO,
     max_tokens: 8000,

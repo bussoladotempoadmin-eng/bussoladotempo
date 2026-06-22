@@ -60,6 +60,15 @@ export async function POST(req: Request) {
       );
     }
     const msg = e instanceof Error ? e.message : 'Falha ao revisar e planejar.';
+    const nome = e instanceof Error ? e.name : '';
+    const ehTimeout = /timeout|timed out|aborted|aborterror/i.test(`${nome} ${msg}`);
+    if (ehTimeout) {
+      // Falhou antes de cobrar — nenhum crédito é consumido. O usuário pode tentar de novo.
+      return NextResponse.json(
+        { error: 'A IA demorou demais e foi interrompida. Tente de novo — nenhum crédito foi usado.' },
+        { status: 504 },
+      );
+    }
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

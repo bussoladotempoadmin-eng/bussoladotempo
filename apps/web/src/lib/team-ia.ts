@@ -86,7 +86,8 @@ export async function analisarTimeIA(
     .join('\n');
   const agg = `Time (${painel.org.nome}): ${painel.agregado.totalHoras}h no total | Importante ${pct(painel.agregado.pImportante)}%, Urgente ${pct(painel.agregado.pUrgente)}%, Disperso ${pct(painel.agregado.pDisperso)}% | ${painel.agregado.comDados} de ${painel.agregado.total} registraram.`;
 
-  const client = new Anthropic({ apiKey });
+  // maxRetries:0 + timeout abaixo do maxDuration: falha limpa, sem retry zumbi.
+  const client = new Anthropic({ apiKey, maxRetries: 0, timeout: 55_000 });
   const response = await client.messages.create({
     model: MODELO,
     max_tokens: 1500,
