@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentWorkspace } from '@/lib/workspace';
 import { isIsoWeek } from '@/lib/semana';
-import { revisarEPlanejarComCache, lerRitualCache, SemChaveIA, LIMITE_REGERACOES } from '@/lib/ai-agenda';
+import { revisarEPlanejarComCache, lerRitualCache, SemChaveIA } from '@/lib/ai-agenda';
 import { statusCota, registrarGeracao, mensagemCota } from '@/lib/cota-ia';
 import { contaBloqueada } from '@/lib/acesso';
 
@@ -31,27 +31,10 @@ export async function POST(req: Request) {
     // Reabrir o resultado salvo é grátis (não checa cota nem conta).
     // Só verifica/consome a cota quando vai REALMENTE gerar (cache vazio ou force).
     const cache = await lerRitualCache(workspace.id, semanaIso);
-
-    // Trava de CUSTO: limita quantas vezes a IA pode ser re-rodada (force) na
-    // mesma semana. Cada re-roll é uma chamada real à Anthropic (custo de tokens),
-    // mesmo sem consumir crédito do plano — esse teto evita gasto descontrolado.
-    if (force && cache && (cache.regeracoes ?? 0) >= LIMITE_REGERACOES) {
-      return NextResponse.json(
-        {
-          error: `Você já regerou esta proposta ${LIMITE_REGERACOES}x esta semana. O gerador libera de novo na próxima semana.`,
-          motivo: 'regeracoes',
-        },
-        { status: 429 },
-      );
-    }
-
     if (!cache || force) {
       const cota = await statusCota(workspace.id);
-      // Regeração explícita (force) ignora a trava SEMANAL — é re-rolar a mesma
-      // semana, não gerar uma nova. Só o teto MENSAL bloqueia. E como
-      // registrarGeracao é idempotente por semana, re-gerar não cobra de novo.
-      const bloqueado = force ? cota.motivo === 'mes' : !cota.podeGerar;
-      if (bloqueado) {
+      // Regra: 1 geração por semana ISO, teto de 6 por mês. force não fura nada.
+      if (!cota.podeGerar) {
         return NextResponse.json({ error: mensagemCota(cota), motivo: cota.motivo }, { status: 429 });
       }
     }
