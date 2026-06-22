@@ -202,7 +202,7 @@ export async function gerarAgendaIA(
   const client = criarClienteIA(apiKey);
   const response = await client.messages.create({
     model: MODELO,
-    max_tokens: 8000,
+    max_tokens: 3000,
     system,
     messages: [{ role: 'user', content: userMsg }],
     tools: [
@@ -471,7 +471,7 @@ export async function revisarEPlanejar(
   const client = criarClienteIA(apiKey);
   const response = await client.messages.create({
     model: MODELO,
-    max_tokens: 8000,
+    max_tokens: 3000,
     system,
     messages: [{ role: 'user', content: userMsg }],
     tools: [
