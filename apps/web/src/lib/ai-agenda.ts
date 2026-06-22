@@ -562,11 +562,14 @@ async function salvarRitualCache(
   semanaIso: string,
   result: RevisarPlanejar,
 ): Promise<void> {
-  const semana = await prisma.semanaPlano.findUnique({
+  // Garante a SemanaPlano (cria vazia se faltar) pra o cache NUNCA deixar de
+  // persistir — senão uma geração paga não fica guardada e a retentativa recobra.
+  const semana = await prisma.semanaPlano.upsert({
     where: { workspaceId_semanaIso: { workspaceId, semanaIso } },
+    create: { workspaceId, semanaIso },
+    update: {},
     select: { id: true },
   });
-  if (!semana) return;
   await prisma.insight.deleteMany({
     where: { semanaPlanoId: semana.id, titulo: CACHE_TITULO },
   });

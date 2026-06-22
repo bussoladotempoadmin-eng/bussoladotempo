@@ -38,7 +38,19 @@ export async function POST(req: Request) {
       }
     }
     const r = await revisarEPlanejarComCache(workspace.id, semanaIso, force);
-    if (!r.cacheado) await registrarGeracao(workspace.id);
+    // Só cobra geração NOVA e ÚTIL (com proposta ou análise). O cache já foi
+    // gravado antes daqui, então toda cobrança tem resultado recuperável de graça.
+    // Falhar ao registrar o crédito NUNCA derruba a entrega — é melhor não cobrar.
+    if (!r.cacheado) {
+      const util = (r.proposta?.blocos?.length ?? 0) > 0 || (r.analise?.length ?? 0) > 0;
+      if (util) {
+        try {
+          await registrarGeracao(workspace.id);
+        } catch (err) {
+          console.error('[agenda-ia] resultado entregue, mas falhou ao registrar crédito:', err);
+        }
+      }
+    }
     return NextResponse.json(r);
   } catch (e) {
     if (e instanceof SemChaveIA) {

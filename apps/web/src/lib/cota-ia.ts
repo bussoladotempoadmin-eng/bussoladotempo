@@ -70,9 +70,18 @@ export async function statusCota(workspaceId: string): Promise<StatusCota> {
   };
 }
 
-/** Registra 1 geração (no fuso do workspace). Aplicar em N semanas = ainda 1. */
+/**
+ * Registra 1 geração (no fuso do workspace). Aplicar em N semanas = ainda 1.
+ * Idempotente por semana ISO: se já houver registro nesta semana, NÃO cobra de
+ * novo (protege contra corrida/retentativa cobrando o mesmo ritual 2x).
+ */
 export async function registrarGeracao(workspaceId: string, semanasAplicadas = 1): Promise<void> {
   const { iso, mes } = await refsAgora(workspaceId);
+  const jaTem = await prisma.geracaoIA.findFirst({
+    where: { workspaceId, isoWeek: iso },
+    select: { id: true },
+  });
+  if (jaTem) return;
   await prisma.geracaoIA.create({
     data: { workspaceId, isoWeek: iso, mesRef: mes, semanasAplicadas },
   });
