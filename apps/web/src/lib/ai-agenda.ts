@@ -188,7 +188,8 @@ export async function gerarAgendaIA(
     '- Leve em conta as reflexões e fechamentos (o que o usuário disse que funcionou/atrapalhou).',
     '- Fins de semana (Sáb/Dom): deixe livres, a menos que o histórico mostre trabalho recorrente neles.',
     '- Com pouco histórico, seja conservador: gere a partir dos orçamentos e compromissos e não invente uma semana lotada.',
-    '- Use APENAS os IDs de frente fornecidos. Horários no formato HH:mm (24h). Blocos sem sobreposição.',
+    '- Em frenteId use APENAS o id (cuid) entre parênteses da lista de FRENTES, NUNCA o nome. Horários no formato HH:mm (24h). Blocos sem sobreposição.',
+    '- CONSOLIDE: junte horas contíguas da mesma frente num ÚNICO bloco maior. Gere uma semana LIMPA (12 a 30 blocos no total), NUNCA dezenas de micro-blocos.',
     '- Gere uma semana realista (não lote o dia inteiro).',
     '- Insights: 2 a 4, cada um citando um padrão CONCRETO do histórico (ex: "Doctum vira disperso depois das 17h em 3 das 4 semanas"). Nada genérico.',
     'Responda SOMENTE chamando a ferramenta propor_agenda.',
@@ -217,7 +218,7 @@ export async function gerarAgendaIA(
   const client = criarClienteIA(apiKey);
   const response = await client.messages.create({
     model: MODELO,
-    max_tokens: 3000,
+    max_tokens: 5000,
     system,
     messages: [{ role: 'user', content: userMsg }],
     tools: [
@@ -288,6 +289,11 @@ export async function gerarAgendaIA(
         diaSemanaValues.includes(b.diaSemana) &&
         categoriaValues.includes(b.categoriaPlanejada),
     );
+  console.warn('[agenda-ia][gerar]', {
+    stop: response.stop_reason,
+    validos: proposta.blocos.length,
+    frentes: idsFrentes.length,
+  });
   proposta.insights = proposta.insights ?? [];
   proposta.resumo = proposta.resumo ?? '';
 
@@ -464,13 +470,15 @@ export async function revisarEPlanejar(
 
   const system = [
     'Você é o assistente da "Bússola do Tempo" (Frentes × IMPORTANTE/URGENTE/DISPERSO). É o ritual semanal: você faz DUAS coisas numa tacada.',
-    `1) ANÁLISE da semana ${semanaIsoRevisada} (a que passou): NO MÁXIMO 3 insights de UMA frase cada, curtos e ACIONÁVEIS, citando um padrão concreto (planejado × realizado). Sem parágrafos longos.`,
-    `2) PROPOSTA da semana ${proximaIso} (a próxima): SEMPRE devolva os blocos em blocosProxima (esse é o resultado principal — preencha a semana, não só o resumo), aprendendo da análise e do histórico.`,
+    `1) ANÁLISE da semana ${semanaIsoRevisada} (a que passou): 3 a 4 insights ACIONÁVEIS de 1 a 2 frases cada, citando um padrão concreto (planejado × realizado). Sem parágrafos longos.`,
+    `2) PROPOSTA da semana ${proximaIso} (a próxima): SEMPRE devolva os blocos em blocosProxima — esse é o resultado PRINCIPAL. Preencha a semana de verdade (não só o resumo).`,
     'Regras da proposta:',
     `- Janela: acorda ${workspace.horaAcordar}, dorme ${workspace.horaDormir}; almoço ${workspace.horaAlmocoIni}-${workspace.horaAlmocoFim} (livre).`,
     '- Mantenha compromissos fixos. Distribua perto do orçamento de cada frente.',
     '- Baseie-se no REALIZADO (o que repete, repete). Proteja horários que funcionam; evite IMPORTANTE em horário que vira DISPERSO/URGENTE.',
-    '- Fins de semana livres salvo histórico. Pouco histórico = conservador. Use só os IDs de frente dados. HH:mm 24h. Sem sobreposição.',
+    '- CONSOLIDE: junte horas contíguas da mesma frente num ÚNICO bloco maior (ex.: DOCTUM 08:00–18:30 = 1 bloco, não vários). Gere uma semana LIMPA, com algo entre 12 e 30 blocos no total — NUNCA dezenas de micro-blocos.',
+    '- Em frenteId use EXATAMENTE o id entre parênteses da lista de FRENTES (o cuid), NUNCA o nome.',
+    '- Fins de semana livres salvo histórico. Pouco histórico = conservador. HH:mm 24h. Sem sobreposição.',
     'Responda SOMENTE chamando revisar_e_planejar.',
   ].join('\n');
 
@@ -493,7 +501,7 @@ export async function revisarEPlanejar(
   const client = criarClienteIA(apiKey);
   const response = await client.messages.create({
     model: MODELO,
-    max_tokens: 3000,
+    max_tokens: 5000,
     system,
     messages: [{ role: 'user', content: userMsg }],
     tools: [
@@ -553,6 +561,13 @@ export async function revisarEPlanejar(
         diaSemanaValues.includes(b.diaSemana) &&
         categoriaValues.includes(b.categoriaPlanejada),
     );
+  // Diagnóstico (vai pros logs da Vercel) — se a grade vier vazia, mostra a causa.
+  console.warn('[agenda-ia][revisar]', {
+    stop: response.stop_reason,
+    recebidos: out.blocosProxima?.length ?? 0,
+    validos: blocos.length,
+    frentes: idsFrentes.length,
+  });
   const semanasComDados = semanas.filter((s) => s.blocos.length > 0).length;
 
   return {
