@@ -26,6 +26,21 @@ function criarClienteIA(apiKey: string): Anthropic {
   return new Anthropic({ apiKey, maxRetries: 0, timeout: TIMEOUT_IA_MS });
 }
 
+/**
+ * Resolve o frenteId que a IA devolveu. Aceita o ID exato OU o NOME da frente
+ * (a IA às vezes manda o nome em vez do cuid). Retorna o ID válido ou null —
+ * assim a gente não descarta um bloco bom só porque a IA escreveu o nome.
+ */
+function construirResolverFrente(frentes: { id: string; nome: string }[]) {
+  const ids = new Set(frentes.map((f) => f.id));
+  const porNome = new Map(frentes.map((f) => [f.nome.trim().toLowerCase(), f.id]));
+  return (raw: string | null | undefined): string | null => {
+    const r = (raw ?? '').trim();
+    if (ids.has(r)) return r;
+    return porNome.get(r.toLowerCase()) ?? null;
+  };
+}
+
 // Sufixo "[real HH:mm-HH:mm]" quando o bloco foi executado fora do horário
 // planejado (Caso 2 — desvio de horário). Vazio quando saiu no horário.
 function sufixoHorarioReal(b: {
@@ -259,18 +274,20 @@ export async function gerarAgendaIA(
   }
   const proposta = bloco.input as PropostaAgenda;
 
-  // Defesa: filtra blocos com frente/horário inválidos.
-  const idSet = new Set(idsFrentes);
+  // Defesa: resolve a frente (id OU nome) e filtra horários inválidos.
+  const resolverFrente = construirResolverFrente(frentes);
   const horaOk = (h: string) => /^\d{2}:\d{2}$/.test(h);
-  proposta.blocos = (proposta.blocos ?? []).filter(
-    (b) =>
-      idSet.has(b.frenteId) &&
-      horaOk(b.horaInicio) &&
-      horaOk(b.horaFim) &&
-      b.horaFim > b.horaInicio &&
-      diaSemanaValues.includes(b.diaSemana) &&
-      categoriaValues.includes(b.categoriaPlanejada),
-  );
+  proposta.blocos = (proposta.blocos ?? [])
+    .map((b) => ({ ...b, frenteId: resolverFrente(b.frenteId) }))
+    .filter(
+      (b): b is PropostaBloco =>
+        b.frenteId != null &&
+        horaOk(b.horaInicio) &&
+        horaOk(b.horaFim) &&
+        b.horaFim > b.horaInicio &&
+        diaSemanaValues.includes(b.diaSemana) &&
+        categoriaValues.includes(b.categoriaPlanejada),
+    );
   proposta.insights = proposta.insights ?? [];
   proposta.resumo = proposta.resumo ?? '';
 
@@ -442,8 +459,8 @@ export async function revisarEPlanejar(
 
   const system = [
     'Você é o assistente da "Bússola do Tempo" (Frentes × IMPORTANTE/URGENTE/DISPERSO). É o ritual semanal: você faz DUAS coisas numa tacada.',
-    `1) ANÁLISE da semana ${semanaIsoRevisada} (a que passou): 3-5 insights curtos e ACIONÁVEIS, cada um citando um padrão concreto (planejado × realizado, reflexões). Nada genérico.`,
-    `2) PROPOSTA da semana ${proximaIso} (a próxima), aprendendo da análise e do histórico.`,
+    `1) ANÁLISE da semana ${semanaIsoRevisada} (a que passou): NO MÁXIMO 3 insights de UMA frase cada, curtos e ACIONÁVEIS, citando um padrão concreto (planejado × realizado). Sem parágrafos longos.`,
+    `2) PROPOSTA da semana ${proximaIso} (a próxima): SEMPRE devolva os blocos em blocosProxima (esse é o resultado principal — preencha a semana, não só o resumo), aprendendo da análise e do histórico.`,
     'Regras da proposta:',
     `- Janela: acorda ${workspace.horaAcordar}, dorme ${workspace.horaDormir}; almoço ${workspace.horaAlmocoIni}-${workspace.horaAlmocoFim} (livre).`,
     '- Mantenha compromissos fixos. Distribua perto do orçamento de cada frente.',
@@ -481,9 +498,9 @@ export async function revisarEPlanejar(
         input_schema: {
           type: 'object',
           additionalProperties: false,
+          // blocosProxima vem PRIMEIRO de propósito: é o resultado principal e
+          // é gerado antes do texto, então nunca é cortado se a saída encostar no teto.
           properties: {
-            analise: { type: 'array', items: { type: 'string' } },
-            resumoProxima: { type: 'string' },
             blocosProxima: {
               type: 'array',
               items: {
@@ -500,8 +517,10 @@ export async function revisarEPlanejar(
                 required: ['diaSemana', 'horaInicio', 'horaFim', 'tarefa', 'frenteId', 'categoriaPlanejada'],
               },
             },
+            resumoProxima: { type: 'string' },
+            analise: { type: 'array', items: { type: 'string' } },
           },
-          required: ['analise', 'resumoProxima', 'blocosProxima'],
+          required: ['blocosProxima', 'resumoProxima', 'analise'],
         },
       },
     ],
@@ -516,17 +535,19 @@ export async function revisarEPlanejar(
     blocosProxima?: PropostaBloco[];
   };
 
-  const idSet = new Set(idsFrentes);
+  const resolverFrente = construirResolverFrente(frentes);
   const horaOk = (h: string) => /^\d{2}:\d{2}$/.test(h);
-  const blocos = (out.blocosProxima ?? []).filter(
-    (b) =>
-      idSet.has(b.frenteId) &&
-      horaOk(b.horaInicio) &&
-      horaOk(b.horaFim) &&
-      b.horaFim > b.horaInicio &&
-      diaSemanaValues.includes(b.diaSemana) &&
-      categoriaValues.includes(b.categoriaPlanejada),
-  );
+  const blocos = (out.blocosProxima ?? [])
+    .map((b) => ({ ...b, frenteId: resolverFrente(b.frenteId) }))
+    .filter(
+      (b): b is PropostaBloco =>
+        b.frenteId != null &&
+        horaOk(b.horaInicio) &&
+        horaOk(b.horaFim) &&
+        b.horaFim > b.horaInicio &&
+        diaSemanaValues.includes(b.diaSemana) &&
+        categoriaValues.includes(b.categoriaPlanejada),
+    );
   const semanasComDados = semanas.filter((s) => s.blocos.length > 0).length;
 
   return {
