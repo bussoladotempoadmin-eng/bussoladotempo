@@ -379,7 +379,12 @@ export type RevisarPlanejar = {
   /** Proposta de agenda da PRÓXIMA semana. */
   proposta: PropostaAgenda;
   proximaIso: string;
+  /** Quantas vezes a IA foi re-rodada (force) sobre esta semana — controle de custo. */
+  regeracoes?: number;
 };
+
+/** Máximo de regerações (force) por semana — trava o custo real de tokens. */
+export const LIMITE_REGERACOES = 2;
 
 /**
  * Comando combinado do ritual semanal: numa única chamada de IA, analisa a
@@ -618,11 +623,13 @@ export async function revisarEPlanejarComCache(
   semanaIso: string,
   force = false,
 ): Promise<RevisarPlanejar & { cacheado: boolean }> {
-  if (!force) {
-    const cache = await lerRitualCache(workspaceId, semanaIso);
-    if (cache) return { ...cache, cacheado: true };
-  }
+  const cache = await lerRitualCache(workspaceId, semanaIso);
+  if (!force && cache) return { ...cache, cacheado: true };
+
   const result = await revisarEPlanejar(workspaceId, semanaIso);
-  await salvarRitualCache(workspaceId, semanaIso, result);
-  return { ...result, cacheado: false };
+  // Se foi um force sobre um resultado já existente, conta como regeração (custo).
+  const regeracoes = cache ? (cache.regeracoes ?? 0) + 1 : 0;
+  const comMeta: RevisarPlanejar = { ...result, regeracoes };
+  await salvarRitualCache(workspaceId, semanaIso, comMeta);
+  return { ...comMeta, cacheado: false };
 }
