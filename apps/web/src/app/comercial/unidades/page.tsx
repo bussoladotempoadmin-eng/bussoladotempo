@@ -27,7 +27,7 @@ export default async function UnidadesPage() {
       </p>
       <UnidadesView
         inicial={escopo.unidades}
-        ehDono={escopo.ehDono}
+        ehDono={escopo.podeGerenciarAcessos}
         orgId={orgId}
         podeConfigRepasse={escopo.podeConfigRepasse}
         repasses={repasses}

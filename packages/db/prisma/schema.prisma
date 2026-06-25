@@ -77,6 +77,7 @@ model User {
   senhaHash     String? // login por e-mail/senha (null = só Google/link mágico)
   superAdmin    Boolean       @default(false) // acesso ao painel de gestão do produto
   onboardingVisto Boolean     @default(false) // já viu o tour guiado inicial
+  ultimoLoginEm DateTime?     // última vez que autenticou no sistema
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 

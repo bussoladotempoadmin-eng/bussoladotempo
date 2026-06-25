@@ -101,6 +101,10 @@ export const authOptions: NextAuthOptions = {
           select: { superAdmin: true },
         });
         token.superAdmin = Boolean(dbUser?.superAdmin);
+        // Registra o último login (fire-and-forget — nunca quebra o login).
+        await prisma.user
+          .update({ where: { id: user.id }, data: { ultimoLoginEm: new Date() } })
+          .catch(() => {});
       }
       return token;
     },

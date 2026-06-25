@@ -27,7 +27,7 @@ export default async function TiposPage() {
         Crie os tipos que fazem sentido pra esta empresa — eles aparecem no formulário de ação e
         viram filtro nos relatórios.
       </p>
-      <TiposView inicial={tipos} ehDono={escopo.ehDono} orgId={orgId} />
+      <TiposView inicial={tipos} ehDono={escopo.podeGerenciarAcessos} orgId={orgId} />
     </ComercialShell>
   );
 }

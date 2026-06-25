@@ -326,6 +326,12 @@ async function ehDonoDaOrg(userId: string, orgId: string): Promise<boolean> {
   return (await papelNaOrg(userId, orgId)) === 'dono';
 }
 
+/** Pode gerenciar a empresa (cadastrar/editar unidades e tipos): dono OU admin. */
+async function podeGerenciarOrg(userId: string, orgId: string): Promise<boolean> {
+  const a = await resolverAcessoComercial(userId, orgId);
+  return a.temAcesso && (a.dono || a.admin);
+}
+
 // ---- Acessos do Comercial (RBAC) ----
 
 export type AcessoComercialInfo = {
@@ -338,6 +344,7 @@ export type AcessoComercialInfo = {
   admin: boolean;
   rotulo: string | null;
   unidadesIds: string[];
+  ultimoLoginEm: string | null; // ISO — só corporativo/admin vê esta tela
 };
 
 /** userIds com QUALQUER acesso à org (dono + time + comercial + coordenador legado). */
@@ -398,7 +405,10 @@ export async function listarAcessosComercial(
   const linhas = await prisma.acessoComercial
     .findMany({
       where: { organizacaoId: orgId },
-      include: { user: { select: { name: true, email: true } }, unidades: { select: { unidadeId: true } } },
+      include: {
+        user: { select: { name: true, email: true, ultimoLoginEm: true } },
+        unidades: { select: { unidadeId: true } },
+      },
       orderBy: { createdAt: 'asc' },
     })
     .catch(() => []);
@@ -412,6 +422,7 @@ export async function listarAcessosComercial(
     admin: l.admin,
     rotulo: l.rotulo,
     unidadesIds: l.unidades.map((u) => u.unidadeId),
+    ultimoLoginEm: l.user.ultimoLoginEm ? l.user.ultimoLoginEm.toISOString() : null,
   }));
 }
 
@@ -499,7 +510,7 @@ export async function criarUnidade(
   nome: string,
   coordenadorEmail?: string,
 ): Promise<{ ok: boolean; erro?: string }> {
-  if (!(await ehDonoDaOrg(userId, orgId))) return { ok: false, erro: 'Sem permissão nesta empresa.' };
+  if (!(await podeGerenciarOrg(userId, orgId))) return { ok: false, erro: 'Sem permissão nesta empresa.' };
   const nomeLimpo = nome.trim();
   if (!nomeLimpo) return { ok: false, erro: 'Dê um nome à unidade.' };
 
@@ -522,9 +533,11 @@ export async function editarUnidade(
 ): Promise<{ ok: boolean; erro?: string }> {
   const alvo = await prisma.unidade.findUnique({
     where: { id: unidadeId },
-    select: { organizacao: { select: { ownerId: true } } },
+    select: { organizacaoId: true },
   });
-  if (!alvo || alvo.organizacao.ownerId !== userId) return { ok: false, erro: 'Sem permissão nesta empresa.' };
+  if (!alvo || !(await podeGerenciarOrg(userId, alvo.organizacaoId))) {
+    return { ok: false, erro: 'Sem permissão nesta empresa.' };
+  }
 
   const data: { nome?: string; coordenadorId?: string | null } = {};
   if (patch.nome !== undefined) {
@@ -550,9 +563,9 @@ export async function editarUnidade(
 export async function removerUnidade(userId: string, unidadeId: string): Promise<boolean> {
   const u = await prisma.unidade.findUnique({
     where: { id: unidadeId },
-    select: { organizacao: { select: { ownerId: true } } },
+    select: { organizacaoId: true },
   });
-  if (!u || u.organizacao.ownerId !== userId) return false;
+  if (!u || !(await podeGerenciarOrg(userId, u.organizacaoId))) return false;
   await prisma.unidade.delete({ where: { id: unidadeId } });
   return true;
 }
@@ -572,7 +585,7 @@ export async function criarTipo(
   orgId: string,
   nome: string,
 ): Promise<{ ok: boolean; erro?: string }> {
-  if (!(await ehDonoDaOrg(userId, orgId))) return { ok: false, erro: 'Sem permissão.' };
+  if (!(await podeGerenciarOrg(userId, orgId))) return { ok: false, erro: 'Sem permissão.' };
   const n = nome.trim();
   if (!n) return { ok: false, erro: 'Digite o nome do tipo.' };
   try {
@@ -586,9 +599,9 @@ export async function criarTipo(
 export async function removerTipo(userId: string, tipoId: string): Promise<boolean> {
   const t = await prisma.tipoAcaoComercial.findUnique({
     where: { id: tipoId },
-    select: { organizacao: { select: { ownerId: true } } },
+    select: { organizacaoId: true },
   });
-  if (!t || t.organizacao.ownerId !== userId) return false;
+  if (!t || !(await podeGerenciarOrg(userId, t.organizacaoId))) return false;
   await prisma.tipoAcaoComercial.delete({ where: { id: tipoId } });
   return true;
 }

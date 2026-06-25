@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Plus, Trash2, UserCog, ShieldCheck } from 'lucide-react';
+import { Loader2, Plus, Trash2, UserCog, ShieldCheck, Pencil, Clock } from 'lucide-react';
 import { useToast } from '@/components/toast';
 import type { AcessoComercialInfo } from '@/lib/comercial';
 
@@ -24,6 +24,7 @@ export function AcessosView({
   const router = useRouter();
   const { toast } = useToast();
   const nomeUnidade = React.useMemo(() => new Map(unidades.map((u) => [u.id, u.nome])), [unidades]);
+  const formRef = React.useRef<HTMLDivElement>(null);
 
   const [email, setEmail] = React.useState('');
   const [rotulo, setRotulo] = React.useState('');
@@ -32,9 +33,36 @@ export function AcessosView({
   const [admin, setAdmin] = React.useState(false);
   const [sel, setSel] = React.useState<string[]>([]);
   const [busy, setBusy] = React.useState(false);
+  const [editando, setEditando] = React.useState<string | null>(null);
 
   function toggleUnidade(id: string) {
     setSel((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  }
+
+  function editar(a: AcessoComercialInfo) {
+    setEmail(a.email);
+    setRotulo(a.rotulo ?? '');
+    setNivel(a.nivel);
+    setTodas(a.todasUnidades);
+    setAdmin(a.admin);
+    setSel(a.todasUnidades ? [] : a.unidadesIds);
+    setEditando(a.email);
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function limparForm() {
+    setEmail('');
+    setRotulo('');
+    setNivel('EDITAR');
+    setTodas(false);
+    setAdmin(false);
+    setSel([]);
+    setEditando(null);
+  }
+
+  function fmtLogin(iso: string | null): string {
+    if (!iso) return 'nunca acessou';
+    return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
   }
 
   async function adicionar() {
@@ -61,11 +89,7 @@ export function AcessosView({
         return;
       }
       toast('Acesso salvo.');
-      setEmail('');
-      setRotulo('');
-      setSel([]);
-      setTodas(false);
-      setAdmin(false);
+      limparForm();
       router.refresh();
     } finally {
       setBusy(false);
@@ -89,15 +113,29 @@ export function AcessosView({
 
   return (
     <div className="space-y-6">
-      {/* Adicionar acesso */}
-      <div className="rounded-2xl border border-border bg-card p-4">
-        <div className="mb-3 flex items-center gap-2 text-sm font-bold">
-          <UserCog className="h-4 w-4" /> Adicionar / atualizar acesso
+      {/* Adicionar / editar acesso */}
+      <div ref={formRef} className="rounded-2xl border border-border bg-card p-4">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-sm font-bold">
+            <UserCog className="h-4 w-4" />
+            {editando ? `Editando: ${editando}` : 'Adicionar / atualizar acesso'}
+          </div>
+          {editando && (
+            <button type="button" onClick={limparForm} className="text-xs font-semibold text-muted-foreground hover:text-foreground">
+              Cancelar edição
+            </button>
+          )}
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col">
             <span className="mb-1 text-xs font-semibold text-muted-foreground">E-mail da pessoa</span>
-            <input className={INP} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="pessoa@empresa.com" />
+            <input
+              className={`${INP} ${editando ? 'opacity-60' : ''}`}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={!!editando}
+              placeholder="pessoa@empresa.com"
+            />
           </label>
           <label className="flex flex-col">
             <span className="mb-1 text-xs font-semibold text-muted-foreground">Rótulo (opcional)</span>
@@ -183,15 +221,29 @@ export function AcessosView({
                 <div className="mt-0.5 truncate text-xs text-muted-foreground">
                   {a.email} · {a.todasUnidades ? 'todas as unidades' : a.unidadesIds.map((id) => nomeUnidade.get(id) ?? '?').join(', ') || 'sem unidade'}
                 </div>
+                <div className="mt-1 flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <Clock className="h-3 w-3" /> Último acesso: <b className="font-semibold">{fmtLogin(a.ultimoLoginEm)}</b>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => remover(a.id)}
-                className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                aria-label="Remover"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => editar(a)}
+                  className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  aria-label="Editar"
+                  title="Editar acesso"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => remover(a.id)}
+                  className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  aria-label="Remover"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
