@@ -127,22 +127,6 @@ export async function criarEmpresa(userId: string, nome: string): Promise<{ id: 
   return org;
 }
 
-type Papel = 'dono' | 'coordenador' | null;
-
-async function papelNaOrg(userId: string, orgId: string): Promise<Papel> {
-  const org = await prisma.organizacao.findFirst({
-    where: { id: orgId, comercialAtivo: true },
-    select: { ownerId: true },
-  });
-  if (!org) return null;
-  if (org.ownerId === userId) return 'dono';
-  const coord = await prisma.unidade.findFirst({
-    where: { organizacaoId: orgId, coordenadorId: userId },
-    select: { id: true },
-  });
-  return coord ? 'coordenador' : null;
-}
-
 function mapUnidade(u: {
   id: string;
   nome: string;
@@ -320,10 +304,6 @@ async function podeEditarUnidade(userId: string, unidadeId: string): Promise<boo
   const orgId = await escopoDaUnidade(unidadeId);
   if (!orgId) return false;
   return (await resolverAcessoComercial(userId, orgId)).podeEditar(unidadeId);
-}
-
-async function ehDonoDaOrg(userId: string, orgId: string): Promise<boolean> {
-  return (await papelNaOrg(userId, orgId)) === 'dono';
 }
 
 /** Pode gerenciar a empresa (cadastrar/editar unidades e tipos): dono OU admin. */
