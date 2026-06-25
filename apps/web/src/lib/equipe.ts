@@ -16,6 +16,7 @@ export type MembroInfo = {
   email: string;
   papel: 'GESTOR' | 'MEMBRO';
   chefeId: string | null; // a quem reporta (null = reporta ao diretor/dono)
+  ultimoLoginEm: string | null; // ISO — null = convidado mas nunca acessou
 };
 
 export type TimeGestor = {
@@ -37,7 +38,7 @@ export async function getTimeGestor(userId: string): Promise<TimeGestor | null> 
   if (!org) return null;
   const membros = await prisma.membroEquipe.findMany({
     where: { organizacaoId: org.id },
-    include: { user: { select: { id: true, name: true, email: true } } },
+    include: { user: { select: { id: true, name: true, email: true, ultimoLoginEm: true } } },
     orderBy: { createdAt: 'asc' },
   });
   return {
@@ -49,6 +50,7 @@ export async function getTimeGestor(userId: string): Promise<TimeGestor | null> 
       email: m.user.email,
       papel: m.papel,
       chefeId: m.chefeId,
+      ultimoLoginEm: m.user.ultimoLoginEm ? m.user.ultimoLoginEm.toISOString() : null,
     })),
   };
 }
@@ -239,7 +241,7 @@ export async function escopoVisivel(
 
   const todos = await prisma.membroEquipe.findMany({
     where: { organizacaoId: vinculo.organizacaoId },
-    include: { user: { select: { name: true, email: true } } },
+    include: { user: { select: { name: true, email: true, ultimoLoginEm: true } } },
   });
   const info: MembroInfo[] = todos.map((m) => ({
     membroId: m.id,
@@ -248,6 +250,7 @@ export async function escopoVisivel(
     email: m.user.email,
     papel: m.papel,
     chefeId: m.chefeId,
+    ultimoLoginEm: m.user.ultimoLoginEm ? m.user.ultimoLoginEm.toISOString() : null,
   }));
   return { org: vinculo.organizacao, ehDono: false, membros: descendentes(vinculo.id, info) };
 }

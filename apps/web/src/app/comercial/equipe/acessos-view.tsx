@@ -34,6 +34,13 @@ export function AcessosView({
   const [sel, setSel] = React.useState<string[]>([]);
   const [busy, setBusy] = React.useState(false);
   const [editando, setEditando] = React.useState<string | null>(null);
+  const [busca, setBusca] = React.useState('');
+
+  const acessosFiltrados = React.useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    if (!q) return acessos;
+    return acessos.filter((a) => `${a.nome} ${a.email} ${a.rotulo ?? ''}`.toLowerCase().includes(q));
+  }, [acessos, busca]);
 
   function toggleUnidade(id: string) {
     setSel((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -203,7 +210,18 @@ export function AcessosView({
         </p>
       ) : (
         <div className="space-y-2">
-          {acessos.map((a) => (
+          <input
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por nome, e-mail ou função…"
+            className={INP}
+          />
+          {acessosFiltrados.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-border bg-card/50 p-5 text-center text-sm text-muted-foreground">
+              Ninguém encontrado para “{busca}”.
+            </p>
+          ) : (
+            acessosFiltrados.map((a) => (
             <div key={a.id} className="flex items-start justify-between gap-3 rounded-xl border border-border bg-card p-3.5">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
@@ -245,7 +263,8 @@ export function AcessosView({
                 </button>
               </div>
             </div>
-          ))}
+            ))
+          )}
         </div>
       )}
     </div>

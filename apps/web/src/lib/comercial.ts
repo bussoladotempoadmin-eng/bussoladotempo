@@ -161,7 +161,7 @@ export async function getEscopoComercial(
     where: acesso.corporativo
       ? { organizacaoId: orgId }
       : { organizacaoId: orgId, id: { in: acesso.unidadesIds } },
-    orderBy: { createdAt: 'asc' },
+    orderBy: { nome: 'asc' }, // ordem alfabética em todas as telas
     include: { coordenador: { select: { name: true, email: true } } },
   });
 

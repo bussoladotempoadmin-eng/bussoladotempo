@@ -25,6 +25,12 @@ export function UnidadesView({
   const [email, setEmail] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [erro, setErro] = React.useState<string | null>(null);
+  const [busca, setBusca] = React.useState('');
+
+  const filtradas = React.useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    return q ? inicial.filter((u) => u.nome.toLowerCase().includes(q)) : inicial;
+  }, [inicial, busca]);
 
   // edição de unidade existente
   const [editId, setEditId] = React.useState<string | null>(null);
@@ -163,7 +169,18 @@ export function UnidadesView({
         </p>
       ) : (
         <div className="space-y-2">
-          {inicial.map((u) => (
+          <input
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar unidade…"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+          {filtradas.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-border bg-card/50 p-5 text-center text-sm text-muted-foreground">
+              Nenhuma unidade encontrada para “{busca}”.
+            </p>
+          ) : (
+            filtradas.map((u) => (
             <div key={u.id} className="rounded-xl border border-border bg-card p-3.5">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -295,7 +312,8 @@ export function UnidadesView({
                 />
               )}
             </div>
-          ))}
+            ))
+          )}
         </div>
       )}
     </div>

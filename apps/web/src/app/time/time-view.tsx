@@ -25,6 +25,10 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
     [membros],
   );
 
+  function fmtLogin(iso: string): string {
+    return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  }
+
   async function recarregar() {
     const r = await fetch('/api/equipe');
     if (r.ok) {
@@ -186,15 +190,27 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
                 {m.nome.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
+                <p className="flex flex-wrap items-center gap-1.5 truncate text-sm font-semibold">
                   {m.nome}
                   {m.papel === 'GESTOR' && <Crown className="h-3.5 w-3.5 text-amber-500" />}
+                  {m.ultimoLoginEm ? (
+                    <span className="rounded-full bg-emerald-500/12 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                      Ativo
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                      Convite pendente
+                    </span>
+                  )}
                 </p>
                 <p className="truncate text-xs text-muted-foreground">
                   {m.email} · reporta a{' '}
                   <span className="font-medium">
                     {m.chefeId ? (nomePorId.get(m.chefeId) ?? '—') : 'Você (Diretor)'}
                   </span>
+                  {m.ultimoLoginEm
+                    ? ` · último acesso ${fmtLogin(m.ultimoLoginEm)}`
+                    : ' · ainda não acessou'}
                 </p>
               </div>
               <button
