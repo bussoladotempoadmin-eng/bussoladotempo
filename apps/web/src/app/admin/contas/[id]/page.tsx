@@ -74,6 +74,10 @@ export default async function ContaDetalhePage({ params }: { params: { id: strin
         parceiroCode={a.parceiro?.code ?? ''}
         ownerName={a.owner.name ?? ''}
         ownerEmail={a.owner.email}
+        empresaNome={a.empresaNome ?? ''}
+        empresaDocumento={a.empresaDocumento ?? ''}
+        empresaResponsavelNome={a.empresaResponsavelNome ?? ''}
+        empresaResponsavelEmail={a.empresaResponsavelEmail ?? ''}
       />
 
       {/* Cobranças */}

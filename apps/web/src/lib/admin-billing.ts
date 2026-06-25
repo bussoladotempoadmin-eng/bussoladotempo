@@ -324,6 +324,32 @@ export async function editarDadosOwner(
   return { ok: true };
 }
 
+/** Edita os dados cadastrais da empresa da conta (fiscal). Tudo opcional. */
+export async function editarDadosEmpresa(
+  assinaturaId: string,
+  patch: {
+    empresaNome?: string;
+    empresaDocumento?: string;
+    empresaResponsavelNome?: string;
+    empresaResponsavelEmail?: string;
+  },
+): Promise<{ ok: true } | { ok: false; erro: string }> {
+  const limpo = (s?: string) => (s != null ? s.trim() || null : undefined);
+  const email = patch.empresaResponsavelEmail;
+  if (email != null && email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    return { ok: false, erro: 'E-mail do responsável inválido' };
+  }
+  const data = {
+    empresaNome: limpo(patch.empresaNome),
+    empresaDocumento: limpo(patch.empresaDocumento),
+    empresaResponsavelNome: limpo(patch.empresaResponsavelNome),
+    empresaResponsavelEmail: limpo(patch.empresaResponsavelEmail),
+  };
+  const r = await prisma.assinatura.updateMany({ where: { id: assinaturaId }, data });
+  if (r.count === 0) return { ok: false, erro: 'Assinatura não encontrada' };
+  return { ok: true };
+}
+
 /** Estende (ou encurta) o trial em N dias a partir de agora. */
 export async function estenderTrial(assinaturaId: string, dias: number) {
   await prisma.assinatura.update({

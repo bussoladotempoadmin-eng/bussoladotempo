@@ -37,6 +37,10 @@ export function AcoesConta(props: {
   parceiroCode: string;
   ownerName: string;
   ownerEmail: string;
+  empresaNome: string;
+  empresaDocumento: string;
+  empresaResponsavelNome: string;
+  empresaResponsavelEmail: string;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -46,6 +50,12 @@ export function AcoesConta(props: {
   // dados do dono da conta
   const [ownerName, setOwnerName] = React.useState(props.ownerName);
   const [ownerEmail, setOwnerEmail] = React.useState(props.ownerEmail);
+
+  // dados cadastrais da empresa
+  const [empNome, setEmpNome] = React.useState(props.empresaNome);
+  const [empDoc, setEmpDoc] = React.useState(props.empresaDocumento);
+  const [empRespNome, setEmpRespNome] = React.useState(props.empresaResponsavelNome);
+  const [empRespEmail, setEmpRespEmail] = React.useState(props.empresaResponsavelEmail);
 
   // edição da assinatura
   const [status, setStatus] = React.useState(props.status);
@@ -119,6 +129,53 @@ export function AcoesConta(props: {
             className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
           >
             {busy === 'owner' && <Loader2 className="h-4 w-4 animate-spin" />} Salvar dados
+          </button>
+        </div>
+      </Card>
+
+      <Card titulo="Dados da empresa">
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <label className="block">
+              <span className="mb-1 block text-xs text-muted-foreground">Empresa</span>
+              <input className={INP} value={empNome} onChange={(e) => setEmpNome(e.target.value)} placeholder="Razão social / nome" />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs text-muted-foreground">CNPJ / CPF</span>
+              <input className={INP} value={empDoc} onChange={(e) => setEmpDoc(e.target.value)} placeholder="Só números" />
+            </label>
+          </div>
+          <label className="block">
+            <span className="mb-1 block text-xs text-muted-foreground">Nome do responsável da empresa</span>
+            <input className={INP} value={empRespNome} onChange={(e) => setEmpRespNome(e.target.value)} placeholder="Responsável" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs text-muted-foreground">E-mail do responsável da empresa</span>
+            <input
+              type="email"
+              className={INP}
+              value={empRespEmail}
+              onChange={(e) => setEmpRespEmail(e.target.value)}
+              placeholder="responsavel@empresa.com"
+            />
+          </label>
+          <p className="text-xs text-muted-foreground">
+            Cadastro fiscal da conta. Não altera o login do usuário — é só registro da empresa.
+          </p>
+          <button
+            onClick={() =>
+              call('empresa', `/api/admin/contas/${props.assinaturaId}`, 'POST', {
+                tipo: 'editar_empresa',
+                empresaNome: empNome,
+                empresaDocumento: empDoc,
+                empresaResponsavelNome: empRespNome,
+                empresaResponsavelEmail: empRespEmail,
+              }).then((ok) => ok && toast('Dados da empresa atualizados.'))
+            }
+            disabled={busy !== null}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+          >
+            {busy === 'empresa' && <Loader2 className="h-4 w-4 animate-spin" />} Salvar empresa
           </button>
         </div>
       </Card>

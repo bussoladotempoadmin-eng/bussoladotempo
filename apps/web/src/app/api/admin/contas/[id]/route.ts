@@ -3,6 +3,7 @@ import { getSuperAdmin } from '@/lib/super-admin';
 import {
   editarAssinatura,
   editarDadosOwner,
+  editarDadosEmpresa,
   estenderTrial,
   criarCobrancaManual,
 } from '@/lib/admin-billing';
@@ -58,6 +59,18 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     const r = await editarDadosOwner(params.id, {
       name: typeof body?.name === 'string' ? body.name : undefined,
       email: typeof body?.email === 'string' ? body.email : undefined,
+    });
+    if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (tipo === 'editar_empresa') {
+    const s = (v: unknown) => (typeof v === 'string' ? v : undefined);
+    const r = await editarDadosEmpresa(params.id, {
+      empresaNome: s(body?.empresaNome),
+      empresaDocumento: s(body?.empresaDocumento),
+      empresaResponsavelNome: s(body?.empresaResponsavelNome),
+      empresaResponsavelEmail: s(body?.empresaResponsavelEmail),
     });
     if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
     return NextResponse.json({ ok: true });

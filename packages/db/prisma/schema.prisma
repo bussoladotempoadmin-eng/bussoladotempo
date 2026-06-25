@@ -778,6 +778,12 @@ model Assinatura {
 
   notasInternas String? @db.Text // anotações de suporte/financeiro
 
+  // Cadastro fiscal/empresa da conta (preenchido pelo super admin).
+  empresaNome             String? // razão social / nome da empresa
+  empresaDocumento        String? // CNPJ ou CPF
+  empresaResponsavelNome  String? // responsável da empresa
+  empresaResponsavelEmail String? // e-mail do responsável da empresa
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
