@@ -18,22 +18,22 @@
 ║  Pra cada uma, quantas horas por semana?                    ║
 ║                                                              ║
 ║  ┌─ Frente 1 ─────────────────────────────────────┐         ║
-║  │ Nome:  🏢 Doctum                               │         ║
+║  │ Nome:  🏢 Trabalho Operacional                               │         ║
 ║  │ Horas/sem:  36 h                               │         ║
 ║  └────────────────────────────────────────────────┘         ║
 ║                                                              ║
 ║  ┌─ Frente 2 ─────────────────────────────────────┐         ║
-║  │ Nome:  🛒 Tribo                                │         ║
+║  │ Nome:  🛒 Gestão Operacional                                │         ║
 ║  │ Horas/sem:  18 h                               │         ║
 ║  └────────────────────────────────────────────────┘         ║
 ║                                                              ║
 ║  ┌─ Frente 3 ─────────────────────────────────────┐         ║
-║  │ Nome:  🎓 Dra. Bruna                           │         ║
+║  │ Nome:  🎓 Agenda externa                           │         ║
 ║  │ Horas/sem:  2,5 h                              │         ║
 ║  └────────────────────────────────────────────────┘         ║
 ║                                                              ║
 ║  ┌─ Frente 4 ─────────────────────────────────────┐         ║
-║  │ Nome:  🤝 CuidaJA                              │         ║
+║  │ Nome:  🤝 Reuniões                              │         ║
 ║  │ Horas/sem:  2,5 h                              │         ║
 ║  └────────────────────────────────────────────────┘         ║
 ║                                                              ║
@@ -57,22 +57,22 @@
 ║         SEG       TER       QUA       QUI       SEX  SÁB    ║
 ║  06h    Ritual                                              ║
 ║  07h    Treino                                              ║
-║  08h    Doctum    Doctum    Doctum    Doctum    Doctum      ║
-║  09h    Doctum    Doctum    Doctum    Doctum    Doctum      ║
-║  10h    Doctum    Doctum    Doctum    Doctum    Doctum      ║
-║  11h    Doctum    Doctum    Doctum    Doctum    Doctum      ║
-║  12h    Almoço                                       Tribo  ║
-║  13h    Doctum    Bruna30   Bruna30   Doctum    Bruna1  ║
-║  14h    Doctum    CJ30      CJ30      Doctum    CJ1     ║
-║  15h    Doctum    Tribo     Tribo     Doctum    Doctum  ║
-║  16h    Doctum    Tribo     Tribo     Doctum    Doctum      ║
-║  17h    Doctum    Doctum    Doctum    Doctum    Doctum      ║
-║  18h    Mentoria  Doctum    Doctum    Live      Doctum      ║
+║  08h    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional      ║
+║  09h    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional      ║
+║  10h    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional      ║
+║  11h    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional      ║
+║  12h    Almoço                                       Gestão Operacional  ║
+║  13h    Trabalho Operacional    Agenda externa30   Agenda externa30   Trabalho Operacional    Agenda externa1  ║
+║  14h    Trabalho Operacional    CJ30      CJ30      Trabalho Operacional    CJ1     ║
+║  15h    Trabalho Operacional    Gestão Operacional     Gestão Operacional     Trabalho Operacional    Trabalho Operacional  ║
+║  16h    Trabalho Operacional    Gestão Operacional     Gestão Operacional     Trabalho Operacional    Trabalho Operacional      ║
+║  17h    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional    Trabalho Operacional      ║
+║  18h    Mentoria  Trabalho Operacional    Trabalho Operacional    Live      Trabalho Operacional      ║
 ║  19h    Mentoria                      Live                  ║
 ║  20h    Mentoria                      Live                  ║
 ║  21h    Mentoria                      Live                  ║
 ║                                                              ║
-║  Resumo: 36h Doctum + 18h Tribo + 2,5h Bruna + 2,5h CJ = 59h║
+║  Resumo: 36h Trabalho Operacional + 18h Gestão Operacional + 2,5h Agenda externa + 2,5h CJ = 59h║
 ║                                                              ║
 ║  [ Refazer ]    [ Ajustar bloco ]    [ Confirmar e usar > ] ║
 ╚══════════════════════════════════════════════════════════════╝
@@ -89,21 +89,21 @@
 ║                                                              ║
 ║  🎯 PRIORIDADES DA SEMANA                                    ║
 ║  ┌─────────────────────────────────────────────────────┐    ║
-║  │ 1️⃣  Revisar pipeline Doctum            🏢 Doctum    │    ║
-║  │ 2️⃣  Gravar aula 04 mentoria            🛒 Tribo     │    ║
-║  │ 3️⃣  Reunião alinhamento CuidaJA        🤝 CuidaJA   │    ║
+║  │ 1️⃣  Revisar pipeline Trabalho Operacional            🏢 Trabalho Operacional    │    ║
+║  │ 2️⃣  Gravar aula 04 mentoria            🛒 Gestão Operacional     │    ║
+║  │ 3️⃣  Reunião alinhamento Reuniões        🤝 Reuniões   │    ║
 ║  └─────────────────────────────────────────────────────┘    ║
 ║                                                              ║
 ║  📅 SEUS BLOCOS DE HOJE          59h previstas na semana    ║
 ║                                                              ║
-║  08h ────────── 12h    🎯 Doctum                             ║
+║  08h ────────── 12h    🎯 Trabalho Operacional                             ║
 ║       Revisar pipeline + alinhar marketing                  ║
 ║       ↑ Prioridade 1                                        ║
 ║                                                              ║
-║  13h30 ──────── 18h    🎯 Doctum                             ║
+║  13h30 ──────── 18h    🎯 Trabalho Operacional                             ║
 ║       1:1 vendedor X + ajustes pipeline                     ║
 ║                                                              ║
-║  18h30 ──────── 21h30  🎯 Tribo                              ║
+║  18h30 ──────── 21h30  🎯 Gestão Operacional                              ║
 ║       🎤 Mentoria - aula ao vivo                            ║
 ║       ↑ Prioridade 2                                        ║
 ║                                                              ║
@@ -119,7 +119,7 @@
 ┌──────────────────────────────────────────────────────────┐
 │ 🔔 Bloco terminou às 12h00                               │
 │                                                          │
-│ Doctum · 08h-12h                                         │
+│ Trabalho Operacional · 08h-12h                                         │
 │ Revisar pipeline + alinhar marketing                     │
 │                                                          │
 │ Foi como planejado? (🎯 Importante)                      │
@@ -147,16 +147,16 @@
 ║  💡 Sugestões já preenchidas baseadas no padrão da frente   ║
 ║                                                              ║
 ║  ┌────────────────────────────────────────────────────┐    ║
-║  │ SEG 08h-12h  Doctum                                │    ║
+║  │ SEG 08h-12h  Trabalho Operacional                                │    ║
 ║  │ Revisar pipeline + marketing            🎯 Imp.    │    ║
 ║  ├────────────────────────────────────────────────────┤    ║
-║  │ SEG 13h30-18h  Doctum                              │    ║
+║  │ SEG 13h30-18h  Trabalho Operacional                              │    ║
 ║  │ 1:1 vendedor X                          🔥 Urg.    │    ║
 ║  ├────────────────────────────────────────────────────┤    ║
-║  │ SEG 18h30-21h30  🎤 Mentoria Tribo                 │    ║
+║  │ SEG 18h30-21h30  🎤 Mentoria Gestão Operacional                 │    ║
 ║  │ Aula 04 ao vivo                         🎯 Imp.    │    ║
 ║  ├────────────────────────────────────────────────────┤    ║
-║  │ TER 13h30-14h  Dra. Bruna                          │    ║
+║  │ TER 13h30-14h  Agenda externa                          │    ║
 ║  │ Status semanal + revisar material       💨 Disp.   │    ║
 ║  └────────────────────────────────────────────────────┘    ║
 ║                                                              ║
@@ -176,7 +176,7 @@
 ║  📊 Sua semana 25-31/05 · O Espelho                          ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
-║              Doctum   Tribo   Bruna   CuidaJA   Total       ║
+║              Trabalho Operacional   Gestão Operacional   Agenda externa   Reuniões   Total       ║
 ║  🎯 Imp.      8h      10h      1h     0h        19h (32%)   ║
 ║  🔥 Urg.     22h       5h      1h     2h        30h (51%) ⚠ ║
 ║  💨 Disp.     6h       3h    30m    30m         10h (17%)   ║
@@ -189,9 +189,9 @@
 ║  💨 Disperso: 12% → 17%   ⬆ +5pp                      ║
 ║                                                              ║
 ║  🔴 Top 3 desvios da semana:                                ║
-║  1. Qui 13h30-15h  Tribo Imp. → Doctum Urg. (CEO)           ║
-║  2. Ter 16h-19h    CuidaJA Imp. → Disp. (msgs)              ║
-║  3. Sex 13h30-19h  Doctum Imp. → Urg. + Disp. (proposta)    ║
+║  1. Qui 13h30-15h  Gestão Operacional Imp. → Trabalho Operacional Urg. (CEO)           ║
+║  2. Ter 16h-19h    Reuniões Imp. → Disp. (msgs)              ║
+║  3. Sex 13h30-19h  Trabalho Operacional Imp. → Urg. + Disp. (proposta)    ║
 ║                                                              ║
 ║                                  [ Ver insights do Coach → ]║
 ╚══════════════════════════════════════════════════════════════╝
@@ -206,16 +206,16 @@
 ║  💬 Insights da semana                                       ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
-║  ✅ Tribo manteve foco em Importante (56%)                   ║
+║  ✅ Gestão Operacional manteve foco em Importante (56%)                   ║
 ║     Você está protegendo sua frente própria. Bom sinal.     ║
 ║                                                              ║
-║  ⚠️ Doctum virou bombeiro: 61% Urgente                       ║
+║  ⚠️ Trabalho Operacional virou bombeiro: 61% Urgente                       ║
 ║     Pela 2ª semana seguida. Vale pensar em delegar ou       ║
 ║     redesenhar o pipeline de demanda.                       ║
 ║                                                              ║
 ║  ⚠️ Sexta 13h30-19h vira caos 3 semanas seguidas             ║
 ║     Esse bloco está estourando como Urgente.                ║
-║     Considere mover Doctum-pesado pra outra janela ou       ║
+║     Considere mover Trabalho Operacional-pesado pra outra janela ou       ║
 ║     aceitar oficialmente que é seu bloco "bombeiro".        ║
 ║                                                              ║
 ║  🎯 Sua prioridade #1 (Revisar pipeline) recebeu 2h         ║
@@ -235,11 +235,11 @@
 ║  ⚠️ Conflito detectado                                       ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
-║  "Reunião pipeline Doctum" entrou em Quinta 14h-15h.        ║
+║  "Reunião pipeline Trabalho Operacional" entrou em Quinta 14h-15h.        ║
 ║                                                              ║
 ║  Conflita com seu bloco:                                    ║
 ║  ┌────────────────────────────────────────────────────┐    ║
-║  │ Quinta 13h30-17h30  🎯 Doctum                      │    ║
+║  │ Quinta 13h30-17h30  🎯 Trabalho Operacional                      │    ║
 ║  │ Revisar pipeline trimestral · Prioridade 1         │    ║
 ║  └────────────────────────────────────────────────────┘    ║
 ║                                                              ║
@@ -268,7 +268,7 @@
 ║     Realizado: 2h Imp. · 4h Urg. · 2h Disp.                  ║
 ║                                                              ║
 ║  ⚠️ Diferença: 2h Importante viraram Urgente                 ║
-║     (Bloco 13h30-18h Doctum invadido por 1:1 urgente)       ║
+║     (Bloco 13h30-18h Trabalho Operacional invadido por 1:1 urgente)       ║
 ║                                                              ║
 ║  ✏️  O que entregou hoje?                                    ║
 ║  ┌────────────────────────────────────────────────────┐    ║

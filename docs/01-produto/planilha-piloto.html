@@ -375,7 +375,7 @@
   </div>
 
   <div class="help-banner">
-    💡 <strong>Como usar:</strong> abaixo está pré-preenchido com o caso do Lucas (Doctum/Tribo/Bruna/CuidaJA). Edite os blocos da semana, escolha a categoria (planejada e realizada), e a matriz + insights se calculam automaticamente. Toda mudança é salva no navegador.
+    💡 <strong>Como usar:</strong> abaixo está pré-preenchido com o caso do Lucas (Trabalho Operacional/Gestão Operacional/Agenda externa/Reuniões). Edite os blocos da semana, escolha a categoria (planejada e realizada), e a matriz + insights se calculam automaticamente. Toda mudança é salva no navegador.
   </div>
 
   <!-- FRENTES -->
@@ -449,10 +449,10 @@
 <script>
 /* ========== ESTADO ========== */
 const DEFAULT_FRENTES = [
-  { id: 'doctum', nome: 'Doctum', icon: '🏢', cor: 'doctum', orcamento: 36 },
-  { id: 'tribo', nome: 'Tribo', icon: '🛒', cor: 'tribo', orcamento: 18 },
-  { id: 'bruna', nome: 'Dra. Bruna', icon: '🎓', cor: 'bruna', orcamento: 2.5 },
-  { id: 'cuidaja', nome: 'CuidaJA', icon: '🤝', cor: 'cuidaja', orcamento: 2.5 },
+  { id: 'doctum', nome: 'Trabalho Operacional', icon: '🏢', cor: 'doctum', orcamento: 36 },
+  { id: 'tribo', nome: 'Gestão Operacional', icon: '🛒', cor: 'tribo', orcamento: 18 },
+  { id: 'bruna', nome: 'Agenda externa', icon: '🎓', cor: 'bruna', orcamento: 2.5 },
+  { id: 'cuidaja', nome: 'Reuniões', icon: '🤝', cor: 'cuidaja', orcamento: 2.5 },
 ];
 
 const DEFAULT_BLOCOS = [
@@ -462,30 +462,30 @@ const DEFAULT_BLOCOS = [
   { dia: 'SEG', inicio: '18:30', fim: '21:30', frente: 'tribo', tarefa: '🎤 Mentoria ao vivo - aula 04', planejado: 'imp', realizado: 'imp' },
   // TERÇA
   { dia: 'TER', inicio: '08:00', fim: '12:00', frente: 'doctum', tarefa: 'Reunião comitê + revisar metas', planejado: 'imp', realizado: 'urg' },
-  { dia: 'TER', inicio: '13:30', fim: '14:00', frente: 'bruna', tarefa: 'Status semanal Dra. Bruna', planejado: 'disp', realizado: 'disp' },
-  { dia: 'TER', inicio: '14:00', fim: '14:30', frente: 'cuidaja', tarefa: 'Status CuidaJA', planejado: 'disp', realizado: 'disp' },
+  { dia: 'TER', inicio: '13:30', fim: '14:00', frente: 'bruna', tarefa: 'Status semanal Agenda externa', planejado: 'disp', realizado: 'disp' },
+  { dia: 'TER', inicio: '14:00', fim: '14:30', frente: 'cuidaja', tarefa: 'Status Reuniões', planejado: 'disp', realizado: 'disp' },
   { dia: 'TER', inicio: '14:30', fim: '17:00', frente: 'tribo', tarefa: 'Gravar aula 05 mentoria', planejado: 'imp', realizado: 'imp' },
   { dia: 'TER', inicio: '17:00', fim: '19:00', frente: 'doctum', tarefa: 'Email + alinhamentos', planejado: 'disp', realizado: 'disp' },
   // QUARTA
   { dia: 'QUA', inicio: '08:00', fim: '12:00', frente: 'doctum', tarefa: 'Reuniões com clientes + forecast', planejado: 'imp', realizado: 'urg' },
-  { dia: 'QUA', inicio: '13:30', fim: '14:00', frente: 'bruna', tarefa: 'Revisar material aula Dra. Bruna', planejado: 'imp', realizado: 'imp' },
-  { dia: 'QUA', inicio: '14:00', fim: '14:30', frente: 'cuidaja', tarefa: 'CuidaJA - mensagens / alinhamento', planejado: 'disp', realizado: 'disp' },
+  { dia: 'QUA', inicio: '13:30', fim: '14:00', frente: 'bruna', tarefa: 'Revisar material aula Agenda externa', planejado: 'imp', realizado: 'imp' },
+  { dia: 'QUA', inicio: '14:00', fim: '14:30', frente: 'cuidaja', tarefa: 'Reuniões - mensagens / alinhamento', planejado: 'disp', realizado: 'disp' },
   { dia: 'QUA', inicio: '14:30', fim: '17:00', frente: 'tribo', tarefa: 'TriboCRM - revisar funcionalidades', planejado: 'imp', realizado: 'imp' },
-  { dia: 'QUA', inicio: '17:00', fim: '19:00', frente: 'doctum', tarefa: 'Doctum - administrativo', planejado: 'disp', realizado: 'disp' },
+  { dia: 'QUA', inicio: '17:00', fim: '19:00', frente: 'doctum', tarefa: 'Trabalho Operacional - administrativo', planejado: 'disp', realizado: 'disp' },
   // QUINTA
   { dia: 'QUI', inicio: '08:00', fim: '12:00', frente: 'doctum', tarefa: 'Workshop com time de vendas', planejado: 'imp', realizado: 'imp' },
   { dia: 'QUI', inicio: '13:30', fim: '17:30', frente: 'doctum', tarefa: 'Reuniões 1:1 + planejamento', planejado: 'imp', realizado: 'urg' },
-  { dia: 'QUI', inicio: '18:00', fim: '21:00', frente: 'tribo', tarefa: '📺 Live Tribo', planejado: 'imp', realizado: 'imp' },
+  { dia: 'QUI', inicio: '18:00', fim: '21:00', frente: 'tribo', tarefa: '📺 Live Gestão Operacional', planejado: 'imp', realizado: 'imp' },
   // SEXTA
   { dia: 'SEX', inicio: '08:00', fim: '12:00', frente: 'doctum', tarefa: 'Fechamento semana + relatórios', planejado: 'imp', realizado: 'urg' },
-  { dia: 'SEX', inicio: '13:30', fim: '14:30', frente: 'bruna', tarefa: 'Reunião Dra. Bruna - revisão semana', planejado: 'imp', realizado: 'imp' },
-  { dia: 'SEX', inicio: '14:30', fim: '15:30', frente: 'cuidaja', tarefa: 'Reunião CuidaJA - revisão semana', planejado: 'imp', realizado: 'imp' },
-  { dia: 'SEX', inicio: '15:30', fim: '19:00', frente: 'doctum', tarefa: 'Doctum - fechamento + emails', planejado: 'urg', realizado: 'urg' },
+  { dia: 'SEX', inicio: '13:30', fim: '14:30', frente: 'bruna', tarefa: 'Reunião Agenda externa - revisão semana', planejado: 'imp', realizado: 'imp' },
+  { dia: 'SEX', inicio: '14:30', fim: '15:30', frente: 'cuidaja', tarefa: 'Reunião Reuniões - revisão semana', planejado: 'imp', realizado: 'imp' },
+  { dia: 'SEX', inicio: '15:30', fim: '19:00', frente: 'doctum', tarefa: 'Trabalho Operacional - fechamento + emails', planejado: 'urg', realizado: 'urg' },
   // SÁBADO
-  { dia: 'SÁB', inicio: '08:00', fim: '13:00', frente: 'tribo', tarefa: 'Tribo - estratégia + produto', planejado: 'imp', realizado: 'imp' },
-  { dia: 'SÁB', inicio: '13:00', fim: '13:30', frente: 'bruna', tarefa: 'Bruna - preparar semana', planejado: 'imp', realizado: 'imp' },
-  { dia: 'SÁB', inicio: '13:30', fim: '14:00', frente: 'cuidaja', tarefa: 'CuidaJA - preparar semana', planejado: 'imp', realizado: 'imp' },
-  { dia: 'SÁB', inicio: '14:00', fim: '16:00', frente: 'tribo', tarefa: 'Tribo - conteúdo / produto', planejado: 'imp', realizado: 'imp' },
+  { dia: 'SÁB', inicio: '08:00', fim: '13:00', frente: 'tribo', tarefa: 'Gestão Operacional - estratégia + produto', planejado: 'imp', realizado: 'imp' },
+  { dia: 'SÁB', inicio: '13:00', fim: '13:30', frente: 'bruna', tarefa: 'Agenda externa - preparar semana', planejado: 'imp', realizado: 'imp' },
+  { dia: 'SÁB', inicio: '13:30', fim: '14:00', frente: 'cuidaja', tarefa: 'Reuniões - preparar semana', planejado: 'imp', realizado: 'imp' },
+  { dia: 'SÁB', inicio: '14:00', fim: '16:00', frente: 'tribo', tarefa: 'Gestão Operacional - conteúdo / produto', planejado: 'imp', realizado: 'imp' },
 ];
 
 let state = loadState();

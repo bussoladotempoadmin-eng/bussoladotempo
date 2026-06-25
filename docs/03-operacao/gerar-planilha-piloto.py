@@ -11,7 +11,7 @@ from openpyxl.formatting.rule import CellIsRule, FormulaRule
 from openpyxl.comments import Comment
 
 # Caminho de saída
-OUT = r"c:\Users\Doctum\projetos\Agenda Lucas Silveira\13-planilha-piloto.xlsx"
+OUT = r"c:\Users\Trabalho Operacional\projetos\Agenda Lucas Silveira\13-planilha-piloto.xlsx"
 
 # Cores (hex sem #)
 DOCTUM = "3B82F6"
@@ -40,37 +40,37 @@ def header_font(color=HEADER_FG, bold=True, size=11):
 
 # Dados pré-preenchidos (mesma lógica do HTML)
 FRENTES = [
-    ("Doctum", "🏢", DOCTUM, 36),
-    ("Tribo", "🛒", TRIBO, 18),
-    ("Dra. Bruna", "🎓", BRUNA, 2.5),
-    ("CuidaJA", "🤝", CUIDAJA, 2.5),
+    ("Trabalho Operacional", "🏢", DOCTUM, 36),
+    ("Gestão Operacional", "🛒", TRIBO, 18),
+    ("Agenda externa", "🎓", BRUNA, 2.5),
+    ("Reuniões", "🤝", CUIDAJA, 2.5),
 ]
 
 BLOCOS = [
-    ("SEG", "08:00", "12:00", "Doctum", "Revisar pipeline + alinhar marketing", "Importante", "Importante"),
-    ("SEG", "13:30", "18:00", "Doctum", "1:1 vendedor X + ajustes", "Urgente", "Urgente"),
-    ("SEG", "18:30", "21:30", "Tribo",  "🎤 Mentoria ao vivo - aula 04", "Importante", "Importante"),
-    ("TER", "08:00", "12:00", "Doctum", "Reunião comitê + revisar metas", "Importante", "Urgente"),
-    ("TER", "13:30", "14:00", "Dra. Bruna", "Status semanal Dra. Bruna", "Disperso", "Disperso"),
-    ("TER", "14:00", "14:30", "CuidaJA", "Status CuidaJA", "Disperso", "Disperso"),
-    ("TER", "14:30", "17:00", "Tribo",  "Gravar aula 05 mentoria", "Importante", "Importante"),
-    ("TER", "17:00", "19:00", "Doctum", "Email + alinhamentos", "Disperso", "Disperso"),
-    ("QUA", "08:00", "12:00", "Doctum", "Reuniões com clientes + forecast", "Importante", "Urgente"),
-    ("QUA", "13:30", "14:00", "Dra. Bruna", "Revisar material aula Dra. Bruna", "Importante", "Importante"),
-    ("QUA", "14:00", "14:30", "CuidaJA", "CuidaJA - mensagens / alinhamento", "Disperso", "Disperso"),
-    ("QUA", "14:30", "17:00", "Tribo",  "TriboCRM - revisar funcionalidades", "Importante", "Importante"),
-    ("QUA", "17:00", "19:00", "Doctum", "Doctum - administrativo", "Disperso", "Disperso"),
-    ("QUI", "08:00", "12:00", "Doctum", "Workshop com time de vendas", "Importante", "Importante"),
-    ("QUI", "13:30", "17:30", "Doctum", "Reuniões 1:1 + planejamento", "Importante", "Urgente"),
-    ("QUI", "18:00", "21:00", "Tribo",  "📺 Live Tribo", "Importante", "Importante"),
-    ("SEX", "08:00", "12:00", "Doctum", "Fechamento semana + relatórios", "Importante", "Urgente"),
-    ("SEX", "13:30", "14:30", "Dra. Bruna", "Reunião Dra. Bruna - revisão semana", "Importante", "Importante"),
-    ("SEX", "14:30", "15:30", "CuidaJA", "Reunião CuidaJA - revisão semana", "Importante", "Importante"),
-    ("SEX", "15:30", "19:00", "Doctum", "Doctum - fechamento + emails", "Urgente", "Urgente"),
-    ("SÁB", "08:00", "13:00", "Tribo",  "Tribo - estratégia + produto", "Importante", "Importante"),
-    ("SÁB", "13:00", "13:30", "Dra. Bruna", "Bruna - preparar semana", "Importante", "Importante"),
-    ("SÁB", "13:30", "14:00", "CuidaJA", "CuidaJA - preparar semana", "Importante", "Importante"),
-    ("SÁB", "14:00", "16:00", "Tribo",  "Tribo - conteúdo / produto", "Importante", "Importante"),
+    ("SEG", "08:00", "12:00", "Trabalho Operacional", "Revisar pipeline + alinhar marketing", "Importante", "Importante"),
+    ("SEG", "13:30", "18:00", "Trabalho Operacional", "1:1 vendedor X + ajustes", "Urgente", "Urgente"),
+    ("SEG", "18:30", "21:30", "Gestão Operacional",  "🎤 Mentoria ao vivo - aula 04", "Importante", "Importante"),
+    ("TER", "08:00", "12:00", "Trabalho Operacional", "Reunião comitê + revisar metas", "Importante", "Urgente"),
+    ("TER", "13:30", "14:00", "Agenda externa", "Status semanal Agenda externa", "Disperso", "Disperso"),
+    ("TER", "14:00", "14:30", "Reuniões", "Status Reuniões", "Disperso", "Disperso"),
+    ("TER", "14:30", "17:00", "Gestão Operacional",  "Gravar aula 05 mentoria", "Importante", "Importante"),
+    ("TER", "17:00", "19:00", "Trabalho Operacional", "Email + alinhamentos", "Disperso", "Disperso"),
+    ("QUA", "08:00", "12:00", "Trabalho Operacional", "Reuniões com clientes + forecast", "Importante", "Urgente"),
+    ("QUA", "13:30", "14:00", "Agenda externa", "Revisar material aula Agenda externa", "Importante", "Importante"),
+    ("QUA", "14:00", "14:30", "Reuniões", "Reuniões - mensagens / alinhamento", "Disperso", "Disperso"),
+    ("QUA", "14:30", "17:00", "Gestão Operacional",  "TriboCRM - revisar funcionalidades", "Importante", "Importante"),
+    ("QUA", "17:00", "19:00", "Trabalho Operacional", "Trabalho Operacional - administrativo", "Disperso", "Disperso"),
+    ("QUI", "08:00", "12:00", "Trabalho Operacional", "Workshop com time de vendas", "Importante", "Importante"),
+    ("QUI", "13:30", "17:30", "Trabalho Operacional", "Reuniões 1:1 + planejamento", "Importante", "Urgente"),
+    ("QUI", "18:00", "21:00", "Gestão Operacional",  "📺 Live Gestão Operacional", "Importante", "Importante"),
+    ("SEX", "08:00", "12:00", "Trabalho Operacional", "Fechamento semana + relatórios", "Importante", "Urgente"),
+    ("SEX", "13:30", "14:30", "Agenda externa", "Reunião Agenda externa - revisão semana", "Importante", "Importante"),
+    ("SEX", "14:30", "15:30", "Reuniões", "Reunião Reuniões - revisão semana", "Importante", "Importante"),
+    ("SEX", "15:30", "19:00", "Trabalho Operacional", "Trabalho Operacional - fechamento + emails", "Urgente", "Urgente"),
+    ("SÁB", "08:00", "13:00", "Gestão Operacional",  "Gestão Operacional - estratégia + produto", "Importante", "Importante"),
+    ("SÁB", "13:00", "13:30", "Agenda externa", "Agenda externa - preparar semana", "Importante", "Importante"),
+    ("SÁB", "13:30", "14:00", "Reuniões", "Reuniões - preparar semana", "Importante", "Importante"),
+    ("SÁB", "14:00", "16:00", "Gestão Operacional",  "Gestão Operacional - conteúdo / produto", "Importante", "Importante"),
 ]
 
 DIAS_VALIDOS = "SEG,TER,QUA,QUI,SEX,SÁB,DOM"
@@ -222,10 +222,10 @@ ws.conditional_formatting.add(f"H2:H{N}", FormulaRule(formula=[f'EXACT($H2,"Urge
 ws.conditional_formatting.add(f"H2:H{N}", FormulaRule(formula=[f'EXACT($H2,"Disperso")'], fill=PatternFill(fill_type="solid", start_color=DISP, end_color=DISP), font=Font(color="FFFFFF", bold=True)))
 
 # Cor da frente coluna E
-ws.conditional_formatting.add(f"E2:E{N}", FormulaRule(formula=[f'EXACT($E2,"Doctum")'], fill=PatternFill(fill_type="solid", start_color=DOCTUM, end_color=DOCTUM), font=Font(color="FFFFFF", bold=True)))
-ws.conditional_formatting.add(f"E2:E{N}", FormulaRule(formula=[f'EXACT($E2,"Tribo")'], fill=PatternFill(fill_type="solid", start_color=TRIBO, end_color=TRIBO), font=Font(color="FFFFFF", bold=True)))
-ws.conditional_formatting.add(f"E2:E{N}", FormulaRule(formula=[f'EXACT($E2,"Dra. Bruna")'], fill=PatternFill(fill_type="solid", start_color=BRUNA, end_color=BRUNA), font=Font(color="FFFFFF", bold=True)))
-ws.conditional_formatting.add(f"E2:E{N}", FormulaRule(formula=[f'EXACT($E2,"CuidaJA")'], fill=PatternFill(fill_type="solid", start_color=CUIDAJA, end_color=CUIDAJA), font=Font(color="FFFFFF", bold=True)))
+ws.conditional_formatting.add(f"E2:E{N}", FormulaRule(formula=[f'EXACT($E2,"Trabalho Operacional")'], fill=PatternFill(fill_type="solid", start_color=DOCTUM, end_color=DOCTUM), font=Font(color="FFFFFF", bold=True)))
+ws.conditional_formatting.add(f"E2:E{N}", FormulaRule(formula=[f'EXACT($E2,"Gestão Operacional")'], fill=PatternFill(fill_type="solid", start_color=TRIBO, end_color=TRIBO), font=Font(color="FFFFFF", bold=True)))
+ws.conditional_formatting.add(f"E2:E{N}", FormulaRule(formula=[f'EXACT($E2,"Agenda externa")'], fill=PatternFill(fill_type="solid", start_color=BRUNA, end_color=BRUNA), font=Font(color="FFFFFF", bold=True)))
+ws.conditional_formatting.add(f"E2:E{N}", FormulaRule(formula=[f'EXACT($E2,"Reuniões")'], fill=PatternFill(fill_type="solid", start_color=CUIDAJA, end_color=CUIDAJA), font=Font(color="FFFFFF", bold=True)))
 
 # Freeze
 ws.freeze_panes = "A2"
@@ -274,7 +274,7 @@ for label, val, color, row in triade_rows:
     c.alignment = Alignment(horizontal="center")
     c.border = border_all
     for i, (nome, icon, cor, orc) in enumerate(FRENTES):
-        # SUMIFS(Blocos!D:D, Blocos!E:E, "Doctum", Blocos!H:H, "Importante")
+        # SUMIFS(Blocos!D:D, Blocos!E:E, "Trabalho Operacional", Blocos!H:H, "Importante")
         cell = ws.cell(row=row, column=2+i,
                        value=f'=SUMIFS(Blocos!D:D,Blocos!E:E,"{nome}",Blocos!H:H,"{val}")')
         cell.alignment = Alignment(horizontal="center")

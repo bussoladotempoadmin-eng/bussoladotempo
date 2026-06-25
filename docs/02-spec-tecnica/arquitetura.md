@@ -2,7 +2,7 @@
 
 > **Documento canônico** pra implementação do produto.
 > **Audiência:** squad AIOX (PM, Architect, Dev, QA, UX) ou time de desenvolvimento.
-> **Versão:** V2 / 25-05-2026 · Autor: Lucas Silveira (Tribo) com Claude.
+> **Versão:** V2 / 25-05-2026 · Autor: Lucas Silveira (Gestão Operacional) com Claude.
 > **Status:** pronto pra entrada em desenvolvimento, condicionado a validação de tese via piloto artesanal.
 
 ---
@@ -93,7 +93,7 @@ Termos que aparecem no produto. **Usar exatamente esses termos no código e na U
 
 | Termo | Definição |
 |---|---|
-| **Frente** | Área de trabalho do usuário (ex: Doctum, Tribo, Cliente X). Tem orçamento de horas/semana. |
+| **Frente** | Área de trabalho do usuário (ex: Trabalho Operacional, Gestão Operacional, Cliente X). Tem orçamento de horas/semana. |
 | **Bloco** | Janela de tempo na agenda, com início, fim, frente associada, tarefa nomeada e classificação. |
 | **Categoria** | Classificação do bloco na Bússola do Tempo. Valores: `IMPORTANTE`, `URGENTE`, `DISPERSO`. |
 | **Bússola do Tempo** | Nome do framework conceitual (não usar "Tríade do Tempo" — marca de terceiro). |
@@ -528,7 +528,7 @@ POST   /api/blocos/:id/realocar    { para: { diaSemana, horaInicio } }          
     }
   },
   "topDesvios": [
-    { "blocoId": "...", "diaSemana": "QUI", "horaInicio": "13:30", "horaFim": "15:00", "frente": "Tribo", "planejada": "IMPORTANTE", "realizada": "URGENTE", "motivoDesvio": "Reunião emergencial CEO" }
+    { "blocoId": "...", "diaSemana": "QUI", "horaInicio": "13:30", "horaFim": "15:00", "frente": "Gestão Operacional", "planejada": "IMPORTANTE", "realizada": "URGENTE", "motivoDesvio": "Reunião emergencial CEO" }
   ]
 }
 ```
@@ -914,7 +914,7 @@ gera/edita blocos → classifica I/U/D → define 3 prioridades → confirma
 ### Para o agente PM
 
 ### FASE 0 — Validação (jun-ago 2026)
-**Não desenvolve nada.** Roda piloto com planilha (`13-planilha-piloto.xlsx`) + 5-7 mentorados Tribo. Critério de avanço: 5/7 sustentam o sistema 4 semanas + 3/7 dizem "pagaria todo mês".
+**Não desenvolve nada.** Roda piloto com planilha (`13-planilha-piloto.xlsx`) + 5-7 mentorados Gestão Operacional. Critério de avanço: 5/7 sustentam o sistema 4 semanas + 3/7 dizem "pagaria todo mês".
 
 ### FASE 1 — MVP (set-nov 2026 · 10-12 semanas)
 **Escopo:** Épicos 1, 2, 3, 4 (sem integração com Calendar).
@@ -1121,7 +1121,7 @@ Antes de iniciar Fase 1, decidir:
 3. **Stripe ou Hotmart** pra cobrança recorrente (Hotmart conecta com base BR; Stripe global)?
 4. **Equipe:** contratar dev ou usar AIOX?
 5. **Visual identity:** contratar designer pra logo, paleta refinada, identidade?
-6. **Investimento inicial:** auto-fundado, fundo Tribo, captação externa?
+6. **Investimento inicial:** auto-fundado, fundo Gestão Operacional, captação externa?
 7. **Carlos Barbosa:** abordar pra parceria/licença/co-marketing ou seguir 100% independente?
 
 ---

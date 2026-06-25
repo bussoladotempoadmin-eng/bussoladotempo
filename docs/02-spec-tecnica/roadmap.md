@@ -7,7 +7,7 @@
 
 ## 📋 Estrutura
 
-15 etapas. Cada etapa = uma "sessão" no bloco Tribo da agenda padrão (ter 14h30-17h ou sáb 8h-13h). Ao fim de cada etapa, você tem **algo rodando localmente** + **commit no git**.
+15 etapas. Cada etapa = uma "sessão" no bloco Gestão Operacional da agenda padrão (ter 14h30-17h ou sáb 8h-13h). Ao fim de cada etapa, você tem **algo rodando localmente** + **commit no git**.
 
 ---
 
@@ -109,7 +109,7 @@ Abre o link local no navegador, vê a página, troca o tema.
 4. Validação Zod compartilhada front/back
 
 ### Entrega
-Você consegue adicionar/editar/remover frentes pela UI. Suas 4 frentes (Doctum, Tribo, Bruna, CuidaJA) já vêm do seed.
+Você consegue adicionar/editar/remover frentes pela UI. Suas 4 frentes (Trabalho Operacional, Gestão Operacional, Agenda externa, Reuniões) já vêm do seed.
 
 ---
 
@@ -299,13 +299,13 @@ Depois disso, você abre pros 7 mentorados do piloto começarem a usar o app de 
 1. **1 sessão = 1 etapa** (ou parte de uma se for grande). Não pular ordem.
 2. **Ao fim de cada sessão:** commit + push + arquivo `PROGRESSO.md` atualizado.
 3. **Se uma etapa ficar travada** (algo que só você pode resolver — conta, dinheiro, decisão): páro e te aviso.
-4. **Sessões acontecem nos blocos Tribo da sua agenda padrão** (ter 14h30-17h, sáb 8h-13h, eventualmente outras tardes Tribo).
-5. **Não vamos invadir Doctum** pra "adiantar" dev. O preço de adiantar é o mesmo de antes.
+4. **Sessões acontecem nos blocos Gestão Operacional da sua agenda padrão** (ter 14h30-17h, sáb 8h-13h, eventualmente outras tardes Gestão Operacional).
+5. **Não vamos invadir Trabalho Operacional** pra "adiantar" dev. O preço de adiantar é o mesmo de antes.
 
 ---
 
 ## ❓ Próximos passos imediatos
 
 1. **Hoje/amanhã (você):** rodar a Etapa 0 — criar contas + comprar domínios + me trazer as credenciais.
-2. **Próximo bloco Tribo agendado** (terça 03/06 14h30 ou sábado 06/06 8h): **Etapa 1 — setup do monorepo.**
+2. **Próximo bloco Gestão Operacional agendado** (terça 03/06 14h30 ou sábado 06/06 8h): **Etapa 1 — setup do monorepo.**
 3. **Lembre-se:** a agenda padrão começa segunda 08/06. Próxima semana inteira já vai estar registrando blocos reais. Sua revisão semanal de 14/06 já vai ter dados do Caso 0 expandidos.

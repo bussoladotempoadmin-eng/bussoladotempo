@@ -10,7 +10,7 @@
 ## 🛠️ Decisões de produto (V2, 25/05/2026)
 
 ### Setup inicial — o que o usuário declara
-1. **Frentes:** lista nomeada (Doctum, Tribo, Bruna, CuidaJA...). Configurável por usuário.
+1. **Frentes:** lista nomeada (Trabalho Operacional, Gestão Operacional, Agenda externa, Reuniões...). Configurável por usuário.
 2. **Orçamento de horas/semana por frente:** ex. 36h + 18h + 2,5h + 2,5h.
 3. **Compromissos fixos recorrentes:** lives, reuniões, treino, hora de dormir.
 
@@ -23,18 +23,18 @@
 ### Granularidade da Bússola: **Classificação no BLOCO** (V1)
 - Cada bloco do calendário tem 1 classificação (I / U / C).
 - Toda atividade desse bloco herda a classificação.
-- **Ajuste retroativo na revisão semanal:** se o bloco "Importante Doctum" virou apenas emails, marca como Disperso na revisão.
+- **Ajuste retroativo na revisão semanal:** se o bloco "Importante Trabalho Operacional" virou apenas emails, marca como Disperso na revisão.
 - V2 pode adicionar override por tarefa pra quem quiser granularidade — mas só após validar valor.
 
 ### Hierarquia de frentes: **1 nível só** (V1)
-- Cada frente é uma unidade indivisível: `Doctum`, `Tribo`, `Bruna`, `CuidaJA`.
-- Sub-frentes (Tribo → Mentoria/CRM/Outros) ficam pra V2 como recurso **opcional**.
+- Cada frente é uma unidade indivisível: `Trabalho Operacional`, `Gestão Operacional`, `Agenda externa`, `Reuniões`.
+- Sub-frentes (Gestão Operacional → Mentoria/CRM/Outros) ficam pra V2 como recurso **opcional**.
 - Razão: quem está sufocado já tem dificuldade de classificar I/U/C. Adicionar hierarquia é convite pra abandono. Captura 80% do valor com 30% da complexidade.
 
 ### Planejamento da semana (Momento 2) — domingo, 15-20 min
 4 passos:
 1. **Encaixar compromissos novos** (reuniões marcadas pra próxima semana, eventos)
-2. **Nomear entrega de cada bloco** ("Doctum 8h-12h: revisar pipeline" — não lista de tarefas)
+2. **Nomear entrega de cada bloco** ("Trabalho Operacional 8h-12h: revisar pipeline" — não lista de tarefas)
 3. **Classificar cada bloco** como I/U/C (sistema sugere, usuário confirma)
 4. **Definir 3 prioridades da semana** (marcam 3 blocos como âncoras)
 
@@ -80,7 +80,7 @@ Princípio: **sistema atua, não pune.** Quanto mais a vida real desvia, mais o 
 **Matriz Frente × Categoria da Bússola do Tempo.**
 
 Cada hora de trabalho é classificada em 2 eixos:
-- **Frente:** Doctum, Tribo, Dra. Bruna, CuidaJA, ou outras (configurável por usuário).
+- **Frente:** Trabalho Operacional, Gestão Operacional, Agenda externa, Reuniões, ou outras (configurável por usuário).
 - **Categoria (Bússola do Tempo):**
   - 🎯 **Importante:** estratégico, alinhado com objetivos, traz resultado real.
   - 🔥 **Urgente:** tem prazo apertado, exige ação imediata. Pode não ser importante.
@@ -90,7 +90,7 @@ A leitura da matriz vira o **espelho semanal** — o que o usuário NÃO vê em 
 
 ### Exemplo de matriz semanal (caso Lucas)
 
-| | Doctum | Tribo | Bruna | CuidaJA | **Total** |
+| | Trabalho Operacional | Gestão Operacional | Agenda externa | Reuniões | **Total** |
 |---|---|---|---|---|---|
 | Importante | 14h | 12h | 1h | 1h | **28h (47%)** |
 | Urgente | 18h | 4h | 1h | 1h | **24h (41%)** |
@@ -114,10 +114,10 @@ A semente: o método que ele está vivendo na própria pele pode ser produtizado
 
 ## Decisões estratégicas (25/05/2026)
 
-### Caminho escolhido: validar com mentorados Tribo primeiro
+### Caminho escolhido: validar com mentorados Gestão Operacional primeiro
 - **Rejeitado:** SaaS mercado amplo (alto risco, sem validação)
-- **Escolhido:** módulo/piloto interno na Tribo, escalar se funcionar
-- **Lógica:** Lucas tem audiência cativa (mentorados Tribo) + CRM próprio (TriboCRM). Esse é o ativo. Começar fora dele é jogar fora vantagem.
+- **Escolhido:** módulo/piloto interno na Gestão Operacional, escalar se funcionar
+- **Lógica:** Lucas tem audiência cativa (mentorados Gestão Operacional) + CRM próprio (TriboCRM). Esse é o ativo. Começar fora dele é jogar fora vantagem.
 
 ### Perfil-alvo do piloto
 - **Dono de negócio / empresário com múltiplas frentes** (parecido com Lucas)
@@ -178,9 +178,9 @@ Apps que existem hoje, **nenhum resolve bem o problema específico** "distribuir
 
 ---
 
-## Como esse projeto entra na agenda (Tribo)
+## Como esse projeto entra na agenda (Gestão Operacional)
 
-As horas dedicadas a esse trabalho são **dentro do bloco Tribo (18h/sem)**, não em paralelo. Especialmente:
+As horas dedicadas a esse trabalho são **dentro do bloco Gestão Operacional (18h/sem)**, não em paralelo. Especialmente:
 - Conversas com mentorados → tardes ter/qua ou bloco sábado
-- Análise + tese → blocos Tribo das tardes
+- Análise + tese → blocos Gestão Operacional das tardes
 - **Nada à noite, nada no domingo, nada fora dos blocos protegidos**

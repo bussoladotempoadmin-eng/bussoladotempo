@@ -170,7 +170,7 @@ Você não precisa criar tudo de uma vez. Pra hoje/essa semana, **só 4 coisas**
 
 5. **Antes de assinar plano pago de qualquer um**, esgote o plano grátis. A maioria dos serviços nessa lista tem free tier que aguenta os primeiros 100 usuários.
 
-6. **Stripe / Asaas exigem CNPJ**, em geral. Confirma se você vai usar o CNPJ da Doctum, da Tribo, ou abrir um terceiro pra Bússola.
+6. **Stripe / Asaas exigem CNPJ**, em geral. Confirma se você vai usar o CNPJ da Trabalho Operacional, da Gestão Operacional, ou abrir um terceiro pra Bússola.
 
 ---
 

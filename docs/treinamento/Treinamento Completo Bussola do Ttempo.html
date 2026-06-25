@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Treinamento — Bússola do Tempo</title>
+<meta name="description" content="Treinamento de novos usuários da Bússola do Tempo: conceitos, porquês e passo a passo da Agenda e do módulo Comercial." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%F0%9F%A7%AD%3C/text%3E%3C/svg%3E" />
+<style>
+  :root {
+    --bg:#ffffff; --fg:#0f172a; --card:#ffffff; --muted:#64748b;
+    --border:#e2e8f0; --primary:#2563eb; --primary-fg:#ffffff; --soft:#f1f5f9;
+    --importante:#10b981; --importante-soft:rgba(16,185,129,.12);
+    --urgente:#f97316;    --urgente-soft:rgba(249,115,22,.12);
+    --disperso:#a855f7;   --disperso-soft:rgba(168,85,247,.12);
+    --good:#10b981; --warn:#f59e0b; --tip:#3b82f6;
+    --shadow:0 1px 3px rgba(15,23,42,.06), 0 10px 30px rgba(15,23,42,.05);
+    --radius:16px;
+  }
+  [data-theme="dark"]{
+    --bg:#070d1c; --fg:#f1f5f9; --card:#0d1526; --muted:#94a3b8;
+    --border:#1e293b; --primary:#3b82f6; --primary-fg:#0b1120; --soft:#111c30;
+    --shadow:0 1px 3px rgba(0,0,0,.4), 0 14px 36px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--fg);line-height:1.65;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  h1,h2,h3,h4{line-height:1.18;letter-spacing:-.02em;margin:0}
+  a{color:var(--primary)}
+  .muted{color:var(--muted)}
+  .accent{color:var(--primary)}
+
+  /* Layout */
+  .shell{display:flex;max-width:1280px;margin:0 auto}
+  nav.toc{position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;
+    width:290px;flex:0 0 290px;padding:26px 18px 60px;border-right:1px solid var(--border);background:var(--bg)}
+  nav.toc .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;margin-bottom:6px}
+  nav.toc .brand .logo{font-size:26px}
+  nav.toc .sub{font-size:12px;color:var(--muted);margin-bottom:22px}
+  nav.toc .grp{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--primary);margin:22px 0 8px}
+  nav.toc a{display:block;color:var(--fg);text-decoration:none;font-size:14px;
+    padding:7px 12px;border-radius:9px;opacity:.85}
+  nav.toc a:hover{background:var(--soft);opacity:1}
+  main{flex:1;min-width:0;padding:42px clamp(20px,5vw,64px) 120px}
+
+  .toggle{position:absolute;top:18px;right:18px;border:1px solid var(--border);background:var(--card);
+    color:var(--fg);border-radius:999px;padding:8px 14px;font-size:13px;cursor:pointer;font-weight:600}
+
+  /* Sections */
+  section{padding:34px 0;border-bottom:1px dashed var(--border)}
+  section:last-child{border-bottom:none}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--primary)}
+  h2.title{font-size:clamp(24px,3.4vw,34px);font-weight:800;margin:10px 0 4px}
+  h3{font-size:21px;font-weight:800;margin:30px 0 8px}
+  h4{font-size:16px;font-weight:800;margin:20px 0 6px}
+  p{margin:10px 0}
+  ul,ol{margin:10px 0;padding-left:22px}
+  li{margin:6px 0}
+
+  /* Hero */
+  .hero{padding:56px 0 30px;border-bottom:1px dashed var(--border)}
+  .hero h1{font-size:clamp(30px,5vw,46px);font-weight:800;margin:14px 0 12px}
+  .hero p.lead{font-size:19px;color:var(--muted);max-width:760px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .pill{font-size:13px;font-weight:700;border:1px solid var(--border);border-radius:999px;padding:7px 14px;background:var(--card)}
+
+  /* Cards & callouts */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:20px 22px;box-shadow:var(--shadow);margin:14px 0}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
+
+  .why{border-left:4px solid var(--primary);background:var(--soft);border-radius:0 12px 12px 0;
+    padding:14px 18px;margin:14px 0}
+  .why .lab{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--primary)}
+  .quote{border-left:4px solid var(--border);padding:6px 18px;color:var(--muted);font-style:italic;margin:14px 0}
+
+  /* Category chips */
+  .chip{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:13px;
+    border-radius:999px;padding:4px 12px}
+  .c-imp{color:var(--importante);background:var(--importante-soft)}
+  .c-urg{color:var(--urgente);background:var(--urgente-soft)}
+  .c-dis{color:var(--disperso);background:var(--disperso-soft)}
+
+  /* Steps */
+  .steps{counter-reset:s;list-style:none;padding:0}
+  .steps>li{counter-increment:s;position:relative;padding:14px 14px 14px 56px;margin:10px 0;
+    background:var(--card);border:1px solid var(--border);border-radius:12px}
+  .steps>li::before{content:counter(s);position:absolute;left:14px;top:14px;width:28px;height:28px;
+    border-radius:50%;background:var(--primary);color:var(--primary-fg);font-weight:800;
+    display:flex;align-items:center;justify-content:center;font-size:14px}
+  .steps>li b{display:block;margin-bottom:2px}
+
+  /* Matrix table */
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  th,td{border:1px solid var(--border);padding:9px 12px;text-align:left}
+  th{background:var(--soft);font-weight:700}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .tot{font-weight:800;background:var(--soft)}
+
+  /* Coach insight cards */
+  .insight{border-radius:12px;padding:12px 16px;margin:8px 0;font-size:14px;border:1px solid var(--border)}
+  .i-good{background:var(--importante-soft);border-color:transparent}
+  .i-warn{background:rgba(245,158,11,.12);border-color:transparent}
+  .i-tip{background:rgba(59,130,246,.12);border-color:transparent}
+
+  /* Screen reference */
+  .scr{display:flex;gap:14px;align-items:flex-start;padding:16px;border:1px solid var(--border);
+    border-radius:12px;background:var(--card);margin:10px 0}
+  .scr .ico{font-size:26px;flex:0 0 auto}
+  .scr .route{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--muted)}
+
+  .tag{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--primary);background:var(--soft);border-radius:6px;padding:3px 8px;margin-left:8px;vertical-align:middle}
+  .tag.pago{color:#b45309;background:rgba(245,158,11,.15)}
+
+  .check{list-style:none;padding:0}
+  .check li{padding-left:30px;position:relative}
+  .check li::before{content:"✓";position:absolute;left:4px;color:var(--good);font-weight:800}
+
+  footer{padding:40px 0 0;color:var(--muted);font-size:13px}
+
+  @media print{
+    nav.toc,.toggle{display:none}
+    main{padding:0}
+    section{break-inside:avoid}
+  }
+  @media(max-width:900px){
+    nav.toc{display:none}
+  }
+</style>
+</head>
+<body>
+<button class="toggle" onclick="(function(){var h=document.documentElement;h.dataset.theme=h.dataset.theme==='dark'?'light':'dark';})()">🌓 Tema</button>
+
+<div class="shell">
+<nav class="toc">
+  <div class="brand"><span class="logo">🧭</span> Bússola do Tempo</div>
+  <div class="sub">Treinamento de novos usuários</div>
+
+  <div class="grp">Começo</div>
+  <a href="#intro">Para que serve este guia</a>
+  <a href="#dor">A dor que resolvemos</a>
+
+  <div class="grp">Parte A — Agenda</div>
+  <a href="#conceitos">1. Os 2 conceitos centrais</a>
+  <a href="#bussola">2. A Bússola: I / U / D</a>
+  <a href="#espelho">3. O Espelho (a matriz)</a>
+  <a href="#setup">4. Primeiro acesso (setup)</a>
+  <a href="#ciclo">5. O ciclo da semana</a>
+  <a href="#telas">6. As telas, uma a uma</a>
+  <a href="#habitos">7. Hábitos que fazem dar certo</a>
+
+  <div class="grp">Parte B — Comercial</div>
+  <a href="#com-intro">8. O que é o Comercial</a>
+  <a href="#com-conceitos">9. Conceitos do Comercial</a>
+  <a href="#com-acessos">10. Perfis e acessos</a>
+  <a href="#com-fluxo">11. Fluxo por perfil</a>
+  <a href="#com-telas">12. Telas do Comercial</a>
+
+  <div class="grp">Apoio</div>
+  <a href="#glossario">Glossário</a>
+  <a href="#checklist">Checklist da 1ª semana</a>
+</nav>
+
+<main>
+
+  <!-- HERO -->
+  <header class="hero" id="intro">
+    <div class="eyebrow">Treinamento oficial</div>
+    <h1>Bem-vindo à Bússola do Tempo 🧭</h1>
+    <p class="lead">Este guia te ensina não só <b>como clicar</b>, mas <b>por que</b> o app funciona desse jeito.
+      Quando você entende o porquê, para de "usar o app" e passa a <b>conduzir a sua semana</b>.</p>
+    <div class="pills">
+      <span class="pill">⏱️ Leitura: ~20 min</span>
+      <span class="pill">🧭 Parte A: a Agenda (todos os usuários)</span>
+      <span class="pill">💼 Parte B: o Comercial (módulo pago)</span>
+    </div>
+    <div class="why" style="margin-top:22px">
+      <div class="lab">Como usar este material</div>
+      Apresente a <b>Parte A</b> para qualquer usuário novo — é o coração do produto. A <b>Parte B</b> só
+      para quem contratou o módulo Comercial (redes com várias unidades). Cada seção tem uma caixa
+      <span class="accent">"Por quê"</span>: é ali que mora o conceito.
+    </div>
+  </header>
+
+  <!-- DOR -->
+  <section id="dor">
+    <div class="eyebrow">O ponto de partida</div>
+    <h2 class="title">A dor que a Bússola resolve</h2>
+    <p>Quase todo mundo já tem uma lista do que <i>precisa</i> ser feito. O problema não é a lista —
+      é que <b>a semana sempre escapa</b>. As urgências dos outros vencem as suas prioridades, e no
+      fim você não consegue nem ver para onde o seu tempo de fato foi.</p>
+    <div class="quote">"Tenho controle do que precisa ser feito, mas a semana sempre escapa porque as
+      urgências dos outros sempre vencem minhas prioridades — e eu não consigo ver onde meu tempo foi."</div>
+
+    <h3>Por que os outros apps não bastam</h3>
+    <p>Agendas e to-do lists mostram <b>o que fazer</b>. Apps como Motion, Sunsama e Reclaim otimizam
+      <b>tarefas</b>. A Bússola otimiza outra coisa: a <b>carga semanal entre as suas frentes de trabalho</b> —
+      e depois te devolve um <b>espelho</b> de onde seu tempo realmente foi, cruzado com a sua estratégia.</p>
+
+    <div class="why">
+      <div class="lab">Por quê</div>
+      O que ninguém te mostra hoje é a diferença entre o que você <b>planejou</b> e o que você
+      <b>executou</b>. Essa diferença é o insight central do produto. Tudo na Bússola existe para
+      tornar essa diferença visível — sem culpa, como um espelho, não como um chefe.
+    </div>
+  </section>
+
+  <!-- ============ PARTE A ============ -->
+  <section id="conceitos">
+    <div class="eyebrow">Parte A — A Agenda · Conceito</div>
+    <h2 class="title">1. Os dois conceitos centrais</h2>
+    <p>Tudo na Bússola gira em torno de cruzar <b>dois eixos</b>. Se o usuário entender só isto, já entendeu o produto.</p>
+
+    <div class="grid g2">
+      <div class="card">
+        <h3 style="margin-top:0">🎯 Frentes</h3>
+        <p>As <b>áreas em que você divide o seu tempo</b> — uma empresa, um projeto, um cliente,
+          a vida pessoal. Cada frente recebe um <b>orçamento de horas por semana</b>.</p>
+        <p class="muted">Ex.: Trabalho Operacional 36h · Gestão Operacional 18h · Agenda externa 2h30 · Reuniões 2h30.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">🧭 A Bússola</h3>
+        <p>A <b>natureza</b> de cada bloco de tempo. Toda hora trabalhada cai em uma de três categorias:
+          <span class="chip c-imp">Importante</span> <span class="chip c-urg">Urgente</span> <span class="chip c-dis">Disperso</span>.</p>
+        <p class="muted">Não é sobre <i>qual frente</i>, e sim sobre <i>que tipo de tempo</i> foi aquele.</p>
+      </div>
+    </div>
+
+    <div class="why">
+      <div class="lab">Por quê só um nível de frente</div>
+      As frentes são uma lista simples, sem sub-frentes. Quem está sufocado já tem dificuldade de
+      classificar o tempo — adicionar hierarquia seria convite ao abandono. Simplicidade aqui é
+      recurso, não limitação: captura 80% do valor com 30% da complexidade.
+    </div>
+  </section>
+
+  <!-- BUSSOLA -->
+  <section id="bussola">
+    <div class="eyebrow">Parte A · Conceito</div>
+    <h2 class="title">2. A Bússola: Importante, Urgente, Disperso</h2>
+    <p>Estas três categorias são o vocabulário do app. Vale treinar o usuário a "pensar nelas".</p>
+
+    <div class="grid g3">
+      <div class="card">
+        <span class="chip c-imp">🎯 Importante</span>
+        <p>Estratégico, alinhado com seus objetivos, <b>traz resultado real</b>. É o tempo que constrói o futuro.</p>
+      </div>
+      <div class="card">
+        <span class="chip c-urg">🔥 Urgente</span>
+        <p>Tem prazo apertado, exige ação imediata. <b>Pode não ser importante</b> — muitas vezes é a urgência do outro.</p>
+      </div>
+      <div class="card">
+        <span class="chip c-dis">💨 Disperso</span>
+        <p>Parece trabalho, mas <b>não gera resultado nem tem prazo real</b>: reunião inútil, e-mail sem propósito, atenção fragmentada.</p>
+      </div>
+    </div>
+
+    <div class="why">
+      <div class="lab">Por quê essas três (e de onde vêm)</div>
+      "Importante" e "Urgente" vêm da clássica Matriz de Eisenhower. A terceira, <b>"Disperso"</b>, é a
+      nossa contribuição: é a categoria que <i>quase nenhuma ferramenta nomeia</i> — e justamente onde o
+      tempo vaza sem ninguém perceber. Dar nome ao disperso é o primeiro passo para cortá-lo.
+    </div>
+
+    <h3>A regra de ouro: classificar leva ≤ 2 segundos</h3>
+    <p>Você <b>não</b> classifica tarefa por tarefa. A classificação vive <b>no bloco</b>: cada bloco da
+      agenda já nasce com uma categoria planejada, e tudo dentro dele herda essa categoria. Durante a
+      semana, você só ajusta a exceção — com um toque, ao concluir o bloco.</p>
+    <div class="why">
+      <div class="lab">Por quê</div>
+      Se cadastrar tempo exigisse 3 cliques, o usuário desistiria em dois dias. Atrito baixo é o que
+      mantém o hábito vivo. Por isso: <b>bloco já vem pré-classificado; a exceção é o ajuste</b>.
+    </div>
+  </section>
+
+  <!-- ESPELHO -->
+  <section id="espelho">
+    <div class="eyebrow">Parte A · Conceito</div>
+    <h2 class="title">3. O Espelho — a matriz Frente × Bússola</h2>
+    <p>Cruze os dois eixos e você tem o <b>Espelho</b>: a foto de para onde seu tempo realmente foi.
+      Esta é a <b>killer feature</b> — o que você não vê em nenhum outro app.</p>
+
+    <table>
+      <thead><tr><th></th><th>Trabalho Operacional</th><th>Gestão Operacional</th><th>Agenda externa</th><th>Reuniões</th><th class="tot">Total</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip c-imp">Importante</span></td><td class="num">14h</td><td class="num">12h</td><td class="num">1h</td><td class="num">1h</td><td class="num tot">28h · 47%</td></tr>
+        <tr><td><span class="chip c-urg">Urgente</span></td><td class="num">18h</td><td class="num">4h</td><td class="num">1h</td><td class="num">1h</td><td class="num tot">24h · 41%</td></tr>
+        <tr><td><span class="chip c-dis">Disperso</span></td><td class="num">4h</td><td class="num">2h</td><td class="num">30m</td><td class="num">30m</td><td class="num tot">7h · 12%</td></tr>
+        <tr class="tot"><td>Total</td><td class="num">36h</td><td class="num">18h</td><td class="num">2h30</td><td class="num">2h30</td><td class="num">59h</td></tr>
+      </tbody>
+    </table>
+
+    <p>A leitura óbvia que vira decisão:</p>
+    <div class="quote">"41% do meu tempo está em Urgente. E 12% em Disperso = praticamente <b>um dia útil
+      jogado fora por semana</b>."</div>
+
+    <div class="why">
+      <div class="lab">Por quê o Espelho compara planejado × realizado</div>
+      O número sozinho não muda comportamento. O que muda é ver: <i>"planejei 65% Importante, executei
+      42%"</i>. O Espelho mostra essa diferença e o app ainda traduz isso em recados humanos — o
+      <b>Coach Gentil</b>. Ele nunca culpa; aponta o padrão e sugere o próximo passo.
+    </div>
+
+    <h4>Exemplos do Coach Gentil</h4>
+    <div class="insight i-good">🟢 Você manteve o foco — 47% da semana foi Importante. Continue protegendo essas manhãs.</div>
+    <div class="insight i-warn">🟡 A Trabalho Operacional virou bombeiro: 18h em Urgente contra 14h em Importante. Vale planejar com mais margem.</div>
+    <div class="insight i-tip">💡 12% em Disperso é um dia inteiro. Que reunião dessa semana poderia ter sido um e-mail?</div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="setup">
+    <div class="eyebrow">Parte A · Prática</div>
+    <h2 class="title">4. Primeiro acesso — o setup em 4 passos</h2>
+    <p>Ao entrar pela primeira vez (sem nenhuma frente cadastrada), o usuário é levado ao
+      <b>onboarding guiado</b>. São 4 passos rápidos:</p>
+
+    <ol class="steps">
+      <li><b>Seu ritmo</b> Define a hora de acordar, de dormir e o intervalo de almoço.
+        <span class="muted">É com esses horários que a Bússola decide onde encaixar os blocos.</span></li>
+      <li><b>Frentes</b> Cria as áreas em que divide o tempo e dá um orçamento de horas/semana para cada.
+        <span class="muted">Precisa de pelo menos uma.</span></li>
+      <li><b>Compromissos fixos</b> Cadastra o que se repete em horário travado toda semana (treino,
+        reunião fixa, live). <span class="muted">Opcional — pode pular.</span></li>
+      <li><b>Sua semana</b> O app distribui as frentes nas janelas livres, respeitando seus horários e
+        compromissos. Toque em <b>"Gerar minha semana"</b> e pronto.</li>
+    </ol>
+
+    <div class="why">
+      <div class="lab">Por quê pedir o ritmo e os compromissos antes de tudo</div>
+      O gerador de agenda não inventa horário do nada: ele preenche as <b>janelas que sobram</b> entre
+      acordar, dormir, almoço e compromissos fixos. Quanto mais fiel for esse contorno, melhor a
+      sugestão. Por isso o setup vem antes da primeira semana.
+    </div>
+
+    <p class="muted">Logo depois aparece também um <b>tour guiado</b> de 6 telas explicando frentes,
+      compromissos, geração com IA, como concluir um bloco e o ritual de revisão. Dá para revê-lo
+      a qualquer momento em <b>Configurações → Rever tour guiado</b>, ou no "?" no topo de cada tela.</p>
+  </section>
+
+  <!-- CICLO -->
+  <section id="ciclo">
+    <div class="eyebrow">Parte A · Prática</div>
+    <h2 class="title">5. O ciclo da semana — os 5 momentos</h2>
+    <p>A Bússola não é uma tela que você abre e fecha. É um <b>ciclo</b>. Ensine o usuário a girar
+      esta roda — é ela que faz o app funcionar.</p>
+
+    <div class="grid g2">
+      <div class="card"><h4 style="margin-top:0">① Planejar a semana <span class="muted">— dom., 15–20 min</span></h4>
+        Encaixe os compromissos novos, dê nome à entrega de cada bloco ("revisar pipeline", não uma
+        lista enorme), confirme a categoria de cada um e marque até <b>3 prioridades</b> (⭐).</div>
+      <div class="card"><h4 style="margin-top:0">② Viver o dia <span class="muted">— 2 min de manhã</span></h4>
+        Abra o <b>Painel do Dia</b>: prioridades da semana + blocos de hoje, com destaque para o bloco
+        "agora". Só visualizar já orienta o dia.</div>
+      <div class="card"><h4 style="margin-top:0">③ Concluir os blocos <span class="muted">— ≤ 2s cada</span></h4>
+        Ao terminar um bloco, toque nele e diga como foi:
+        <span class="chip c-imp">Como planejado</span>
+        <span class="chip c-urg">Virou urgente</span>
+        <span class="chip c-dis">Foi disperso</span>.
+        Ignorar = "foi como planejado".</div>
+      <div class="card"><h4 style="margin-top:0">④ Fechar a noite <span class="muted">— 2 min</span></h4>
+        O ritual <b>🌙 Noite</b>: o que foi bom hoje, o que você aprendeu e uma nota de 1 a 5.
+        Fecha o dia em paz.</div>
+      <div class="card" style="grid-column:1/-1"><h4 style="margin-top:0">⑤ Revisar a semana <span class="muted">— sex. a dom., ~30 min</span></h4>
+        O grande momento: ver o <b>Espelho</b> + Coach, fazer a retrospectiva e já <b>plantar a próxima
+        semana</b> (risco principal + 3 prioridades). Aqui o ciclo se fecha e recomeça.</div>
+    </div>
+
+    <div class="why">
+      <div class="lab">Por quê "concluir o bloco" é o passo mais importante</div>
+      É o registro de <b>realizado</b> que dá inteligência ao sistema. Sem ele, o Espelho e o Coach só
+      conhecem o que você <i>planejou</i>. Por isso o app insiste: ao concluir, diga se foi como
+      planejado, virou urgente ou foi disperso — e, se executou em horário diferente, ajuste. <b>É o que
+      alimenta toda a análise.</b>
+    </div>
+
+    <div class="why">
+      <div class="lab">Por quê a revisão não é "mais trabalho"</div>
+      A revisão é reflexão, não tarefa. A tela foi feita para transmitir tranquilidade, não uma planilha
+      cheia de números. E ela encadeia direto no planejamento da próxima semana — esse ritual é
+      <b>o segredo de não largar o app</b>.
+    </div>
+
+    <h3>Quando a vida desanda — o sistema ajuda, não pune</h3>
+    <p>Reunião nova entrou? Bloco cancelou? Pegou fogo? Dia inteiro fora do plano? O princípio é sempre o
+      mesmo: <b>o sistema atua, não cobra</b>. Quanto mais a vida real desvia, mais a Bússola deve
+      parecer um amigo ajudando a recolocar as peças — e o desvio fica registrado no Espelho, sem culpa.</p>
+  </section>
+
+  <!-- TELAS -->
+  <section id="telas">
+    <div class="eyebrow">Parte A · Referência</div>
+    <h2 class="title">6. As telas, uma a uma</h2>
+    <p>Referência rápida de cada tela: o que o usuário faz e por quê ela existe.</p>
+
+    <div class="scr"><div class="ico">🏠</div><div>
+      <b>Painel do Dia</b> <span class="route">/</span>
+      <p>A home depois do login. Saudação, prioridades da semana, blocos de hoje (com o bloco "agora" em
+      destaque) e atalhos. <b>Toque num bloco</b> para concluí-lo ou editar. <span class="muted">É a
+      tela das "2 horas extras":</span> a primeira coisa de manhã.</p></div></div>
+
+    <div class="scr"><div class="ico">📅</div><div>
+      <b>Semana</b> <span class="route">/semana/[semana]</span>
+      <p>Onde você monta a semana. Dois modos: <b>Lista</b> (blocos por dia) e <b>Calendário</b> (grade
+      hora × dia — arraste para mover, estique para mudar a duração). Crie, edite, marque ⭐ prioridade e
+      expanda o checklist de cada bloco. Clicar num bloco abre o <b>painel do bloco</b>: concluir,
+      checklist, prioridade, editar, excluir. <span class="muted">Conflitos de horário aparecem com ⚠️ —
+      o app avisa, mas não trava.</span></p></div></div>
+
+    <div class="scr"><div class="ico">✨</div><div>
+      <b>Agenda padrão / Gerar com IA</b> <span class="route">/agenda-padrao</span>
+      <p>Duas formas de montar a semana automaticamente: a <b>agenda padrão</b> (algoritmo que espalha as
+      frentes pelas janelas livres, preferindo manhãs) e a <b>geração com IA</b> (mais inteligente, usa o
+      que funcionou nas semanas anteriores; consome cota mensal). Em ambas você <b>aplica</b> e depois
+      ajusta bloco a bloco. <span class="muted">É sempre um ponto de partida, não uma camisa de força.</span></p></div></div>
+
+    <div class="scr"><div class="ico">🪞</div><div>
+      <b>Revisão / Espelho</b> <span class="route">/revisao/[semana]</span>
+      <p>O ritual da semana num lugar só: o <b>Espelho</b> (resumo, matriz Frente × Categoria, Coach
+      Gentil e os 3 maiores desvios), o <b>Ritual de IA</b> (montar a próxima semana com um clique) e
+      o <b>fechamento</b> (retrospectiva + risco + 3 prioridades da próxima). Ao concluir, a próxima
+      semana já fica pronta para conferir.</p></div></div>
+
+    <div class="scr"><div class="ico">🌙</div><div>
+      <b>Fechamento da noite</b> <span class="route">/noite</span>
+      <p>Dois minutos antes de dormir: o que foi bom, o que aprendeu e a nota do dia (1–5). Mostra um
+      resumo de quantos blocos saíram como planejado vs. desviaram. <span class="muted">Não é
+      produtividade — é fechar o dia em paz.</span></p></div></div>
+
+    <div class="scr"><div class="ico">🧭</div><div>
+      <b>Frentes</b> <span class="route">/frentes</span>
+      <p>Crie, edite e <b>ordene</b> (arrastando) as suas frentes — nome, ícone, cor e orçamento de
+      horas/semana. <span class="muted">A ordem importa: o gerador atende as frentes de cima primeiro.</span></p></div></div>
+
+    <div class="scr"><div class="ico">📌</div><div>
+      <b>Compromissos fixos</b> <span class="route">/compromissos</span>
+      <p>O que se repete em horário travado toda semana. O gerador trata esses blocos como
+      <b>intocáveis</b> e preenche o resto em volta deles.</p></div></div>
+
+    <div class="scr"><div class="ico">⚙️</div><div>
+      <b>Configurações</b> <span class="route">/configuracoes</span>
+      <p>Horários de rotina (acordar, dormir, almoço), timezone e início da semana. <b>Alimentam o
+      gerador.</b> Aqui também se revê o tour guiado.</p></div></div>
+
+    <div class="scr"><div class="ico">👤</div><div>
+      <b>Perfil</b> <span class="route">/perfil</span>
+      <p>Dados da conta, conectar/desconectar o <b>Google Agenda</b>, sair e (LGPD) <b>exportar todos os
+      seus dados</b> ou apagar a conta.</p></div></div>
+
+    <div class="scr"><div class="ico">💳</div><div>
+      <b>Meu plano</b> <span class="route">/meu-plano</span>
+      <p>Status da assinatura (teste grátis de 14 dias, ativo, pendente) e escolha de plano. Quem é
+      <b>membro de um time</b> não vê cobrança — o acesso é gerenciado por quem administra a conta da
+      empresa.</p></div></div>
+  </section>
+
+  <!-- HABITOS -->
+  <section id="habitos">
+    <div class="eyebrow">Parte A · Sucesso</div>
+    <h2 class="title">7. Hábitos que fazem dar certo</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h4 style="margin-top:0">✅ Faça</h4>
+        <ul class="check">
+          <li>Conclua os blocos no fim de cada um (≤2s) — é o que dá inteligência ao app.</li>
+          <li>Reserve 30 min de domingo (ou sexta) para a revisão. É inegociável.</li>
+          <li>Marque só 3 prioridades — mais que isso deixa de ser prioridade.</li>
+          <li>Trate a sugestão da IA como rascunho: aplique e ajuste.</li>
+          <li>Quando algo invadir o bloco, registre — o desvio é informação, não fracasso.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4 style="margin-top:0">⚠️ Evite</h4>
+        <ul>
+          <li>Querer planejar a semana minuto a minuto. Pense em <b>blocos</b>, não em tarefas soltas.</li>
+          <li>Criar 10 frentes. Comece com 3–5; frente demais dilui o Espelho.</li>
+          <li>Deixar os blocos sem concluir a semana inteira — aí o Espelho fica "só planejado".</li>
+          <li>Encarar a revisão como cobrança. Ela é um espelho, não um boletim.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="why">
+      <div class="lab">A frase para fechar o treinamento da Parte A</div>
+      "A Bússola não te dá mais horas. Ela te mostra para onde as suas estão indo — e te devolve o poder
+      de decidir o que proteger."
+    </div>
+  </section>
+
+  <!-- ============ PARTE B — COMERCIAL ============ -->
+  <section id="com-intro">
+    <div class="eyebrow">Parte B — Comercial <span class="tag pago">Módulo pago</span></div>
+    <h2 class="title">8. O que é o módulo Comercial</h2>
+    <p>O Comercial é um <b>módulo separado da agenda pessoal</b>. Ele é um <b>quadro de ações de captação
+      para redes com várias unidades</b> (cidades, escolas, filiais): planejar ações, controlar a verba
+      (solicitado × gasto) e ver tudo consolidado num painel.</p>
+    <div class="quote">"O quadro do seu setor comercial: cadastre unidades, planeje ações de captação,
+      controle a verba e veja tudo consolidado num painel."</div>
+
+    <div class="why">
+      <div class="lab">Por quê é separado da Agenda</div>
+      A Agenda responde "para onde foi <i>o meu tempo</i>". O Comercial responde "como vão as <i>ações de
+      captação da minha rede</i>". São perguntas diferentes, perfis diferentes (diretor, coordenador) e
+      dados que não se misturam. Por isso vivem em módulos distintos.
+    </div>
+
+    <p>Ao abrir o Comercial pela primeira vez, o usuário dá um nome à empresa/rede e <b>vira o diretor
+      da operação</b>. Depois é só adicionar unidades e o time.</p>
+  </section>
+
+  <section id="com-conceitos">
+    <div class="eyebrow">Parte B · Conceito</div>
+    <h2 class="title">9. Os conceitos do Comercial</h2>
+
+    <h3>A hierarquia</h3>
+    <p style="font-size:18px"><b>Empresa</b> (a rede) → <b>Unidade</b> (cidade/escola) → <b>Ação comercial</b> (cada evento de captação).</p>
+    <div class="grid g3">
+      <div class="card"><h4 style="margin-top:0">🏢 Empresa</h4>Uma organização com comercial ativo.
+        Um usuário pode ser dono de várias e trocar de contexto num clique.</div>
+      <div class="card"><h4 style="margin-top:0">📍 Unidade</h4>Cada cidade/escola da rede. Tem um
+        coordenador (opcional) que enxerga <b>só</b> a própria unidade.</div>
+      <div class="card"><h4 style="margin-top:0">🎯 Ação comercial</h4>Um evento de captação: tem
+        planejamento e, depois, resultado. É a unidade de trabalho do módulo.</div>
+    </div>
+
+    <h3>A ação é planejada em 5W2H</h3>
+    <p>Cada ação nasce com um planejamento estruturado, para não ser improviso:</p>
+    <ul>
+      <li><b>O quê</b> — tipo de ação (ex.: Visita em empresa, Ação em condomínio, Carro de som) e o objetivo (captação, relacionamento, reforço de marca…).</li>
+      <li><b>Onde</b> — o local (ex.: "Hospital Dório Silva").</li>
+      <li><b>Quem</b> — responsáveis pela execução.</li>
+      <li><b>Quando</b> — data de início e fim.</li>
+      <li><b>Como</b> — o detalhe do planejamento (materiais, logística).</li>
+      <li><b>Quanto</b> — o <b>valor solicitado</b> (orçamento previsto).</li>
+    </ul>
+    <p>Depois que a ação acontece, registra-se o <b>resultado</b>: status, leads captados, <b>valor gasto</b> e comentários.</p>
+
+    <h3>Os números que importam</h3>
+    <div class="grid g2">
+      <div class="card"><h4 style="margin-top:0">💰 Verba: solicitado × gasto</h4>
+        O app compara o previsto com o real e mostra <b>economia</b> (verde) ou <b>estouro</b> (vermelho).</div>
+      <div class="card"><h4 style="margin-top:0">📈 Leads e Custo por Lead (CPL)</h4>
+        Quantos leads a ação trouxe e quanto custou cada um (gasto ÷ leads). <b>Menor CPL = mais eficiente.</b></div>
+    </div>
+    <div class="why">
+      <div class="lab">Por quê verba + CPL, e não só "quantos leads"</div>
+      Contar leads sem olhar o custo engana. Uma ação com 50 leads que custou caro pode ser pior que uma
+      com 20 leads quase de graça. O Comercial junta <b>eficiência</b> (CPL) com <b>controle de
+      orçamento</b> (verba) — é isso que transforma "fizemos ações" em "fizemos as ações certas".
+    </div>
+
+    <p><b>Status de uma ação:</b>
+      <span class="pill">Em planejamento</span>
+      <span class="pill">Finalizado</span>
+      <span class="pill">Adiado</span>
+      <span class="pill">Cancelado</span>
+    </p>
+  </section>
+
+  <section id="com-acessos">
+    <div class="eyebrow">Parte B · Conceito</div>
+    <h2 class="title">10. Perfis e acessos</h2>
+    <p>O Comercial controla <b>quem vê o quê</b> por dois ajustes independentes: <b>escopo</b> (quais
+      unidades) e <b>nível</b> (o que pode fazer).</p>
+
+    <div class="grid g3">
+      <div class="card"><h4 style="margin-top:0">👑 Diretor / Dono</h4>Vê <b>tudo</b>. Cria unidades,
+        tipos de ação e gerencia acessos. É quem ativou a empresa.</div>
+      <div class="card"><h4 style="margin-top:0">📍 Coordenador de unidade</h4>Vê e edita <b>só a
+        unidade dele</b>. Planeja e registra as ações da própria cidade.</div>
+      <div class="card"><h4 style="margin-top:0">🛡️ Admin corporativo</h4>Enxerga todas as unidades e
+        pode <b>gerenciar acessos</b> — sem precisar ser o dono.</div>
+    </div>
+
+    <h4>Nível de acesso</h4>
+    <ul>
+      <li><b>Ver e editar</b> — a pessoa visualiza e modifica as ações do escopo dela.</li>
+      <li><b>Só visualizar</b> — a pessoa acompanha e analisa, mas não muda nada (ex.: um consultor).</li>
+    </ul>
+
+    <div class="why">
+      <div class="lab">Por quê separar escopo de nível</div>
+      São perguntas diferentes: "<i>quais unidades</i> essa pessoa enxerga?" (escopo) e "<i>o que</i> ela
+      pode fazer?" (nível). Separar os dois permite arranjos finos — um diretor regional que <b>edita</b>
+      três cidades; um sócio que <b>só vê</b> a rede inteira — sem dar poder demais a ninguém.
+    </div>
+
+    <div class="why">
+      <div class="lab">O que é um "assento"</div>
+      Cada pessoa com acesso ao Comercial ocupa <b>1 assento</b> (qualquer acesso conta, seja "ver" ou
+      "editar"). O número de assentos é definido pelo plano. A tela de Equipe mostra um contador de
+      assentos em uso, para o admin não estourar o limite.
+    </div>
+  </section>
+
+  <section id="com-fluxo">
+    <div class="eyebrow">Parte B · Prática</div>
+    <h2 class="title">11. Fluxo de uso por perfil</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h4 style="margin-top:0">👑 Diretor da rede — montagem</h4>
+        <ol>
+          <li>Ativa o Comercial e nomeia a empresa.</li>
+          <li>Cadastra as <b>unidades</b> (cidades) e atribui um coordenador a cada uma.</li>
+          <li>Define os <b>tipos de ação</b> que fazem sentido para o negócio.</li>
+          <li>Adiciona o <b>time</b> (escopo + nível por pessoa).</li>
+          <li>Acompanha o <b>painel consolidado</b> e exporta relatórios.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h4 style="margin-top:0">📍 Coordenador — dia a dia</h4>
+        <ol>
+          <li>Recebe o convite (o diretor cadastra o e-mail) e entra no app.</li>
+          <li>Vê o painel só da <b>sua</b> unidade.</li>
+          <li><b>Cria ações</b> preenchendo o 5W2H.</li>
+          <li>Depois da ação, <b>registra o resultado</b> (status, leads, gasto, comentários).</li>
+          <li>Acompanha relatórios do próprio recorte.</li>
+        </ol>
+      </div>
+    </div>
+    <p class="muted">Importante: para receber acesso, a pessoa precisa <b>já ter entrado no app pelo menos
+      uma vez</b> com o e-mail cadastrado.</p>
+  </section>
+
+  <section id="com-telas">
+    <div class="eyebrow">Parte B · Referência</div>
+    <h2 class="title">12. As telas do Comercial</h2>
+
+    <div class="scr"><div class="ico">📊</div><div>
+      <b>Painel</b> <span class="route">/comercial</span>
+      <p>Visão consolidada do período (filtro de datas): KPIs de <b>Custo por Lead, leads captados,
+      execução, solicitado e gasto</b>, mais os gráficos "Leads por unidade" e "O que mais converte".
+      Diretor vê tudo; coordenador vê só a sua unidade.</p></div></div>
+
+    <div class="scr"><div class="ico">🗂️</div><div>
+      <b>Ações</b> <span class="route">/comercial/acoes</span>
+      <p>Lista com filtros (período, unidade, status). Cada ação traz tipo, local, responsáveis, datas,
+      verba e leads, com botões <b>Registrar resultado</b>, <b>Reagendar</b> e <b>Realocar</b>.
+      O botão <b>+ Nova ação</b> abre o formulário 5W2H.</p></div></div>
+
+    <div class="scr"><div class="ico">✅</div><div>
+      <b>Detalhe / Registrar resultado</b> <span class="route">/comercial/acoes/[id]</span>
+      <p>Mostra o planejamento e o formulário de resultado: status, leads, valor gasto e comentários,
+      com o comparativo de verba na hora. Dá para reabrir o planejamento e reeditar os 9 campos.</p></div></div>
+
+    <div class="scr"><div class="ico">📍</div><div>
+      <b>Unidades</b> <span class="route">/comercial/unidades</span>
+      <p>O diretor cadastra cidades e define o coordenador de cada uma (por e-mail).
+      <span class="muted">O coordenador vê e edita só a unidade dele.</span></p></div></div>
+
+    <div class="scr"><div class="ico">🏷️</div><div>
+      <b>Tipos de ação</b> <span class="route">/comercial/tipos</span>
+      <p>Personaliza as categorias de ação da rede (ex.: Carro de som, Live, Parceria com igreja). Elas
+      viram opção ao criar ação e filtro nos relatórios.</p></div></div>
+
+    <div class="scr"><div class="ico">👥</div><div>
+      <b>Equipe</b> <span class="route">/comercial/equipe</span>
+      <p>Onde o diretor/admin adiciona pessoas: e-mail, rótulo, <b>nível</b> (ver / editar), se é
+      <b>corporativo</b> (todas as unidades) ou de unidades específicas, e se é <b>admin</b>. Mostra o
+      contador de <b>assentos em uso</b>.</p></div></div>
+
+    <div class="scr"><div class="ico">📑</div><div>
+      <b>Relatórios</b> <span class="route">/comercial/relatorios</span>
+      <p>Duas tabelas por período: <b>Verba</b> (solicitado × gasto × diferença) e <b>Resultados</b>
+      (leads por ação). Ambas exportam em <b>CSV</b> para abrir no Excel.</p></div></div>
+
+    <div class="scr"><div class="ico">🏢</div><div>
+      <b>Seletor de empresa</b> <span class="route">topo do Comercial</span>
+      <p>Quem gerencia mais de uma rede troca de empresa pelo menu do topo — ou cria uma nova. Os dados
+      de cada empresa ficam totalmente isolados.</p></div></div>
+  </section>
+
+  <!-- GLOSSARIO -->
+  <section id="glossario">
+    <div class="eyebrow">Apoio</div>
+    <h2 class="title">Glossário rápido</h2>
+    <table>
+      <tbody>
+        <tr><td><b>Frente</b></td><td>Área em que você divide seu tempo, com orçamento de horas/semana.</td></tr>
+        <tr><td><b>Bússola (categoria)</b></td><td>Importante, Urgente ou Disperso — a natureza de um bloco.</td></tr>
+        <tr><td><b>Bloco</b></td><td>Um pedaço de tempo da agenda, ligado a uma frente e a uma categoria.</td></tr>
+        <tr><td><b>Espelho</b></td><td>A matriz Frente × Categoria: para onde seu tempo realmente foi.</td></tr>
+        <tr><td><b>Planejado × Realizado</b></td><td>A diferença entre o que você programou e o que de fato aconteceu.</td></tr>
+        <tr><td><b>Coach Gentil</b></td><td>Os recados automáticos que leem o Espelho e sugerem ajustes, sem culpar.</td></tr>
+        <tr><td><b>Prioridade ⭐</b></td><td>Até 3 blocos marcados como o que mais importa na semana.</td></tr>
+        <tr><td><b>Empresa</b> <span class="tag pago">Comercial</span></td><td>Uma rede com o módulo Comercial ativo.</td></tr>
+        <tr><td><b>Unidade</b> <span class="tag pago">Comercial</span></td><td>Cidade/escola da rede, com coordenador próprio.</td></tr>
+        <tr><td><b>Ação</b> <span class="tag pago">Comercial</span></td><td>Evento de captação planejado em 5W2H, com resultado registrado depois.</td></tr>
+        <tr><td><b>Verba</b> <span class="tag pago">Comercial</span></td><td>Comparação entre valor solicitado e valor gasto.</td></tr>
+        <tr><td><b>CPL</b> <span class="tag pago">Comercial</span></td><td>Custo por Lead = gasto ÷ leads. Menor é melhor.</td></tr>
+        <tr><td><b>Assento</b> <span class="tag pago">Comercial</span></td><td>Cada pessoa com acesso ao Comercial ocupa 1, conforme o plano.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- CHECKLIST -->
+  <section id="checklist">
+    <div class="eyebrow">Apoio</div>
+    <h2 class="title">Checklist da primeira semana</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h4 style="margin-top:0">🧭 Agenda — comece por aqui</h4>
+        <ul class="check">
+          <li>Configurar ritmo (acordar/dormir/almoço).</li>
+          <li>Criar 3 a 5 frentes com orçamento de horas.</li>
+          <li>Cadastrar os compromissos fixos.</li>
+          <li>Gerar a semana e ajustar bloco a bloco.</li>
+          <li>Marcar 3 prioridades ⭐.</li>
+          <li>Concluir os blocos todo dia.</li>
+          <li>No fim da semana: abrir a Revisão e ler o Espelho.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4 style="margin-top:0">💼 Comercial — se contratado</h4>
+        <ul class="check">
+          <li>Ativar o módulo e nomear a empresa.</li>
+          <li>Cadastrar as unidades e coordenadores.</li>
+          <li>Definir os tipos de ação da rede.</li>
+          <li>Adicionar o time (escopo + nível).</li>
+          <li>Criar a primeira ação (5W2H).</li>
+          <li>Registrar o resultado quando ela acontecer.</li>
+          <li>Olhar o painel e exportar o primeiro relatório.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    🧭 <b>Bússola do Tempo</b> — material de treinamento para novos usuários.
+    Conceitos, porquês e passo a passo da Agenda e do módulo Comercial.
+    <br>Dica para apresentar: use o botão <b>🌓 Tema</b> no canto, e <b>Ctrl/Cmd&nbsp;+&nbsp;P</b> gera um PDF do guia inteiro.
+  </footer>
+
+</main>
+</div>
+</body>
+</html>
