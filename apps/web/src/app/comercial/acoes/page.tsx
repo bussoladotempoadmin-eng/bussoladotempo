@@ -92,7 +92,11 @@ export default async function AcoesPage({
       </form>
 
       <div className="mt-5">
-        <AcoesTable acoes={acoes} unidades={escopo.unidades.map((u) => ({ id: u.id, nome: u.nome }))} />
+        <AcoesTable
+          acoes={acoes}
+          unidades={escopo.unidades.map((u) => ({ id: u.id, nome: u.nome }))}
+          podeGerenciar={escopo.podeConfigRepasse}
+        />
       </div>
     </ComercialShell>
   );

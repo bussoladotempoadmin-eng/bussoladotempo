@@ -8,6 +8,7 @@ import { getAcao, listarTipos, OBJETIVOS, RESULTADOS } from '@/lib/comercial';
 import { ComercialShell } from '../../comercial-shell';
 import { ResultadoForm } from './resultado-form';
 import { AcaoForm } from '../acao-form';
+import { ExcluirAcaoButton } from './excluir-acao';
 import { carregarComercial } from '../../contexto';
 import { fmtMoney, fmtPeriodo } from '../../fmt';
 
@@ -30,6 +31,14 @@ export default async function AcaoDetailPage({ params }: { params: { id: string 
   if (!a) redirect('/comercial/acoes');
   const tipos = await listarTipos(orgId);
 
+  // Trava por repasse: ação vinculada a um repasse tem edição/exclusão restrita.
+  const ehGestor = escopo.podeConfigRepasse; // corporativo ou admin
+  const travada = a.repasseId != null;
+  const repasseFechado = a.repasse != null && a.repasse.status !== 'PENDENTE';
+  const podeEditar = !travada || ehGestor;
+  const podeExcluir = !travada || (ehGestor && !repasseFechado);
+  const selo = travada ? (repasseFechado ? 'Em repasse · fechado' : 'Em repasse · pendente') : null;
+
   return (
     <ComercialShell empresas={empresas} empresaAtualId={orgId} podeGerenciar={escopo.podeGerenciarAcessos}>
       <Link
@@ -45,6 +54,11 @@ export default async function AcaoDetailPage({ params }: { params: { id: string 
           {a.tipo}
         </span>
         <span className="text-xs text-muted-foreground">{a.unidade.nome}</span>
+        {selo && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+            🔒 {selo}
+          </span>
+        )}
       </div>
       <h1 className="text-2xl font-extrabold tracking-tight">{a.local}</h1>
       <p className="mt-1 text-sm text-muted-foreground">
@@ -81,25 +95,45 @@ export default async function AcaoDetailPage({ params }: { params: { id: string 
           Editar planejamento da ação
         </summary>
         <div className="mt-4">
-          <AcaoForm
-            acaoId={a.id}
-            unidades={escopo.unidades.map((u) => ({ id: u.id, nome: u.nome }))}
-            tipos={tipos}
-            objetivos={OBJETIVOS}
-            inicial={{
-              unidadeId: a.unidadeId,
-              tipo: a.tipo,
-              objetivo: a.objetivo,
-              local: a.local,
-              responsaveis: a.responsaveis,
-              dataInicio: iso(a.dataInicio),
-              dataFim: iso(a.dataFim),
-              valorSolicitado: a.valorSolicitado?.toString() ?? '',
-              detalhe: a.detalhe ?? '',
-            }}
-          />
+          {podeEditar ? (
+            <AcaoForm
+              acaoId={a.id}
+              unidades={escopo.unidades.map((u) => ({ id: u.id, nome: u.nome }))}
+              tipos={tipos}
+              objetivos={OBJETIVOS}
+              inicial={{
+                unidadeId: a.unidadeId,
+                tipo: a.tipo,
+                objetivo: a.objetivo,
+                local: a.local,
+                responsaveis: a.responsaveis,
+                dataInicio: iso(a.dataInicio),
+                dataFim: iso(a.dataFim),
+                valorSolicitado: a.valorSolicitado?.toString() ?? '',
+                detalhe: a.detalhe ?? '',
+              }}
+            />
+          ) : (
+            <p className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+              🔒 Esta ação já entrou num repasse — só <b>corporativo/admin</b> pode editar. Para liberar
+              a edição, remova o repasse na aba <b>Repasses</b>.
+            </p>
+          )}
         </div>
       </details>
+
+      <div className="mt-8 border-t border-border pt-5">
+        {podeExcluir ? (
+          <ExcluirAcaoButton acaoId={a.id} local={a.local} />
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            🔒 Não dá pra excluir esta ação:{' '}
+            {repasseFechado
+              ? 'o repasse já foi fechado.'
+              : 'ela está num repasse — só corporativo/admin enquanto o repasse estiver pendente.'}
+          </p>
+        )}
+      </div>
     </ComercialShell>
   );
 }

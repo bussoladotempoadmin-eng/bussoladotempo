@@ -8,6 +8,7 @@
 import { prisma, type StatusAcao, type MetodoRepasse, type TipoConta } from '@bussola/db';
 import { resolverAcessoComercial } from './comercial-acessos';
 import { sincronizarLancamentoAcao } from './comercial-caixa';
+import { recalcularRepassePendente } from './comercial-repasse';
 
 // Listas fixas (objetivo/resultado). Tipo de ação é editável pelo diretor.
 export const OBJETIVOS = [
@@ -640,7 +641,10 @@ export async function criarAcao(
 async function acaoAcessivel(userId: string, acaoId: string, precisaEditar = false) {
   const a = await prisma.acaoComercial.findUnique({
     where: { id: acaoId },
-    include: { unidade: { select: { id: true, nome: true } } },
+    include: {
+      unidade: { select: { id: true, nome: true, organizacaoId: true } },
+      repasse: { select: { status: true } },
+    },
   });
   if (!a) return null;
   const ok = precisaEditar
@@ -648,6 +652,28 @@ async function acaoAcessivel(userId: string, acaoId: string, precisaEditar = fal
     : await podeAcessarUnidade(userId, a.unidadeId);
   if (!ok) return null;
   return a;
+}
+
+/** Corporativo OU admin da empresa — pode editar/excluir ação travada por repasse. */
+async function ehGestorOrg(userId: string, orgId: string): Promise<boolean> {
+  const acc = await resolverAcessoComercial(userId, orgId);
+  return acc.temAcesso && (acc.corporativo || acc.admin);
+}
+
+/**
+ * Resultado da checagem de trava por repasse pra uma operação de edição.
+ * - liberado: pode seguir.
+ * - erro: motivo (quando bloqueado).
+ */
+type ChecagemTrava = { liberado: boolean; erro?: string };
+
+async function checarTravaEdicao(
+  userId: string,
+  a: { repasseId: string | null; unidade: { organizacaoId: string } },
+): Promise<ChecagemTrava> {
+  if (!a.repasseId) return { liberado: true }; // ação livre
+  if (await ehGestorOrg(userId, a.unidade.organizacaoId)) return { liberado: true }; // override
+  return { liberado: false, erro: 'Ação já incluída num repasse — só corporativo/admin pode editar.' };
 }
 
 export async function getAcao(userId: string, acaoId: string) {
@@ -661,6 +687,7 @@ export async function atualizarAcao(
 ): Promise<boolean> {
   const a = await acaoAcessivel(userId, acaoId, true); // mutação exige editar
   if (!a) return false;
+  if (!(await checarTravaEdicao(userId, a)).liberado) return false; // travada por repasse
   const data: Record<string, unknown> = {};
   if (input.tipo !== undefined) data.tipo = input.tipo.trim();
   if (input.objetivo !== undefined) data.objetivo = input.objetivo.trim();
@@ -678,6 +705,8 @@ export async function atualizarAcao(
   }
   await prisma.acaoComercial.update({ where: { id: acaoId }, data });
   await sincronizarLancamentoAcao(acaoId); // valor/data podem ter mudado
+  // Admin editou ação vinculada a repasse pendente → recalcula o valor do repasse.
+  if (a.repasseId && a.repasse?.status === 'PENDENTE') await recalcularRepassePendente(a.repasseId);
   return true;
 }
 
@@ -718,6 +747,7 @@ export async function reagendar(
 ): Promise<boolean> {
   const a = await acaoAcessivel(userId, acaoId, true); // mutação exige editar
   if (!a) return false;
+  if (!(await checarTravaEdicao(userId, a)).liberado) return false; // travada por repasse
   const ini = parseDia(dataInicio);
   const fim = parseDia(dataFim || dataInicio);
   if (!ini || !fim) return false;
@@ -737,23 +767,43 @@ export async function realocar(
 ): Promise<{ ok: boolean; erro?: string }> {
   const a = await acaoAcessivel(userId, acaoId, true); // realocar exige editar
   if (!a) return { ok: false, erro: 'Ação não encontrada.' };
+  const trava = await checarTravaEdicao(userId, a);
+  if (!trava.liberado) return { ok: false, erro: trava.erro };
+
   const data: Record<string, unknown> = {};
-  if (destino.unidadeId && destino.unidadeId !== a.unidadeId) {
-    if (!(await podeEditarUnidade(userId, destino.unidadeId))) {
+  const mudaUnidade = Boolean(destino.unidadeId && destino.unidadeId !== a.unidadeId);
+  if (mudaUnidade) {
+    // Mudar a unidade de uma ação vinculada a repasse: só se o repasse ainda
+    // estiver pendente (fechado = congelado). Ao mover, desvincula do repasse
+    // antigo e recalcula esse repasse (a ação saiu dele).
+    if (a.repasseId && a.repasse?.status !== 'PENDENTE') {
+      return { ok: false, erro: 'Repasse já fechado — não dá pra mudar a unidade desta ação.' };
+    }
+    if (!(await podeEditarUnidade(userId, destino.unidadeId!))) {
       return { ok: false, erro: 'Você não tem permissão para editar a unidade de destino.' };
     }
     data.unidadeId = destino.unidadeId;
+    if (a.repasseId) data.repasseId = null; // sai do repasse antigo
   }
   if (destino.responsaveis !== undefined) data.responsaveis = destino.responsaveis.trim();
   if (Object.keys(data).length === 0) return { ok: true };
   await prisma.acaoComercial.update({ where: { id: acaoId }, data });
+  if (a.repasseId && mudaUnidade && a.repasse?.status === 'PENDENTE') {
+    await recalcularRepassePendente(a.repasseId);
+  }
   return { ok: true };
 }
 
 export async function removerAcao(userId: string, acaoId: string): Promise<boolean> {
   const a = await acaoAcessivel(userId, acaoId, true); // mutação exige editar
   if (!a) return false;
+  if (a.repasseId) {
+    if (a.repasse?.status !== 'PENDENTE') return false; // repasse fechado → ninguém exclui
+    if (!(await ehGestorOrg(userId, a.unidade.organizacaoId))) return false; // pendente: só gestor
+  }
+  const repasseId = a.repasseId;
   await prisma.acaoComercial.delete({ where: { id: acaoId } });
+  if (repasseId) await recalcularRepassePendente(repasseId); // ação saiu → recalcula
   return true;
 }
 
@@ -775,6 +825,8 @@ export type AcaoListItem = {
   valorSolicitado: number | null;
   valorGasto: number | null;
   comentarios: string | null;
+  travada: boolean; // já incluída num repasse (edição/exclusão restrita)
+  repasseFechado: boolean; // o repasse já saiu de PENDENTE (congelado)
 };
 
 type Filtro = { unidadeId?: string; de?: string; ate?: string; status?: StatusAcao };
@@ -795,7 +847,7 @@ async function buscarAcoes(userId: string, orgId: string, filtro: Filtro) {
   return prisma.acaoComercial.findMany({
     where,
     orderBy: { dataInicio: 'desc' },
-    include: { unidade: { select: { nome: true } } },
+    include: { unidade: { select: { nome: true } }, repasse: { select: { status: true } } },
   });
 }
 
@@ -825,6 +877,8 @@ export async function listarAcoes(
     valorSolicitado: a.valorSolicitado,
     valorGasto: a.valorGasto,
     comentarios: a.comentarios,
+    travada: a.repasseId != null,
+    repasseFechado: a.repasse != null && a.repasse.status !== 'PENDENTE',
   }));
 }
 

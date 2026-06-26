@@ -25,7 +25,15 @@ function verbaPill(solicitado: number | null, gasto: number | null) {
 
 type UnidadeOpt = { id: string; nome: string };
 
-export function AcoesTable({ acoes, unidades }: { acoes: AcaoListItem[]; unidades: UnidadeOpt[] }) {
+export function AcoesTable({
+  acoes,
+  unidades,
+  podeGerenciar = false,
+}: {
+  acoes: AcaoListItem[];
+  unidades: UnidadeOpt[];
+  podeGerenciar?: boolean;
+}) {
   const [modal, setModal] = React.useState<{ tipo: 'reagendar' | 'realocar'; acao: AcaoListItem } | null>(null);
 
   if (acoes.length === 0) {
@@ -48,6 +56,7 @@ export function AcoesTable({ acoes, unidades }: { acoes: AcaoListItem[]; unidade
         {acoes.map((a) => {
           const st = STATUS_STYLE[a.status];
           const vp = verbaPill(a.valorSolicitado, a.valorGasto);
+          const travadoPraVoce = a.travada && !podeGerenciar; // em repasse e não é gestor
           return (
             <div key={a.id} className="rounded-2xl border border-border bg-card p-4">
               <div className="flex items-start justify-between gap-3">
@@ -56,6 +65,11 @@ export function AcoesTable({ acoes, unidades }: { acoes: AcaoListItem[]; unidade
                     {a.tipo}
                   </span>
                   <span className="text-xs text-muted-foreground">{a.unidadeNome}</span>
+                  {a.travada && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                      🔒 Em repasse{a.repasseFechado ? ' · fechado' : ''}
+                    </span>
+                  )}
                 </div>
                 <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${st.cls}`}>{st.label}</span>
               </div>
@@ -87,7 +101,9 @@ export function AcoesTable({ acoes, unidades }: { acoes: AcaoListItem[]; unidade
                 <button
                   type="button"
                   onClick={() => setModal({ tipo: 'reagendar', acao: a })}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+                  disabled={travadoPraVoce}
+                  title={travadoPraVoce ? 'Ação em repasse — só corporativo/admin edita' : undefined}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <CalendarClock className="h-3.5 w-3.5" />
                   Reagendar
@@ -95,7 +111,9 @@ export function AcoesTable({ acoes, unidades }: { acoes: AcaoListItem[]; unidade
                 <button
                   type="button"
                   onClick={() => setModal({ tipo: 'realocar', acao: a })}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+                  disabled={travadoPraVoce}
+                  title={travadoPraVoce ? 'Ação em repasse — só corporativo/admin edita' : undefined}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <ArrowRightLeft className="h-3.5 w-3.5" />
                   Realocar

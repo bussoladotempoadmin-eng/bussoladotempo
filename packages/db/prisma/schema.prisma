@@ -522,11 +522,18 @@ model AcaoComercial {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Repasse em que esta ação foi incluída (1 ação = no máx. 1 repasse). null =
+  // ainda livre (pode editar). Setado ao salvar a relação de repasse; volta a
+  // null se o repasse é removido (SetNull). Trava edição/exclusão conforme RBAC.
+  repasseId String?
+
   unidade         Unidade          @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
   lancamentoCaixa LancamentoCaixa?
+  repasse         Repasse?         @relation(fields: [repasseId], references: [id], onDelete: SetNull)
 
   @@index([unidadeId])
   @@index([status])
+  @@index([repasseId])
 }
 
 enum TipoLancamento {
@@ -588,6 +595,7 @@ model Repasse {
   organizacao Organizacao      @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
   unidade     Unidade          @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
   lancamento  LancamentoCaixa?
+  acoes       AcaoComercial[]
 
   @@index([organizacaoId])
   @@index([unidadeId])

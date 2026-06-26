@@ -41,36 +41,69 @@ export async function criarRepassesDoRelatorio(
   if (!de || !ate) return { ok: false, erro: 'Período inválido.' };
   if (!prevista) return { ok: false, erro: 'Informe a data prevista do repasse.' };
 
-  // Ações que cruzam o período, agrupadas por unidade (soma do solicitado).
+  // Ações que cruzam o período, com solicitado > 0 e AINDA LIVRES (repasseId
+  // null) — cada ação entra em 1 repasse só. Agrupa por unidade.
   const acoes = await prisma.acaoComercial.findMany({
     where: {
       unidade: { organizacaoId: orgId },
+      repasseId: null,
+      valorSolicitado: { gt: 0 },
       dataInicio: { lte: ate },
       dataFim: { gte: de },
     },
-    select: { unidadeId: true, valorSolicitado: true },
+    select: { id: true, unidadeId: true, valorSolicitado: true },
   });
 
-  const porUni = new Map<string, number>();
+  const porUni = new Map<string, { valor: number; acaoIds: string[] }>();
   for (const a of acoes) {
-    if (!a.valorSolicitado) continue;
-    porUni.set(a.unidadeId, (porUni.get(a.unidadeId) ?? 0) + a.valorSolicitado);
+    const cur = porUni.get(a.unidadeId) ?? { valor: 0, acaoIds: [] };
+    cur.valor += a.valorSolicitado ?? 0;
+    cur.acaoIds.push(a.id);
+    porUni.set(a.unidadeId, cur);
   }
-  const entradas = Array.from(porUni.entries()).filter(([, v]) => v > 0);
-  if (entradas.length === 0) return { ok: false, erro: 'Nenhuma unidade com verba solicitada no período.' };
+  const entradas = Array.from(porUni.entries()).filter(([, v]) => v.valor > 0);
+  if (entradas.length === 0) {
+    return { ok: false, erro: 'Nenhuma ação livre com verba solicitada no período (as do período já podem ter sido repassadas).' };
+  }
 
-  await prisma.repasse.createMany({
-    data: entradas.map(([unidadeId, valor]) => ({
-      organizacaoId: orgId,
-      unidadeId,
-      periodoDe: de,
-      periodoAte: ate,
-      valorSolicitado: Math.round(valor * 100) / 100,
-      dataPrevista: prevista,
-      criadoPorId: userId,
-    })),
-  });
+  // Cria 1 repasse por unidade e VINCULA as ações dele (trava edição/exclusão).
+  for (const [unidadeId, { valor, acaoIds }] of entradas) {
+    const repasse = await prisma.repasse.create({
+      data: {
+        organizacaoId: orgId,
+        unidadeId,
+        periodoDe: de,
+        periodoAte: ate,
+        valorSolicitado: Math.round(valor * 100) / 100,
+        dataPrevista: prevista,
+        criadoPorId: userId,
+      },
+      select: { id: true },
+    });
+    await prisma.acaoComercial.updateMany({
+      where: { id: { in: acaoIds } },
+      data: { repasseId: repasse.id },
+    });
+  }
   return { ok: true, count: entradas.length };
+}
+
+/**
+ * Recalcula o valor de um repasse PENDENTE a partir das ações ainda vinculadas
+ * a ele (usado quando o corporativo/admin edita/exclui uma ação vinculada).
+ * Repasse já fechado (não-pendente) é um snapshot — não recalcula.
+ */
+export async function recalcularRepassePendente(repasseId: string): Promise<void> {
+  const r = await prisma.repasse.findUnique({ where: { id: repasseId }, select: { status: true } });
+  if (!r || r.status !== 'PENDENTE') return;
+  const agg = await prisma.acaoComercial.aggregate({
+    where: { repasseId },
+    _sum: { valorSolicitado: true },
+  });
+  await prisma.repasse.update({
+    where: { id: repasseId },
+    data: { valorSolicitado: Math.round((agg._sum.valorSolicitado ?? 0) * 100) / 100 },
+  });
 }
 
 export type RepasseItem = {
