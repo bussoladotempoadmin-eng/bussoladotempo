@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Users, Loader2, Plus, Trash2, Crown, BarChart3 } from 'lucide-react';
+import { Users, Loader2, Plus, Trash2, Crown, BarChart3, Send } from 'lucide-react';
 import type { TimeGestor, MembroInfo } from '@/lib/equipe';
 import { useToast } from '@/components/toast';
 
@@ -19,6 +19,7 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
   const [addBusy, setAddBusy] = React.useState(false);
   const [erro, setErro] = React.useState<string | null>(null);
   const [removendo, setRemovendo] = React.useState<string | null>(null);
+  const [reenviando, setReenviando] = React.useState<string | null>(null);
 
   const nomePorId = React.useMemo(
     () => new Map(membros.map((m) => [m.membroId, m.nome])),
@@ -70,6 +71,19 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
     setEmail('');
     toast(d?.convidado ? 'Convite enviado por e-mail!' : 'Pessoa adicionada ao time');
     await recarregar();
+  }
+
+  async function reenviar(membroId: string) {
+    setReenviando(membroId);
+    const r = await fetch('/api/equipe/membros', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ membroId }),
+    });
+    const d = await r.json().catch(() => ({}));
+    setReenviando(null);
+    if (r.ok) toast('Convite reenviado por e-mail!');
+    else toast(d?.error ?? 'Não consegui reenviar.', 'erro');
   }
 
   async function remover(membroId: string) {
@@ -213,19 +227,37 @@ export function TimeView({ inicial }: { inicial: TimeGestor | null }) {
                     : ' · ainda não acessou'}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => remover(m.membroId)}
-                disabled={removendo === m.membroId}
-                className="rounded-lg p-2 text-muted-foreground hover:text-destructive disabled:opacity-50"
-                aria-label="Remover"
-              >
-                {removendo === m.membroId ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
+              <div className="flex shrink-0 items-center gap-1">
+                {!m.ultimoLoginEm && (
+                  <button
+                    type="button"
+                    onClick={() => reenviar(m.membroId)}
+                    disabled={reenviando === m.membroId}
+                    className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted disabled:opacity-50"
+                    title="Reenviar o convite por e-mail (gera um link novo)"
+                  >
+                    {reenviando === m.membroId ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Send className="h-3.5 w-3.5" />
+                    )}
+                    Reenviar convite
+                  </button>
                 )}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => remover(m.membroId)}
+                  disabled={removendo === m.membroId}
+                  className="rounded-lg p-2 text-muted-foreground hover:text-destructive disabled:opacity-50"
+                  aria-label="Remover"
+                >
+                  {removendo === m.membroId ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
             </li>
           ))}
         </ul>

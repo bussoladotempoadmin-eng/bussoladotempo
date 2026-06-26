@@ -192,6 +192,42 @@ export async function convidarMembro(
   return { ok: true, convidado };
 }
 
+/**
+ * Reenvia o convite (link de criar senha) para um membro do time. Gera um token
+ * NOVO e válido por 7 dias, substituindo os anteriores — útil quando o link
+ * expirou. Só o gestor do time pode reenviar.
+ */
+export async function reenviarConvite(
+  gestorId: string,
+  membroId: string,
+): Promise<{ ok: boolean; erro?: string; email?: string }> {
+  const org = await getOrgDoGestor(gestorId);
+  if (!org) return { ok: false, erro: 'Crie seu time primeiro.' };
+
+  const membro = await prisma.membroEquipe.findFirst({
+    where: { id: membroId, organizacaoId: org.id },
+    select: { user: { select: { id: true, email: true } } },
+  });
+  if (!membro) return { ok: false, erro: 'Membro não encontrado.' };
+
+  const { id: userId, email } = membro.user;
+  // Substitui os tokens antigos por um novo (uso único, 7 dias).
+  await prisma.passwordResetToken.deleteMany({ where: { userId } });
+  const token = randomBytes(32).toString('hex');
+  await prisma.passwordResetToken.create({
+    data: { userId, token, expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+  });
+
+  const base = process.env.NEXTAUTH_URL ?? 'https://app.bussoladotempo.com.br';
+  try {
+    await sendAcessoCriadoEmail({ to: email, link: `${base}/redefinir-senha?token=${token}` });
+  } catch (e) {
+    console.error('[equipe] falha ao reenviar convite:', e);
+    return { ok: false, erro: 'Não consegui enviar o e-mail. Tente de novo.' };
+  }
+  return { ok: true, email };
+}
+
 export async function removerMembro(gestorId: string, membroId: string): Promise<boolean> {
   const org = await getOrgDoGestor(gestorId);
   if (!org) return false;
