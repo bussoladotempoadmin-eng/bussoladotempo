@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Plus, Trash2, UserCog, ShieldCheck, Pencil, Clock } from 'lucide-react';
+import { Loader2, Plus, Trash2, UserCog, ShieldCheck, Pencil, Clock, Building2 } from 'lucide-react';
 import { useToast } from '@/components/toast';
 import type { AcessoComercialInfo } from '@/lib/comercial';
 
@@ -31,6 +31,7 @@ export function AcessosView({
   const [nivel, setNivel] = React.useState<'VER' | 'EDITAR'>('EDITAR');
   const [todas, setTodas] = React.useState(false);
   const [admin, setAdmin] = React.useState(false);
+  const [podeCriarEmpresa, setPodeCriarEmpresa] = React.useState(false);
   const [sel, setSel] = React.useState<string[]>([]);
   const [busy, setBusy] = React.useState(false);
   const [editando, setEditando] = React.useState<string | null>(null);
@@ -52,6 +53,7 @@ export function AcessosView({
     setNivel(a.nivel);
     setTodas(a.todasUnidades);
     setAdmin(a.admin);
+    setPodeCriarEmpresa(a.podeCriarEmpresa);
     setSel(a.todasUnidades ? [] : a.unidadesIds);
     setEditando(a.email);
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -63,6 +65,7 @@ export function AcessosView({
     setNivel('EDITAR');
     setTodas(false);
     setAdmin(false);
+    setPodeCriarEmpresa(false);
     setSel([]);
     setEditando(null);
   }
@@ -87,6 +90,7 @@ export function AcessosView({
           todasUnidades: todas,
           unidadeIds: todas ? [] : sel,
           admin,
+          podeCriarEmpresa,
           rotulo: rotulo.trim() || undefined,
         }),
       });
@@ -159,6 +163,11 @@ export function AcessosView({
             <input type="checkbox" checked={admin} onChange={(e) => setAdmin(e.target.checked)} />
             <span className="font-semibold">Corporativo / admin</span>
             <span className="text-xs text-muted-foreground">(gerencia acessos)</span>
+          </label>
+          <label className="flex items-center gap-2 self-end pb-2 text-sm sm:col-span-2">
+            <input type="checkbox" checked={podeCriarEmpresa} onChange={(e) => setPodeCriarEmpresa(e.target.checked)} />
+            <span className="font-semibold">Pode criar nova empresa</span>
+            <span className="text-xs text-muted-foreground">(abrir outras empresas no seletor)</span>
           </label>
         </div>
 
@@ -233,6 +242,11 @@ export function AcessosView({
                   {a.admin && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-primary/12 px-2 py-0.5 text-[11px] font-semibold text-primary">
                       <ShieldCheck className="h-3 w-3" /> admin
+                    </span>
+                  )}
+                  {a.podeCriarEmpresa && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/12 px-2 py-0.5 text-[11px] font-semibold text-blue-600 dark:text-blue-400">
+                      <Building2 className="h-3 w-3" /> cria empresa
                     </span>
                   )}
                 </div>

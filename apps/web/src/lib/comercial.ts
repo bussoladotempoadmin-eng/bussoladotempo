@@ -54,6 +54,7 @@ export type EscopoComercial = {
   corporativo: boolean; // vê todas as unidades (dono ou acesso corporativo)
   podeGerenciarAcessos: boolean; // dono ou admin
   podeConfigRepasse: boolean; // corporativo ou admin — configura repasse das unidades
+  podeCriarEmpresa: boolean; // pode criar novas empresas (dono sempre pode)
   somenteLeitura: boolean; // nível VER (não edita nada)
   unidades: UnidadeInfo[];
 };
@@ -114,6 +115,23 @@ export async function resolverEmpresaId(userId: string, preferido?: string): Pro
   return empresas[0]?.id ?? null;
 }
 
+/**
+ * Pode o usuário criar uma nova empresa?
+ *  - quem ainda não tem NENHUMA empresa → sim (ativação inicial, vira dono);
+ *  - dono de qualquer org → sim (sempre);
+ *  - acesso com `podeCriarEmpresa` em qualquer org → sim;
+ *  - senão → não.
+ */
+export async function podeCriarEmpresa(userId: string): Promise<boolean> {
+  const empresas = await getEmpresasAcessiveis(userId);
+  if (empresas.length === 0) return true; // primeira empresa (ativação)
+  if (empresas.some((e) => e.ehDono)) return true; // dono sempre pode
+  const liberado = await prisma.acessoComercial
+    .count({ where: { userId, podeCriarEmpresa: true } })
+    .catch(() => 0);
+  return liberado > 0;
+}
+
 /** Cria uma NOVA empresa (org com comercial ativo) e semeia os tipos padrão. */
 export async function criarEmpresa(userId: string, nome: string): Promise<{ id: string; nome: string }> {
   const nomeLimpo = nome.trim() || 'Nova empresa';
@@ -172,6 +190,7 @@ export async function getEscopoComercial(
     corporativo: acesso.corporativo,
     podeGerenciarAcessos: acesso.dono || acesso.admin,
     podeConfigRepasse: acesso.corporativo || acesso.admin,
+    podeCriarEmpresa: acesso.podeCriarEmpresa,
     somenteLeitura: acesso.nivel === 'VER' && !acesso.dono,
     unidades: unidades.map(mapUnidade),
   };
@@ -323,6 +342,7 @@ export type AcessoComercialInfo = {
   nivel: 'VER' | 'EDITAR';
   todasUnidades: boolean;
   admin: boolean;
+  podeCriarEmpresa: boolean;
   rotulo: string | null;
   unidadesIds: string[];
   ultimoLoginEm: string | null; // ISO — só corporativo/admin vê esta tela
@@ -401,6 +421,7 @@ export async function listarAcessosComercial(
     nivel: l.nivel,
     todasUnidades: l.todasUnidades,
     admin: l.admin,
+    podeCriarEmpresa: l.podeCriarEmpresa,
     rotulo: l.rotulo,
     unidadesIds: l.unidades.map((u) => u.unidadeId),
     ultimoLoginEm: l.user.ultimoLoginEm ? l.user.ultimoLoginEm.toISOString() : null,
@@ -416,6 +437,7 @@ export async function salvarAcessoComercial(
     todasUnidades: boolean;
     unidadeIds: string[];
     admin: boolean;
+    podeCriarEmpresa: boolean;
     rotulo?: string;
   },
 ): Promise<{ ok: boolean; erro?: string }> {
@@ -452,12 +474,14 @@ export async function salvarAcessoComercial(
       nivel: input.nivel,
       todasUnidades: input.todasUnidades,
       admin: input.admin,
+      podeCriarEmpresa: input.podeCriarEmpresa,
       rotulo: input.rotulo?.trim() || null,
     },
     update: {
       nivel: input.nivel,
       todasUnidades: input.todasUnidades,
       admin: input.admin,
+      podeCriarEmpresa: input.podeCriarEmpresa,
       rotulo: input.rotulo?.trim() || null,
     },
     select: { id: true },

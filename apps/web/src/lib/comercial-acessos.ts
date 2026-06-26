@@ -19,6 +19,7 @@ export type AcessoComercialResolvido = {
   dono: boolean;
   corporativo: boolean; // enxerga todas as unidades
   admin: boolean; // gerencia acessos/usuários
+  podeCriarEmpresa: boolean; // pode criar novas empresas (dono sempre pode)
   nivel: 'VER' | 'EDITAR';
   unidadesIds: string[]; // unidades específicas (vazio quando corporativo)
   podeVer: (unidadeId: string) => boolean;
@@ -30,6 +31,7 @@ const NEGADO: AcessoComercialResolvido = {
   dono: false,
   corporativo: false,
   admin: false,
+  podeCriarEmpresa: false,
   nivel: 'VER',
   unidadesIds: [],
   podeVer: () => false,
@@ -53,6 +55,7 @@ export async function resolverAcessoComercial(
       dono: true,
       corporativo: true,
       admin: true,
+      podeCriarEmpresa: true,
       nivel: 'EDITAR',
       unidadesIds: [],
       podeVer: () => true,
@@ -93,6 +96,7 @@ export async function resolverAcessoComercial(
     dono: false,
     corporativo,
     admin: acesso?.admin ?? false,
+    podeCriarEmpresa: acesso?.podeCriarEmpresa ?? false,
     nivel,
     unidadesIds: Array.from(visiveis),
     podeVer: (uid) => corporativo || visiveis.has(uid),

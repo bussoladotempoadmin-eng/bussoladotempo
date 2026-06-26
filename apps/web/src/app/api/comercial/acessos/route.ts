@@ -5,7 +5,7 @@ import { salvarAcessoComercial, removerAcessoComercial } from '@/lib/comercial';
 export const dynamic = 'force-dynamic';
 
 // POST /api/comercial/acessos — cria/atualiza um acesso ao Comercial.
-// body: { orgId, email, nivel, todasUnidades, unidadeIds, admin, rotulo }
+// body: { orgId, email, nivel, todasUnidades, unidadeIds, admin, podeCriarEmpresa, rotulo }
 export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
@@ -20,6 +20,7 @@ export async function POST(req: Request) {
     todasUnidades: Boolean(body?.todasUnidades),
     unidadeIds: Array.isArray(body?.unidadeIds) ? body.unidadeIds.filter((x: unknown) => typeof x === 'string') : [],
     admin: Boolean(body?.admin),
+    podeCriarEmpresa: Boolean(body?.podeCriarEmpresa),
     rotulo: typeof body?.rotulo === 'string' ? body.rotulo : undefined,
   });
   if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });

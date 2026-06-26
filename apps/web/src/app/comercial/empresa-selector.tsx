@@ -6,7 +6,15 @@ import { Building, Plus, Check, Loader2, X } from 'lucide-react';
 import type { EmpresaInfo } from '@/lib/comercial';
 import { useToast } from '@/components/toast';
 
-export function EmpresaSelector({ empresas, atualId }: { empresas: EmpresaInfo[]; atualId: string }) {
+export function EmpresaSelector({
+  empresas,
+  atualId,
+  podeCriar = false,
+}: {
+  empresas: EmpresaInfo[];
+  atualId: string;
+  podeCriar?: boolean;
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [open, setOpen] = React.useState(false);
@@ -82,7 +90,7 @@ export function EmpresaSelector({ empresas, atualId }: { empresas: EmpresaInfo[]
               </button>
             ))}
 
-            {criando ? (
+            {podeCriar && (criando ? (
               <div className="border-t border-border p-3">
                 <div className="flex items-center gap-1.5">
                   <input
@@ -110,7 +118,7 @@ export function EmpresaSelector({ empresas, atualId }: { empresas: EmpresaInfo[]
                 <Plus className="h-4 w-4" />
                 Nova empresa
               </button>
-            )}
+            ))}
           </div>
         </>
       )}

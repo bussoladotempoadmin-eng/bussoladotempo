@@ -622,6 +622,7 @@ model AcessoComercial {
   nivel         NivelComercial @default(EDITAR)
   todasUnidades Boolean        @default(false) // corporativo: todas as unidades
   admin         Boolean        @default(false) // pode gerenciar acessos/usuários
+  podeCriarEmpresa Boolean      @default(false) // pode criar novas empresas (dono sempre pode)
   rotulo        String? // papel (só visual)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
