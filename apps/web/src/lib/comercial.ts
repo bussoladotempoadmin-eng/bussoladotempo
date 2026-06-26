@@ -825,6 +825,7 @@ export type AcaoListItem = {
   valorSolicitado: number | null;
   valorGasto: number | null;
   comentarios: string | null;
+  detalhe: string | null;
   travada: boolean; // já incluída num repasse (edição/exclusão restrita)
   repasseFechado: boolean; // o repasse já saiu de PENDENTE (congelado)
 };
@@ -877,6 +878,7 @@ export async function listarAcoes(
     valorSolicitado: a.valorSolicitado,
     valorGasto: a.valorGasto,
     comentarios: a.comentarios,
+    detalhe: a.detalhe,
     travada: a.repasseId != null,
     repasseFechado: a.repasse != null && a.repasse.status !== 'PENDENTE',
   }));

@@ -81,7 +81,12 @@ export default async function AcoesPage({
 
       {view === 'calendario' ? (
         <div className="mt-4">
-          <AcoesCalendario unidades={escopo.unidades.map((u) => ({ id: u.id, nome: u.nome }))} />
+          <AcoesCalendario
+            unidades={escopo.unidades.map((u) => ({ id: u.id, nome: u.nome }))}
+            tipos={tipos}
+            objetivos={OBJETIVOS}
+            podeGerenciar={escopo.podeConfigRepasse}
+          />
         </div>
       ) : (
         <>
@@ -122,6 +127,8 @@ export default async function AcoesPage({
         <AcoesTable
           acoes={acoes}
           unidades={escopo.unidades.map((u) => ({ id: u.id, nome: u.nome }))}
+          tipos={tipos}
+          objetivos={OBJETIVOS}
           podeGerenciar={escopo.podeConfigRepasse}
         />
       </div>

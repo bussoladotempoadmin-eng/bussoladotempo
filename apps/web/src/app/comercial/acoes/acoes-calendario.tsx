@@ -1,13 +1,13 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter } from 'next/navigation';
 import { Calendar, dateFnsLocalizer, type Event as RbcEvent } from 'react-big-calendar';
 import { format, parse, startOfWeek, endOfWeek, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import type { AcaoListItem } from '@/lib/comercial';
+import { AcaoModal } from './acao-modal';
 
 const locales = { 'pt-BR': ptBR };
 const localizer = dateFnsLocalizer({
@@ -29,10 +29,21 @@ function parseYmd(s: string): Date {
   return new Date(y, m - 1, d);
 }
 
+type Opt = { id: string; nome: string };
 type AcaoEvent = RbcEvent & { id: string; unidadeId: string };
 
-export function AcoesCalendario({ unidades }: { unidades: { id: string; nome: string }[] }) {
-  const router = useRouter();
+export function AcoesCalendario({
+  unidades,
+  tipos,
+  objetivos,
+  podeGerenciar = false,
+}: {
+  unidades: Opt[];
+  tipos: Opt[];
+  objetivos: readonly string[];
+  podeGerenciar?: boolean;
+}) {
+  const [aberta, setAberta] = React.useState<AcaoListItem | null>(null);
   const corPorUnidade = React.useMemo(() => {
     const m = new Map<string, string>();
     unidades.forEach((u, i) => m.set(u.id, PALETA[i % PALETA.length]));
@@ -45,6 +56,7 @@ export function AcoesCalendario({ unidades }: { unidades: { id: string; nome: st
   });
   const [acoes, setAcoes] = React.useState<AcaoListItem[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [reload, setReload] = React.useState(0);
   const [sel, setSel] = React.useState<Set<string>>(() => new Set(unidades.map((u) => u.id)));
 
   // Grade do mês (segunda antes do dia 1 → domingo depois do fim).
@@ -74,7 +86,7 @@ export function AcoesCalendario({ unidades }: { unidades: { id: string; nome: st
     return () => {
       cancel = true;
     };
-  }, [grade]);
+  }, [grade, reload]);
 
   const events: AcaoEvent[] = React.useMemo(() => {
     return acoes
@@ -170,7 +182,10 @@ export function AcoesCalendario({ unidades }: { unidades: { id: string; nome: st
           toolbar={false}
           onNavigate={() => {}}
           popup
-          onSelectEvent={(event) => router.push(`/comercial/acoes/${event.id}`)}
+          onSelectEvent={(event) => {
+            const a = acoes.find((x) => x.id === event.id);
+            if (a) setAberta(a);
+          }}
           eventPropGetter={(event) => {
             const cor = corPorUnidade.get(event.unidadeId) ?? '#3b82f6';
             return { style: { backgroundColor: cor, borderColor: cor } };
@@ -181,6 +196,20 @@ export function AcoesCalendario({ unidades }: { unidades: { id: string; nome: st
       <p className="mt-2 text-xs text-muted-foreground">
         Toque numa ação pra abrir o detalhe. As cores representam as unidades.
       </p>
+
+      {aberta && (
+        <AcaoModal
+          acao={aberta}
+          unidades={unidades}
+          tipos={tipos}
+          objetivos={objetivos}
+          podeGerenciar={podeGerenciar}
+          onClose={() => {
+            setAberta(null);
+            setReload((n) => n + 1);
+          }}
+        />
+      )}
     </div>
   );
 }
