@@ -28,12 +28,18 @@ export function AcaoForm({
   objetivos,
   acaoId,
   inicial,
+  onSaved,
+  onCancel,
+  embedded = false,
 }: {
   unidades: Opt[];
   tipos: Opt[];
   objetivos: readonly string[];
   acaoId?: string;
   inicial?: Partial<AcaoFormData>;
+  onSaved?: () => void;
+  onCancel?: () => void;
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -80,15 +86,24 @@ export function AcaoForm({
       return;
     }
     toast(acaoId ? 'Ação atualizada' : 'Ação criada');
+    if (onSaved) {
+      onSaved();
+      router.refresh();
+      return;
+    }
     router.push('/comercial/acoes');
     router.refresh();
   }
 
+  const wrap = embedded ? '' : 'max-w-2xl rounded-2xl border border-border bg-card p-5 sm:p-6';
+
   return (
-    <div className="max-w-2xl rounded-2xl border border-border bg-card p-5 sm:p-6">
-      <p className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        Planejamento da ação
-      </p>
+    <div className={wrap}>
+      {!embedded && (
+        <p className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          Planejamento da ação
+        </p>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Unidade">
           <select value={f.unidadeId} onChange={(e) => set('unidadeId', e.target.value)} className={INP}>
@@ -161,9 +176,19 @@ export function AcaoForm({
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
           {acaoId ? 'Salvar alterações' : 'Salvar ação'}
         </button>
-        <Link href="/comercial/acoes" className="rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted">
-          Cancelar
-        </Link>
+        {onCancel ? (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted"
+          >
+            Cancelar
+          </button>
+        ) : (
+          <Link href="/comercial/acoes" className="rounded-lg border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted">
+            Cancelar
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -1,13 +1,15 @@
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
+import { List, CalendarDays } from 'lucide-react';
 import { authOptions } from '@/lib/auth';
 import { getSessionUser } from '@/lib/workspace';
-import { listarAcoes, STATUS_LABEL } from '@/lib/comercial';
+import { listarAcoes, listarTipos, OBJETIVOS, STATUS_LABEL } from '@/lib/comercial';
 import type { StatusAcao } from '@bussola/db';
 import { ComercialShell } from '../comercial-shell';
 import { AcoesTable } from './acoes-table';
+import { AcoesCalendario } from './acoes-calendario';
+import { NovaAcaoButton } from './nova-acao-button';
 import { carregarComercial } from '../contexto';
 import { mesCorrente } from '../fmt';
 
@@ -18,7 +20,7 @@ const STATUS: StatusAcao[] = ['EM_PLANEJAMENTO', 'FINALIZADO', 'ADIADO', 'CANCEL
 export default async function AcoesPage({
   searchParams,
 }: {
-  searchParams: { de?: string; ate?: string; unidade?: string; status?: string };
+  searchParams: { de?: string; ate?: string; unidade?: string; status?: string; view?: string };
 }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/login?callbackUrl=/comercial/acoes');
@@ -36,28 +38,53 @@ export default async function AcoesPage({
     | StatusAcao
     | '';
 
-  const acoes = await listarAcoes(user.id, orgId, {
-    de,
-    ate,
-    unidadeId: unidade || undefined,
-    status: status || undefined,
-  });
+  const view = searchParams.view === 'calendario' ? 'calendario' : 'lista';
+
+  const acoes =
+    view === 'lista'
+      ? await listarAcoes(user.id, orgId, {
+          de,
+          ate,
+          unidadeId: unidade || undefined,
+          status: status || undefined,
+        })
+      : [];
+
+  const tipos = await listarTipos(orgId);
 
   const sel = 'rounded-lg border border-border bg-card px-3 py-2 text-sm font-semibold outline-none';
+  const tabBase = 'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors';
+  const tabOn = 'bg-card border border-border';
+  const tabOff = 'text-muted-foreground hover:bg-muted';
 
   return (
     <ComercialShell empresas={empresas} empresaAtualId={orgId} podeGerenciar={escopo.podeGerenciarAcessos}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-extrabold tracking-tight">Ações comerciais</h1>
-        <Link
-          href="/comercial/acoes/nova"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
-        >
-          <Plus className="h-4 w-4" />
-          Nova ação
+        <NovaAcaoButton
+          unidades={escopo.unidades.map((u) => ({ id: u.id, nome: u.nome }))}
+          tipos={tipos}
+          objetivos={OBJETIVOS}
+        />
+      </div>
+
+      <div className="mt-4 inline-flex gap-1 rounded-xl border border-border bg-muted/40 p-1">
+        <Link href="/comercial/acoes" className={`${tabBase} ${view === 'lista' ? tabOn : tabOff}`}>
+          <List className="h-4 w-4" />
+          Lista
+        </Link>
+        <Link href="/comercial/acoes?view=calendario" className={`${tabBase} ${view === 'calendario' ? tabOn : tabOff}`}>
+          <CalendarDays className="h-4 w-4" />
+          Calendário
         </Link>
       </div>
 
+      {view === 'calendario' ? (
+        <div className="mt-4">
+          <AcoesCalendario unidades={escopo.unidades.map((u) => ({ id: u.id, nome: u.nome }))} />
+        </div>
+      ) : (
+        <>
       <form method="get" className="mt-4 flex flex-wrap items-end gap-2">
         <div className="flex items-end gap-2 rounded-xl border border-border bg-card px-3 py-2">
           <label className="flex flex-col">
@@ -98,6 +125,8 @@ export default async function AcoesPage({
           podeGerenciar={escopo.podeConfigRepasse}
         />
       </div>
+        </>
+      )}
     </ComercialShell>
   );
 }

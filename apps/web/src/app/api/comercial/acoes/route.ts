@@ -1,8 +1,23 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { getSessionUser } from '@/lib/workspace';
-import { criarAcao, type AcaoInput } from '@/lib/comercial';
+import { criarAcao, listarAcoes, resolverEmpresaId, type AcaoInput } from '@/lib/comercial';
+import { COOKIE_EMPRESA } from '@/app/comercial/contexto';
 
 export const dynamic = 'force-dynamic';
+
+// GET /api/comercial/acoes?de=&ate= — ações do período (respeita o escopo do usuário).
+export async function GET(req: Request) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
+  const url = new URL(req.url);
+  const de = url.searchParams.get('de') || undefined;
+  const ate = url.searchParams.get('ate') || undefined;
+  const orgId = await resolverEmpresaId(user.id, cookies().get(COOKIE_EMPRESA)?.value);
+  if (!orgId) return NextResponse.json({ acoes: [] });
+  const acoes = await listarAcoes(user.id, orgId, { de, ate });
+  return NextResponse.json({ acoes });
+}
 
 // POST /api/comercial/acoes  — cria ação (planejamento)
 export async function POST(req: Request) {
