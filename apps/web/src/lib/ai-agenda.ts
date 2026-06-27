@@ -16,14 +16,32 @@ import {
 
 const MODELO = 'claude-sonnet-4-6';
 
-// Timeout abaixo do maxDuration (60s) da função: a chamada falha de forma LIMPA
-// e capturável (vira JSON 500/504 tratado), em vez de estourar a função e voltar
-// um 504 sem corpo. maxRetries:0 evita que o SDK re-tente 2x e multiplique custo
-// de tokens e tempo (era a causa de "cobrou mais a cada tentativa").
-const TIMEOUT_IA_MS = 55_000;
+// Timeout do SDK logo ABAIXO do maxDuration (300s) das rotas, pra a chamada
+// falhar de forma LIMPA e capturável (JSON 504 tratado) em vez de estourar a
+// função. Com streaming, a geração tem folga de minutos e praticamente nunca
+// bate aqui — este é só o backstop pra um travamento real da API.
+// maxRetries:0 evita que o SDK re-tente 2x e multiplique custo de tokens/tempo.
+const TIMEOUT_IA_MS = 290_000;
 
 function criarClienteIA(apiKey: string): Anthropic {
   return new Anthropic({ apiKey, maxRetries: 0, timeout: TIMEOUT_IA_MS });
+}
+
+/**
+ * Faz a chamada à IA SEMPRE em streaming e devolve a mensagem final.
+ *
+ * Por que streaming: numa chamada não-streaming a API só responde quando a
+ * geração inteira termina — a conexão fica muda 40-60s e qualquer relógio
+ * (SDK/proxy/Vercel) interpreta como "Request timed out". Em streaming os
+ * tokens chegam continuamente; é a forma recomendada pelo SDK para respostas
+ * longas / max_tokens alto e elimina os timeouts espúrios. O resultado final é
+ * idêntico (mesmo tool_use), só muda o transporte.
+ */
+function iaFinalMessage(
+  client: Anthropic,
+  params: Anthropic.MessageCreateParamsNonStreaming,
+): Promise<Anthropic.Message> {
+  return client.messages.stream(params).finalMessage();
 }
 
 /**
@@ -216,7 +234,7 @@ export async function gerarAgendaIA(
   const idsFrentes = frentes.map((f) => f.id);
 
   const client = criarClienteIA(apiKey);
-  const response = await client.messages.create({
+  const response = await iaFinalMessage(client, {
     model: MODELO,
     max_tokens: 5000,
     system,
@@ -345,7 +363,7 @@ export async function gerarInsightsSemana(
     : 'Sem reflexão escrita.';
 
   const client = criarClienteIA(apiKey);
-  const response = await client.messages.create({
+  const response = await iaFinalMessage(client, {
     model: MODELO,
     max_tokens: 1500,
     system:
@@ -494,7 +512,7 @@ export async function revisarEPlanejar(
   ].join('\n');
 
   const client = criarClienteIA(apiKey);
-  const response = await client.messages.create({
+  const response = await iaFinalMessage(client, {
     model: MODELO,
     max_tokens: 5000,
     system,

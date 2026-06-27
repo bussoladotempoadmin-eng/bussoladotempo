@@ -5,8 +5,8 @@ import { gerarAgendaIA, SemChaveIA } from '@/lib/ai-agenda';
 import { statusCota, registrarGeracao, mensagemCota } from '@/lib/cota-ia';
 import { contaBloqueada } from '@/lib/acesso';
 
-// Geração com IA pode levar alguns segundos — dá folga no timeout serverless.
-export const maxDuration = 60;
+// Geração com IA pode levar até ~1min — folga no timeout serverless (Pro: 300s).
+export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
 
 // POST /api/agenda-ia/gerar  body: { semanaIso, semanasHistorico? }

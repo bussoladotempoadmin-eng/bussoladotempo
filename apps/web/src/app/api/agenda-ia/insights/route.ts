@@ -3,7 +3,7 @@ import { getCurrentWorkspace } from '@/lib/workspace';
 import { isIsoWeek } from '@/lib/semana';
 import { gerarInsightsSemana, SemChaveIA } from '@/lib/ai-agenda';
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
 
 // POST /api/agenda-ia/insights  body: { semanaIso }

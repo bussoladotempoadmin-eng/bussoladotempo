@@ -4,7 +4,7 @@ import { isIsoWeek } from '@/lib/semana';
 import { analisarTimeIA } from '@/lib/team-ia';
 import { SemChaveIA } from '@/lib/ai-agenda';
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
 
 // POST /api/equipe/ia  body: { semana, force? }

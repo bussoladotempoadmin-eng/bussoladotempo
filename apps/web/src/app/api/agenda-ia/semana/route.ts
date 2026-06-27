@@ -5,7 +5,7 @@ import { revisarEPlanejarComCache, lerRitualCache, SemChaveIA } from '@/lib/ai-a
 import { statusCota, registrarGeracao, mensagemCota } from '@/lib/cota-ia';
 import { contaBloqueada } from '@/lib/acesso';
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
 
 // POST /api/agenda-ia/semana  body: { semanaIso }

@@ -87,8 +87,11 @@ export async function analisarTimeIA(
   const agg = `Time (${painel.org.nome}): ${painel.agregado.totalHoras}h no total | Importante ${pct(painel.agregado.pImportante)}%, Urgente ${pct(painel.agregado.pUrgente)}%, Disperso ${pct(painel.agregado.pDisperso)}% | ${painel.agregado.comDados} de ${painel.agregado.total} registraram.`;
 
   // maxRetries:0 + timeout abaixo do maxDuration: falha limpa, sem retry zumbi.
-  const client = new Anthropic({ apiKey, maxRetries: 0, timeout: 55_000 });
-  const response = await client.messages.create({
+  // Streaming (.stream().finalMessage()): a conexão recebe tokens continuamente,
+  // o que evita o "Request timed out" em respostas longas (recomendação do SDK).
+  const client = new Anthropic({ apiKey, maxRetries: 0, timeout: 290_000 });
+  const response = await client.messages
+    .stream({
     model: MODELO,
     max_tokens: 1500,
     system: [
@@ -110,8 +113,9 @@ export async function analisarTimeIA(
         },
       },
     ],
-    tool_choice: { type: 'tool', name: 'dar_insights_time' },
-  });
+      tool_choice: { type: 'tool', name: 'dar_insights_time' },
+    })
+    .finalMessage();
 
   const bloco = response.content.find((b) => b.type === 'tool_use');
   if (!bloco || bloco.type !== 'tool_use') return { insights: [], cacheado: false };
