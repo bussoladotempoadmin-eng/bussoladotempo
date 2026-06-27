@@ -28,28 +28,40 @@ export async function POST(req: Request) {
   const force = Boolean(body?.force);
 
   try {
-    // Reabrir o resultado salvo é grátis (não checa cota nem conta).
-    // Só verifica/consome a cota quando vai REALMENTE gerar (cache vazio ou force).
     const cache = await lerRitualCache(workspace.id, semanaIso);
-    if (!cache || force) {
+    // Só conta como "resultado salvo" o cache que TEM grade. Um cache vazio (de uma
+    // tentativa que não gerou blocos) não vale — vamos refazer.
+    const cacheTemGrade = !!cache && (cache.proposta?.blocos?.length ?? 0) > 0;
+
+    // Reabrir um resultado salvo COM grade é grátis (não checa cota nem gera).
+    if (cacheTemGrade && !force) {
+      return NextResponse.json({ ...cache, cacheado: true });
+    }
+
+    // Daqui pra baixo vai gerar. A cota só BLOQUEIA numa geração nova de verdade —
+    // não quando estamos refazendo uma tentativa anterior que ficou sem grade
+    // (essa não entregou nada, então refazer não deve custar uma cota nova).
+    const recuperandoVazia = !!cache && !cacheTemGrade;
+    if (!recuperandoVazia) {
       const cota = await statusCota(workspace.id);
-      // Regra: 1 geração por semana ISO, teto de 6 por mês. force não fura nada.
+      // Regra: 1 geração por semana ISO, teto de 6 por mês.
       if (!cota.podeGerar) {
         return NextResponse.json({ error: mensagemCota(cota), motivo: cota.motivo }, { status: 429 });
       }
     }
-    const r = await revisarEPlanejarComCache(workspace.id, semanaIso, force);
-    // Só cobra geração NOVA e ÚTIL (com proposta ou análise). O cache já foi
-    // gravado antes daqui, então toda cobrança tem resultado recuperável de graça.
-    // Falhar ao registrar o crédito NUNCA derruba a entrega — é melhor não cobrar.
-    if (!r.cacheado) {
-      const util = (r.proposta?.blocos?.length ?? 0) > 0 || (r.analise?.length ?? 0) > 0;
-      if (util) {
-        try {
-          await registrarGeracao(workspace.id);
-        } catch (err) {
-          console.error('[agenda-ia] resultado entregue, mas falhou ao registrar crédito:', err);
-        }
+
+    // force=true aqui: sempre (re)gera, porque ou o usuário pediu ou o cache não
+    // tinha grade. revisarEPlanejarComCache só GRAVA o cache quando a grade sai.
+    const r = await revisarEPlanejarComCache(workspace.id, semanaIso, true);
+
+    // Só cobra quando a GRADE saiu (é o entregável). registrarGeracao é idempotente
+    // por semana ISO, então quem já tinha sido cobrado (ex.: tentativa vazia antiga)
+    // NÃO é cobrado de novo. Falhar ao registrar nunca derruba a entrega.
+    if ((r.proposta?.blocos?.length ?? 0) > 0) {
+      try {
+        await registrarGeracao(workspace.id);
+      } catch (err) {
+        console.error('[agenda-ia] grade entregue, mas falhou ao registrar crédito:', err);
       }
     }
     return NextResponse.json(r);

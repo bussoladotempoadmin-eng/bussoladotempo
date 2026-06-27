@@ -35,7 +35,15 @@ export async function POST(req: Request) {
 
   try {
     const proposta = await gerarAgendaIA(workspace.id, semanaIso, semanasHistorico);
-    await registrarGeracao(workspace.id);
+    // Só cobra quando a grade saiu (é o entregável). Geração sem blocos não
+    // consome a cota da semana — o usuário pode tentar de novo.
+    if ((proposta?.blocos?.length ?? 0) > 0) {
+      try {
+        await registrarGeracao(workspace.id);
+      } catch (err) {
+        console.error('[agenda-ia] grade entregue, mas falhou ao registrar crédito:', err);
+      }
+    }
     return NextResponse.json(proposta);
   } catch (e) {
     if (e instanceof SemChaveIA) {

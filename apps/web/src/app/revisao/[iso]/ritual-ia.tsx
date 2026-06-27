@@ -264,6 +264,25 @@ export function RitualIA({
                 <p className="mb-3 rounded-lg bg-muted/60 px-3 py-2 text-sm">{res.proposta.resumo}</p>
               )}
 
+              {blocos.length === 0 && (
+                <div className="mb-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
+                  <p className="font-medium">A grade da próxima semana não foi montada.</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Às vezes a IA descreve o plano no resumo sem listar os blocos. Gere a grade de
+                    novo — não gasta crédito.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => gerar(true)}
+                    disabled={loading}
+                    className="mt-2 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    Gerar a grade
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {DIAS.map((dia) => {
                   const itens = blocosComIdx
@@ -328,6 +347,8 @@ export function RitualIA({
                 Adicionar bloco
               </button>
 
+              {blocos.length > 0 && (
+                <>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-muted-foreground">Aplicar em:</span>
                 <div className="inline-flex rounded-lg border border-border p-0.5 text-xs font-semibold">
@@ -363,6 +384,8 @@ export function RitualIA({
                   ? `Confirmar agenda de ${isoWeekLabel(res.proximaIso)}`
                   : `Confirmar nas próximas ${repetir} semanas`}
               </button>
+                </>
+              )}
             </div>
           )}
 

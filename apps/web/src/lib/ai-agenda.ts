@@ -563,7 +563,7 @@ export async function revisarEPlanejar(
 
   const resolverFrente = construirResolverFrente(frentes);
   const horaOk = (h: string) => /^\d{2}:\d{2}$/.test(h);
-  const blocos = (out.blocosProxima ?? [])
+  let blocos = (out.blocosProxima ?? [])
     .map((b) => ({ ...b, frenteId: resolverFrente(b.frenteId) }))
     .filter(
       (b): b is PropostaBloco =>
@@ -574,6 +574,7 @@ export async function revisarEPlanejar(
         diaSemanaValues.includes(b.diaSemana) &&
         categoriaValues.includes(b.categoriaPlanejada),
     );
+  let resumo = out.resumoProxima ?? '';
   // Diagnóstico (vai pros logs da Vercel) — se a grade vier vazia, mostra a causa.
   console.warn('[agenda-ia][revisar]', {
     stop: response.stop_reason,
@@ -581,12 +582,30 @@ export async function revisarEPlanejar(
     validos: blocos.length,
     frentes: idsFrentes.length,
   });
+
+  // REDE DE SEGURANÇA: às vezes o tool combinado preenche a ANÁLISE e o resumo,
+  // mas devolve a grade vazia (descreve em vez de enumerar os blocos). Quando isso
+  // acontece, cai pro planejador focado (gerarAgendaIA — só blocos, schema simples
+  // e confiável) pra a próxima semana NUNCA voltar sem grade quando há frentes.
+  if (blocos.length === 0) {
+    try {
+      const fb = await gerarAgendaIA(workspaceId, proximaIso, semanasHistorico);
+      blocos = fb.blocos;
+      if (!resumo) resumo = fb.resumo;
+      console.warn('[agenda-ia][revisar] grade vazia → planejador focado', {
+        validos: blocos.length,
+      });
+    } catch (e) {
+      console.error('[agenda-ia][revisar] fallback do planejador falhou:', e);
+    }
+  }
+
   const semanasComDados = semanas.filter((s) => s.blocos.length > 0).length;
 
   return {
     analise: (out.analise ?? []).filter((s) => typeof s === 'string' && s.trim()),
     proposta: {
-      resumo: out.resumoProxima ?? '',
+      resumo,
       insights: [],
       blocos,
       semanasComDados,
@@ -653,9 +672,15 @@ export async function revisarEPlanejarComCache(
 ): Promise<RevisarPlanejar & { cacheado: boolean }> {
   if (!force) {
     const cache = await lerRitualCache(workspaceId, semanaIso);
-    if (cache) return { ...cache, cacheado: true };
+    // Só reaproveita cache que TEM grade. Um resultado antigo sem blocos não é
+    // entregável — ignora e gera de novo (auto-cura quem ficou travado).
+    if (cache && (cache.proposta?.blocos?.length ?? 0) > 0) return { ...cache, cacheado: true };
   }
   const result = await revisarEPlanejar(workspaceId, semanaIso);
-  await salvarRitualCache(workspaceId, semanaIso, result);
+  // Só guarda quando a grade saiu — assim uma geração falha não vira resultado
+  // salvo travado, e o usuário pode tentar de novo de graça.
+  if ((result.proposta?.blocos?.length ?? 0) > 0) {
+    await salvarRitualCache(workspaceId, semanaIso, result);
+  }
   return { ...result, cacheado: false };
 }
