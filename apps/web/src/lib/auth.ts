@@ -6,13 +6,48 @@
  *   precisa validar a sessão por JWT, não por sessão no banco.
  */
 import type { NextAuthOptions } from 'next-auth';
+import type { Adapter, AdapterUser } from 'next-auth/adapters';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import EmailProvider from 'next-auth/providers/email';
-import GoogleProvider from 'next-auth/providers/google';
+import GoogleProvider, { type GoogleProfile } from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { prisma } from '@bussola/db';
 import { sendMagicLinkEmail } from './email';
 import { verificarSenha } from './senha';
+
+/**
+ * E-mail canônico: minúsculo e sem espaços nas pontas. TODO login (senha, Google
+ * ou link mágico) resolve o usuário por ESTE e-mail normalizado — assim o mesmo
+ * e-mail sempre abre o MESMO cadastro, sem duplicar por diferença de maiúsculas.
+ */
+export function normalizarEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+/**
+ * Adapter do Prisma com e-mail normalizado na criação e na busca. É o que garante
+ * que provedores diferentes (Google × link mágico) caiam no mesmo User em vez de
+ * criar um cadastro duplicado quando o e-mail chega com maiúsculas/espaços.
+ */
+function adapterEmailNormalizado(): Adapter {
+  const base = PrismaAdapter(prisma) as Required<Adapter>;
+  return {
+    ...base,
+    createUser: (data: AdapterUser) =>
+      base.createUser({ ...data, email: normalizarEmail(data.email) }),
+    getUserByEmail: (email: string) => base.getUserByEmail(normalizarEmail(email)),
+  };
+}
+
+/** Mapeia o perfil do Google forçando o e-mail normalizado (fecha a ponta OAuth). */
+function perfilGoogleNormalizado(profile: GoogleProfile) {
+  return {
+    id: profile.sub,
+    name: profile.name,
+    email: normalizarEmail(profile.email),
+    image: profile.picture,
+  };
+}
 
 const providers: NextAuthOptions['providers'] = [
   EmailProvider({
@@ -53,6 +88,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       // Mesmo e-mail (verificado pelo magic link e pelo Google) = mesma conta.
       allowDangerousEmailAccountLinking: true,
+      profile: perfilGoogleNormalizado,
     }),
   );
 
@@ -66,6 +102,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: true,
+      profile: perfilGoogleNormalizado,
       authorization: {
         params: {
           // calendar.events = ler E escrever eventos (Fase C lê, Fase 2 escreve).
@@ -80,7 +117,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: adapterEmailNormalizado(),
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 dias
