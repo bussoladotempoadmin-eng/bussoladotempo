@@ -3,8 +3,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CalendarClock, ArrowRightLeft, PenLine, Pencil, Loader2, X, ArrowLeft } from 'lucide-react';
-import type { AcaoListItem } from '@/lib/comercial';
+import { CalendarClock, ArrowRightLeft, PenLine, Pencil, Loader2, X, ArrowLeft, Building2 } from 'lucide-react';
+import type { AcaoListItem, EmpresaAdmin } from '@/lib/comercial';
 import { useToast } from '@/components/toast';
 import { AcaoForm } from './acao-form';
 import { fmtMoney, fmtNum, fmtPeriodo } from '../fmt';
@@ -20,7 +20,7 @@ const STATUS_STYLE: Record<string, { label: string; cls: string }> = {
 
 const INP = 'w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none focus:border-primary';
 
-type Modo = 'menu' | 'editar' | 'reagendar' | 'realocar';
+type Modo = 'menu' | 'editar' | 'reagendar' | 'realocar' | 'mover-empresa';
 
 export function AcaoModal({
   acao,
@@ -55,7 +55,9 @@ export function AcaoModal({
         ? 'Reagendar'
         : modo === 'realocar'
           ? 'Realocar'
-          : acao.local;
+          : modo === 'mover-empresa'
+            ? 'Mover pra outra empresa'
+            : acao.local;
 
   return (
     <div
@@ -139,6 +141,14 @@ export function AcaoModal({
               <BotaoMenu icon={<Pencil className="h-4 w-4" />} label="Editar" onClick={() => setModo('editar')} disabled={travadoPraVoce} />
               <BotaoMenu icon={<CalendarClock className="h-4 w-4" />} label="Reagendar" onClick={() => setModo('reagendar')} disabled={travadoPraVoce} />
               <BotaoMenu icon={<ArrowRightLeft className="h-4 w-4" />} label="Realocar" onClick={() => setModo('realocar')} disabled={travadoPraVoce} />
+              {podeGerenciar && (
+                <BotaoMenu
+                  icon={<Building2 className="h-4 w-4" />}
+                  label="Mover empresa"
+                  onClick={() => setModo('mover-empresa')}
+                  disabled={acao.travada}
+                />
+              )}
             </div>
           </div>
         )}
@@ -168,6 +178,7 @@ export function AcaoModal({
 
         {modo === 'reagendar' && <ReagendarBody acao={acao} onDone={feitoESai} />}
         {modo === 'realocar' && <RealocarBody acao={acao} unidades={unidades} onDone={feitoESai} />}
+        {modo === 'mover-empresa' && <MoverEmpresaBody acaoId={acao.id} onDone={feitoESai} />}
       </div>
     </div>
   );
@@ -290,6 +301,112 @@ function RealocarBody({ acao, unidades, onDone }: { acao: AcaoListItem; unidades
         className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRightLeft className="h-4 w-4" />}
+        Mover ação
+      </button>
+    </div>
+  );
+}
+
+function MoverEmpresaBody({ acaoId, onDone }: { acaoId: string; onDone: () => void }) {
+  const { toast } = useToast();
+  const [empresas, setEmpresas] = React.useState<EmpresaAdmin[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [orgId, setOrgId] = React.useState('');
+  const [unidadeId, setUnidadeId] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancel = false;
+    fetch('/api/comercial/empresas')
+      .then((r) => (r.ok ? r.json() : { empresas: [] }))
+      .then((d: { empresas?: EmpresaAdmin[] }) => {
+        if (cancel) return;
+        // Só empresas DIFERENTES da atual e que já têm ao menos uma unidade destino.
+        const dest = (d.empresas ?? []).filter((e) => !e.ehAtual && e.unidadesList.length > 0);
+        setEmpresas(dest);
+        if (dest[0]) {
+          setOrgId(dest[0].id);
+          setUnidadeId(dest[0].unidadesList[0]?.id ?? '');
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancel) setLoading(false);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  const unidadesDestino = empresas.find((e) => e.id === orgId)?.unidadesList ?? [];
+
+  function trocarEmpresa(id: string) {
+    setOrgId(id);
+    const emp = empresas.find((e) => e.id === id);
+    setUnidadeId(emp?.unidadesList[0]?.id ?? '');
+  }
+
+  async function salvar() {
+    if (!unidadeId) return;
+    setBusy(true);
+    try {
+      const r = await fetch(`/api/comercial/acoes/${acaoId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ acao: 'mover-empresa', destinoUnidadeId: unidadeId }),
+      });
+      const d = await r.json().catch(() => null);
+      if (!r.ok) {
+        toast(d?.error ?? 'Não consegui mover.', 'erro');
+        return;
+      }
+      toast('Ação movida.');
+      onDone();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (loading) return <p className="text-sm text-muted-foreground">Carregando empresas…</p>;
+  if (empresas.length === 0)
+    return (
+      <p className="text-sm text-muted-foreground">
+        Não há outra empresa com unidade pra onde mover esta ação.
+      </p>
+    );
+
+  return (
+    <div>
+      <p className="mb-3 text-xs text-muted-foreground">
+        A ação sai desta empresa e vai pra unidade escolhida em outra. Ação em repasse não pode ser movida.
+      </p>
+      <label className="flex flex-col text-xs font-semibold text-muted-foreground">
+        Empresa destino
+        <select value={orgId} onChange={(e) => trocarEmpresa(e.target.value)} className={`mt-1 ${INP}`}>
+          {empresas.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.nome}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="mt-3 flex flex-col text-xs font-semibold text-muted-foreground">
+        Unidade destino
+        <select value={unidadeId} onChange={(e) => setUnidadeId(e.target.value)} className={`mt-1 ${INP}`}>
+          {unidadesDestino.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.nome}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        onClick={salvar}
+        disabled={busy || !unidadeId}
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60"
+      >
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Building2 className="h-4 w-4" />}
         Mover ação
       </button>
     </div>

@@ -6,7 +6,7 @@ import { ComercialNav } from './comercial-nav';
 import { EmpresaSelector } from './empresa-selector';
 import { getSessionUser } from '@/lib/workspace';
 import { resolverAcessoComercial } from '@/lib/comercial-acessos';
-import { podeCriarEmpresa } from '@/lib/comercial';
+import { podeCriarEmpresa, podeGerenciarEmpresas } from '@/lib/comercial';
 import type { EmpresaInfo } from '@/lib/comercial';
 
 /** Casca padrão das telas do módulo Comercial (header + seletor de empresa + abas). */
@@ -26,6 +26,7 @@ export async function ComercialShell({
   const acesso = user ? await resolverAcessoComercial(user.id, empresaAtualId) : null;
   const podeRepasse = !!acesso?.corporativo;
   const podeNovaEmpresa = user ? await podeCriarEmpresa(user.id) : false;
+  const podeEmpresas = user ? await podeGerenciarEmpresas(user.id, empresaAtualId) : false;
 
   return (
     <main className="min-h-screen">
@@ -44,7 +45,7 @@ export async function ComercialShell({
       </header>
 
       <div className="container">
-        <ComercialNav podeGerenciar={podeGerenciar} podeRepasse={podeRepasse} />
+        <ComercialNav podeGerenciar={podeGerenciar} podeRepasse={podeRepasse} podeEmpresas={podeEmpresas} />
       </div>
 
       <section className="container py-7">{children}</section>

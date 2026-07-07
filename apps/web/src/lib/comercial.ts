@@ -154,6 +154,139 @@ export async function criarEmpresa(userId: string, nome: string): Promise<{ id: 
   return org;
 }
 
+// ---- Gestão de empresas (corporativo/admin) — ver todas, excluir, mover ----
+
+/** Corporativo/admin (na empresa atual) OU conta master pode gerenciar empresas. */
+export async function podeGerenciarEmpresas(userId: string, orgIdAtual: string): Promise<boolean> {
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { superAdmin: true } });
+  if (u?.superAdmin) return true;
+  const a = await resolverAcessoComercial(userId, orgIdAtual);
+  return a.temAcesso && (a.corporativo || a.admin);
+}
+
+export type UnidadeDeEmpresa = { id: string; nome: string; acoes: number };
+export type EmpresaAdmin = {
+  id: string;
+  nome: string;
+  ativa: boolean;
+  donoEmail: string;
+  ehAtual: boolean;
+  unidades: number;
+  acoes: number;
+  acessos: number;
+  vazia: boolean; // sem unidades E sem ações → pode excluir
+  unidadesList: UnidadeDeEmpresa[];
+};
+
+/** Todas as empresas do Comercial (comercialAtivo), com contagens e unidades. */
+export async function listarTodasEmpresas(orgIdAtual: string): Promise<EmpresaAdmin[]> {
+  const orgs = await prisma.organizacao.findMany({
+    where: { comercialAtivo: true },
+    orderBy: { createdAt: 'asc' },
+    select: {
+      id: true,
+      nome: true,
+      comercialAtivo: true,
+      owner: { select: { email: true } },
+      unidades: {
+        orderBy: { nome: 'asc' },
+        select: { id: true, nome: true, _count: { select: { acoes: true } } },
+      },
+      _count: { select: { acessosComercial: true } },
+    },
+  });
+  return orgs.map((o) => {
+    const acoes = o.unidades.reduce((s, u) => s + u._count.acoes, 0);
+    return {
+      id: o.id,
+      nome: o.nome,
+      ativa: o.comercialAtivo,
+      donoEmail: o.owner?.email ?? '—',
+      ehAtual: o.id === orgIdAtual,
+      unidades: o.unidades.length,
+      acoes,
+      acessos: o._count.acessosComercial,
+      vazia: o.unidades.length === 0 && acoes === 0,
+      unidadesList: o.unidades.map((u) => ({ id: u.id, nome: u.nome, acoes: u._count.acoes })),
+    };
+  });
+}
+
+/** Exclui uma empresa — SÓ se estiver vazia (sem unidades e sem ações). */
+export async function excluirEmpresaComercial(
+  userId: string,
+  orgIdAtual: string,
+  alvoId: string,
+): Promise<{ ok: boolean; erro?: string }> {
+  if (!(await podeGerenciarEmpresas(userId, orgIdAtual))) return { ok: false, erro: 'Sem permissão.' };
+  const alvo = await prisma.organizacao.findUnique({
+    where: { id: alvoId },
+    select: {
+      _count: { select: { unidades: true } },
+      unidades: { select: { _count: { select: { acoes: true } } } },
+    },
+  });
+  if (!alvo) return { ok: false, erro: 'Empresa não encontrada.' };
+  const acoes = alvo.unidades.reduce((s, u) => s + u._count.acoes, 0);
+  if (alvo._count.unidades > 0 || acoes > 0) {
+    return { ok: false, erro: 'A empresa tem unidades/ações. Mova os dados antes de excluir.' };
+  }
+  await prisma.organizacao.delete({ where: { id: alvoId } });
+  return { ok: true };
+}
+
+/** Move uma UNIDADE inteira (com ações, caixa e repasses) para outra empresa. */
+export async function moverUnidadeEmpresa(
+  userId: string,
+  orgIdAtual: string,
+  unidadeId: string,
+  destinoOrgId: string,
+): Promise<{ ok: boolean; erro?: string }> {
+  if (!(await podeGerenciarEmpresas(userId, orgIdAtual))) return { ok: false, erro: 'Sem permissão.' };
+  const uni = await prisma.unidade.findUnique({ where: { id: unidadeId }, select: { organizacaoId: true } });
+  if (!uni) return { ok: false, erro: 'Unidade não encontrada.' };
+  const destino = await prisma.organizacao.findFirst({
+    where: { id: destinoOrgId, comercialAtivo: true },
+    select: { id: true },
+  });
+  if (!destino) return { ok: false, erro: 'Empresa destino inválida.' };
+  if (uni.organizacaoId === destinoOrgId) return { ok: false, erro: 'A unidade já está nessa empresa.' };
+  await prisma.$transaction([
+    // Ações e lançamentos de caixa seguem a unidade (referenciam unidadeId).
+    prisma.unidade.update({ where: { id: unidadeId }, data: { organizacaoId: destinoOrgId } }),
+    // Repasses referenciam org + unidade — acompanham a empresa nova (consistência).
+    prisma.repasse.updateMany({ where: { unidadeId }, data: { organizacaoId: destinoOrgId } }),
+    // Grants por-unidade da empresa de ORIGEM não valem na nova — removidos.
+    prisma.acessoComercialUnidade.deleteMany({ where: { unidadeId } }),
+  ]);
+  return { ok: true };
+}
+
+/** Move UMA ação para uma unidade de outra empresa (bloqueada se estiver em repasse). */
+export async function moverAcaoEmpresa(
+  userId: string,
+  orgIdAtual: string,
+  acaoId: string,
+  destinoUnidadeId: string,
+): Promise<{ ok: boolean; erro?: string }> {
+  if (!(await podeGerenciarEmpresas(userId, orgIdAtual))) return { ok: false, erro: 'Sem permissão.' };
+  const acao = await prisma.acaoComercial.findUnique({
+    where: { id: acaoId },
+    select: { repasseId: true, unidadeId: true },
+  });
+  if (!acao) return { ok: false, erro: 'Ação não encontrada.' };
+  if (acao.repasseId) return { ok: false, erro: 'Ação está num repasse — remova do repasse antes de mover.' };
+  const dest = await prisma.unidade.findUnique({ where: { id: destinoUnidadeId }, select: { id: true } });
+  if (!dest) return { ok: false, erro: 'Unidade destino inválida.' };
+  if (acao.unidadeId === destinoUnidadeId) return { ok: false, erro: 'A ação já está nessa unidade.' };
+  await prisma.$transaction([
+    prisma.acaoComercial.update({ where: { id: acaoId }, data: { unidadeId: destinoUnidadeId } }),
+    // Saída automática no caixa (se houver) acompanha a ação.
+    prisma.lancamentoCaixa.updateMany({ where: { acaoId }, data: { unidadeId: destinoUnidadeId } }),
+  ]);
+  return { ok: true };
+}
+
 function mapUnidade(u: {
   id: string;
   nome: string;

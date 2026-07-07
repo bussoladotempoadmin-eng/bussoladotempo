@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { getSessionUser } from '@/lib/workspace';
 import {
   atualizarAcao,
@@ -6,8 +7,11 @@ import {
   reagendar,
   realocar,
   removerAcao,
+  moverAcaoEmpresa,
+  resolverEmpresaId,
   type ResultadoInput,
 } from '@/lib/comercial';
+import { COOKIE_EMPRESA } from '@/app/comercial/contexto';
 import type { StatusAcao } from '@bussola/db';
 
 export const dynamic = 'force-dynamic';
@@ -55,6 +59,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
       unidadeId: typeof b.unidadeId === 'string' ? b.unidadeId : undefined,
       responsaveis: typeof b.responsaveis === 'string' ? b.responsaveis : undefined,
     });
+    return r.ok
+      ? NextResponse.json({ ok: true })
+      : NextResponse.json({ error: r.erro }, { status: 422 });
+  }
+
+  // Mover a ação para uma UNIDADE de OUTRA empresa (só corporativo/admin).
+  if (acao === 'mover-empresa') {
+    const orgId = await resolverEmpresaId(user.id, cookies().get(COOKIE_EMPRESA)?.value);
+    if (!orgId) return NextResponse.json({ error: 'Sem empresa atual' }, { status: 400 });
+    const destinoUnidadeId = typeof b.destinoUnidadeId === 'string' ? b.destinoUnidadeId : '';
+    const r = await moverAcaoEmpresa(user.id, orgId, params.id, destinoUnidadeId);
     return r.ok
       ? NextResponse.json({ ok: true })
       : NextResponse.json({ error: r.erro }, { status: 422 });
