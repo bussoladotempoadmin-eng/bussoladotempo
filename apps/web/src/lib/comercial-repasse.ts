@@ -188,6 +188,10 @@ export async function listarRepassesRelatorio(
   const rows = await prisma.repasse.findMany({
     where,
     include: {
+      // Ações vinculadas — o relatório só soma as que AINDA NÃO foram finalizadas
+      // (nem canceladas): é o que de fato precisa ser repassado. Finalizada = já
+      // executada, não entra na ordem de pagamento.
+      acoes: { select: { status: true, valorSolicitado: true } },
       unidade: {
         select: {
           nome: true,
@@ -205,31 +209,38 @@ export async function listarRepassesRelatorio(
     orderBy: [{ dataPrevista: 'asc' }, { unidade: { nome: 'asc' } }],
   });
 
-  return rows.map((r) => {
-    const pagoRelevante = r.status === 'FEITO' || r.status === 'PARCIAL';
-    return {
-      id: r.id,
-      unidadeId: r.unidadeId,
-      unidadeNome: r.unidade.nome,
-      periodoDe: iso(r.periodoDe),
-      periodoAte: iso(r.periodoAte),
-      valorSolicitado: r.valorSolicitado,
-      dataPrevista: iso(r.dataPrevista),
-      status: r.status,
-      valorPago: r.valorPago,
-      dataPagamento: r.dataPagamento ? iso(r.dataPagamento) : null,
-      divergencia: pagoRelevante ? Math.round(((r.valorPago ?? 0) - r.valorSolicitado) * 100) / 100 : null,
-      observacao: r.observacao,
-      metodo: r.unidade.repasseMetodo,
-      banco: r.unidade.repasseBanco,
-      agencia: r.unidade.repasseAgencia,
-      conta: r.unidade.repasseConta,
-      tipoConta: r.unidade.repasseTipoConta,
-      pix: r.unidade.repassePix,
-      cpfCnpj: r.unidade.repasseCpfCnpj,
-      titular: r.unidade.repasseTitular,
-    };
-  });
+  return rows
+    .map((r) => {
+      const aEnviar = r.acoes
+        .filter((a) => a.status !== 'FINALIZADO' && a.status !== 'CANCELADO')
+        .reduce((s, a) => s + (a.valorSolicitado ?? 0), 0);
+      const pagoRelevante = r.status === 'FEITO' || r.status === 'PARCIAL';
+      return {
+        id: r.id,
+        unidadeId: r.unidadeId,
+        unidadeNome: r.unidade.nome,
+        periodoDe: iso(r.periodoDe),
+        periodoAte: iso(r.periodoAte),
+        // Valor a repassar = só as ações em aberto (não finalizadas/canceladas).
+        valorSolicitado: Math.round(aEnviar * 100) / 100,
+        dataPrevista: iso(r.dataPrevista),
+        status: r.status,
+        valorPago: r.valorPago,
+        dataPagamento: r.dataPagamento ? iso(r.dataPagamento) : null,
+        divergencia: pagoRelevante ? Math.round(((r.valorPago ?? 0) - r.valorSolicitado) * 100) / 100 : null,
+        observacao: r.observacao,
+        metodo: r.unidade.repasseMetodo,
+        banco: r.unidade.repasseBanco,
+        agencia: r.unidade.repasseAgencia,
+        conta: r.unidade.repasseConta,
+        tipoConta: r.unidade.repasseTipoConta,
+        pix: r.unidade.repassePix,
+        cpfCnpj: r.unidade.repasseCpfCnpj,
+        titular: r.unidade.repasseTitular,
+      };
+    })
+    // Só entra no relatório quem tem valor em aberto pra repassar.
+    .filter((i) => i.valorSolicitado > 0);
 }
 
 export async function marcarRepasse(

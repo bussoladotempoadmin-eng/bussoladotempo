@@ -73,9 +73,8 @@ export async function GET(req: Request) {
   const statusTxt = status ? STATUS_LABEL[status] : 'Todos';
   const emitido = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
+  // Total a repassar = soma do valor solicitado em aberto (ações não finalizadas).
   const totalSolicitado = itens.reduce((s, i) => s + i.valorSolicitado, 0);
-  const totalPago = itens.reduce((s, i) => s + (i.status === 'FEITO' || i.status === 'PARCIAL' ? i.valorPago ?? 0 : 0), 0);
-  const totalPendente = itens.filter((i) => i.status === 'PENDENTE').reduce((s, i) => s + i.valorSolicitado, 0);
 
   if (formato === 'excel') {
     const linhas: (string | number)[][] = [
@@ -89,9 +88,7 @@ export async function GET(req: Request) {
         'Unidade',
         'Período',
         'Previsto',
-        'Status',
-        'Solicitado (R$)',
-        'Pago (R$)',
+        'Valor solicitado (R$)',
         'Método',
         'Banco',
         'Agência',
@@ -105,9 +102,7 @@ export async function GET(req: Request) {
         i.unidadeNome,
         i.periodoDe === i.periodoAte ? fmtDia(i.periodoDe) : `${fmtDia(i.periodoDe)} a ${fmtDia(i.periodoAte)}`,
         fmtDia(i.dataPrevista),
-        STATUS_LABEL[i.status],
         brMoney(i.valorSolicitado),
-        i.status === 'FEITO' || i.status === 'PARCIAL' ? brMoney(i.valorPago) : '',
         metodoLabel(i.metodo),
         i.banco ?? '',
         i.agencia ?? '',
@@ -118,9 +113,7 @@ export async function GET(req: Request) {
         i.titular ?? '',
       ]),
       [],
-      ['', '', '', 'Total pendente', brMoney(totalPendente)],
-      ['', '', '', 'Total solicitado', brMoney(totalSolicitado)],
-      ['', '', '', 'Total pago', brMoney(totalPago)],
+      ['', '', 'VALOR TOTAL', brMoney(totalSolicitado)],
     ];
     const body = '﻿' + linhas.map((l) => l.map(csvCell).join(';')).join('\r\n');
     return new Response(body, {
@@ -151,9 +144,9 @@ export async function GET(req: Request) {
         <div class="top">
           <div>
             <div class="uni">${esc(i.unidadeNome)}</div>
-            <div class="sub">Previsto ${fmtDia(i.dataPrevista)} · período ${i.periodoDe === i.periodoAte ? fmtDia(i.periodoDe) : `${fmtDia(i.periodoDe)}–${fmtDia(i.periodoAte)}`} · <span class="st st-${i.status}">${STATUS_LABEL[i.status]}</span></div>
+            <div class="sub">Previsto ${fmtDia(i.dataPrevista)} · período ${i.periodoDe === i.periodoAte ? fmtDia(i.periodoDe) : `${fmtDia(i.periodoDe)}–${fmtDia(i.periodoAte)}`}</div>
           </div>
-          <div class="valor">R$ ${brMoney(i.valorSolicitado)}${i.status === 'FEITO' || i.status === 'PARCIAL' ? `<div class="pago">pago R$ ${brMoney(i.valorPago)}</div>` : ''}</div>
+          <div class="valor">R$ ${brMoney(i.valorSolicitado)}</div>
         </div>
         <div class="conta">${metodoLabel(i.metodo) !== 'Não configurado' ? `<span class="metodo">${metodoLabel(i.metodo)}</span> ` : ''}${contaBloco(i)}</div>
       </div>`,
@@ -176,8 +169,9 @@ export async function GET(req: Request) {
   .uni { font-weight: 700; font-size: 15px; }
   .sub { font-size: 11px; color: #555; margin-top: 2px; }
   .valor { text-align: right; font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .pago { font-size: 11px; font-weight: 600; color: #047857; }
   .conta { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e5e7eb; font-size: 12px; color: #222; }
+  .rodape { margin-top: 16px; padding-top: 12px; border-top: 2px solid #bbb; text-align: right; font-size: 15px; }
+  .rodape b { font-size: 22px; margin-left: 8px; }
   .metodo { display: inline-block; background: #eef2ff; color: #3730a3; border-radius: 6px; padding: 1px 7px; font-size: 11px; font-weight: 700; }
   .semconta { color: #b91c1c; font-weight: 600; }
   .cartao { color: #555; }
@@ -196,12 +190,8 @@ export async function GET(req: Request) {
     <b>Empresa:</b> ${esc(empresa)}<br>
     <b>Previstos:</b> ${esc(periodo)} &nbsp;·&nbsp; <b>Status:</b> ${esc(statusTxt)} &nbsp;·&nbsp; <b>Emitido em:</b> ${esc(emitido)}
   </div>
-  <div class="tot">
-    <div>Pendente <b>R$ ${brMoney(totalPendente)}</b></div>
-    <div>Solicitado <b>R$ ${brMoney(totalSolicitado)}</b></div>
-    <div>Pago <b>R$ ${brMoney(totalPago)}</b></div>
-  </div>
-  ${cards || '<p style="text-align:center;color:#888;padding:24px">Nenhum repasse no filtro escolhido.</p>'}
+  ${cards || '<p style="text-align:center;color:#888;padding:24px">Nenhum repasse em aberto no filtro escolhido.</p>'}
+  <div class="rodape">Valor total a repassar: <b>R$ ${brMoney(totalSolicitado)}</b></div>
   <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 250); };</script>
 </body></html>`;
 

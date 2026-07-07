@@ -26,8 +26,8 @@ export function RelatorioRepasseBar() {
         Relatório de repasse
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
-        Emite, por unidade, o <b>valor a repassar + os dados da conta</b> configurada na unidade. Filtre por data
-        prevista e status.
+        Emite, por unidade, o <b>valor a repassar + os dados da conta</b> configurada na unidade. Só entram
+        <b> ações ainda em aberto</b> (não finalizadas); ação finalizada sai da conta. Filtre por data prevista e status.
       </p>
       <div className="mt-3 flex flex-wrap items-end gap-2">
         <label className="flex flex-col">
