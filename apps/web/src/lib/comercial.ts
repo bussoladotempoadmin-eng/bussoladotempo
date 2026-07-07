@@ -118,17 +118,25 @@ export async function resolverEmpresaId(userId: string, preferido?: string): Pro
 /**
  * Pode o usuário criar uma nova empresa?
  *  - quem ainda não tem NENHUMA empresa → sim (ativação inicial, vira dono);
- *  - dono de qualquer org → sim (sempre);
- *  - acesso com `podeCriarEmpresa` em qualquer org → sim;
- *  - senão → não.
+ *  - conta master (superAdmin) → sim;
+ *  - acesso com a marcação `podeCriarEmpresa` → sim;
+ *  - senão → NÃO.
+ *
+ * IMPORTANTE: ser dono de uma empresa NÃO basta. Senão quem criou uma empresa por
+ * engano (virando dono dela) conseguiria criar mais indefinidamente — foi esse o
+ * furo que deixou usuários sem a marcação criando empresas.
  */
 export async function podeCriarEmpresa(userId: string): Promise<boolean> {
   const empresas = await getEmpresasAcessiveis(userId);
   if (empresas.length === 0) return true; // primeira empresa (ativação)
-  if (empresas.some((e) => e.ehDono)) return true; // dono sempre pode
-  const liberado = await prisma.acessoComercial
-    .count({ where: { userId, podeCriarEmpresa: true } })
-    .catch(() => 0);
+  const u = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { superAdmin: true },
+  });
+  if (u?.superAdmin) return true; // conta master sempre pode
+  const liberado = await prisma.acessoComercial.count({
+    where: { userId, podeCriarEmpresa: true },
+  });
   return liberado > 0;
 }
 
