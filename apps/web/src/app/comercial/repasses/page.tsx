@@ -6,6 +6,7 @@ import { listarRepasses } from '@/lib/comercial-repasse';
 import { ComercialShell } from '../comercial-shell';
 import { carregarComercial } from '../contexto';
 import { RepassesView } from './repasses-view';
+import { RelatorioRepasseBar } from './relatorio-bar';
 
 export const metadata = { title: 'Repasses · Comercial' };
 export const dynamic = 'force-dynamic';
@@ -29,6 +30,7 @@ export default async function RepassesPage() {
         Valores a repassar por unidade. Marque cada um como feito, parcial ou não feito — o que for pago é
         creditado no caixa da unidade.
       </p>
+      <RelatorioRepasseBar />
       <RepassesView itens={itens} />
     </ComercialShell>
   );

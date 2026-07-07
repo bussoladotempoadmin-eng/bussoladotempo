@@ -5,7 +5,7 @@
  * creditam o caixa da unidade (via sincronizarLancamentoRepasse); NAO_FEITO
  * não credita. Guarda solicitado × pago p/ enxergar divergência.
  */
-import { prisma, type RepasseStatus } from '@bussola/db';
+import { prisma, type RepasseStatus, type MetodoRepasse, type TipoConta } from '@bussola/db';
 import { resolverAcessoComercial } from './comercial-acessos';
 import { sincronizarLancamentoRepasse } from './comercial-caixa';
 
@@ -153,6 +153,85 @@ export async function listarRepasses(userId: string, orgId: string): Promise<Rep
  * PARCIAL: pago informado (< solicitado) + data real.
  * NAO_FEITO/PENDENTE: zera pago/data e remove o crédito.
  */
+// ---- Relatório de repasse (valor + dados da conta por unidade) ----
+
+export type RepasseRelatorioItem = RepasseItem & {
+  metodo: MetodoRepasse | null;
+  banco: string | null;
+  agencia: string | null;
+  conta: string | null;
+  tipoConta: TipoConta | null;
+  pix: string | null;
+  cpfCnpj: string | null;
+  titular: string | null;
+};
+
+/**
+ * Repasses (filtrados por data prevista e status) JÁ com os dados bancários da
+ * unidade — base do "Relatório de repasse". Só corporativo.
+ */
+export async function listarRepassesRelatorio(
+  userId: string,
+  orgId: string,
+  filtro: { de?: string; ate?: string; status?: RepasseStatus } = {},
+): Promise<RepasseRelatorioItem[] | null> {
+  if (!(await ehCorporativo(userId, orgId))) return null;
+
+  const de = filtro.de ? parseDia(filtro.de) : null;
+  const ate = filtro.ate ? parseDia(filtro.ate) : null;
+  const where: Record<string, unknown> = { organizacaoId: orgId };
+  if (filtro.status) where.status = filtro.status;
+  if (de || ate) {
+    where.dataPrevista = { ...(de ? { gte: de } : {}), ...(ate ? { lte: ate } : {}) };
+  }
+
+  const rows = await prisma.repasse.findMany({
+    where,
+    include: {
+      unidade: {
+        select: {
+          nome: true,
+          repasseMetodo: true,
+          repasseBanco: true,
+          repasseAgencia: true,
+          repasseConta: true,
+          repasseTipoConta: true,
+          repassePix: true,
+          repasseCpfCnpj: true,
+          repasseTitular: true,
+        },
+      },
+    },
+    orderBy: [{ dataPrevista: 'asc' }, { unidade: { nome: 'asc' } }],
+  });
+
+  return rows.map((r) => {
+    const pagoRelevante = r.status === 'FEITO' || r.status === 'PARCIAL';
+    return {
+      id: r.id,
+      unidadeId: r.unidadeId,
+      unidadeNome: r.unidade.nome,
+      periodoDe: iso(r.periodoDe),
+      periodoAte: iso(r.periodoAte),
+      valorSolicitado: r.valorSolicitado,
+      dataPrevista: iso(r.dataPrevista),
+      status: r.status,
+      valorPago: r.valorPago,
+      dataPagamento: r.dataPagamento ? iso(r.dataPagamento) : null,
+      divergencia: pagoRelevante ? Math.round(((r.valorPago ?? 0) - r.valorSolicitado) * 100) / 100 : null,
+      observacao: r.observacao,
+      metodo: r.unidade.repasseMetodo,
+      banco: r.unidade.repasseBanco,
+      agencia: r.unidade.repasseAgencia,
+      conta: r.unidade.repasseConta,
+      tipoConta: r.unidade.repasseTipoConta,
+      pix: r.unidade.repassePix,
+      cpfCnpj: r.unidade.repasseCpfCnpj,
+      titular: r.unidade.repasseTitular,
+    };
+  });
+}
+
 export async function marcarRepasse(
   userId: string,
   repasseId: string,
