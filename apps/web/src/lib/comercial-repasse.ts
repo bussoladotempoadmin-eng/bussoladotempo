@@ -5,7 +5,14 @@
  * creditam o caixa da unidade (via sincronizarLancamentoRepasse); NAO_FEITO
  * não credita. Guarda solicitado × pago p/ enxergar divergência.
  */
-import { prisma, type RepasseStatus, type MetodoRepasse, type TipoConta } from '@bussola/db';
+import {
+  prisma,
+  type Repasse,
+  type RepasseStatus,
+  type MetodoRepasse,
+  type TipoConta,
+  type StatusAcao,
+} from '@bussola/db';
 import { resolverAcessoComercial } from './comercial-acessos';
 import { sincronizarLancamentoRepasse } from './comercial-caixa';
 
@@ -32,7 +39,7 @@ export async function criarRepassesDoRelatorio(
   userId: string,
   orgId: string,
   input: { de: string; ate: string; dataPrevista: string },
-): Promise<{ ok: boolean; erro?: string; count?: number }> {
+): Promise<{ ok: boolean; erro?: string; count?: number; loteId?: string }> {
   if (!(await ehCorporativo(userId, orgId))) return { ok: false, erro: 'Só o corporativo pode salvar repasses.' };
 
   const de = parseDia(input.de);
@@ -48,6 +55,9 @@ export async function criarRepassesDoRelatorio(
       unidade: { organizacaoId: orgId },
       repasseId: null,
       valorSolicitado: { gt: 0 },
+      // Só ações AINDA EM ABERTO entram no repasse: finalizada/cancelada não é
+      // financiada (já aconteceu / não vai acontecer).
+      status: { notIn: ['FINALIZADO', 'CANCELADO'] as StatusAcao[] },
       dataInicio: { lte: ate },
       dataFim: { gte: de },
     },
@@ -66,11 +76,15 @@ export async function criarRepassesDoRelatorio(
     return { ok: false, erro: 'Nenhuma ação livre com verba solicitada no período (as do período já podem ter sido repassadas).' };
   }
 
+  // Um loteId por emissão: todos os repasses desta relação = 1 relatório emitido.
+  const loteId = crypto.randomUUID();
+
   // Cria 1 repasse por unidade e VINCULA as ações dele (trava edição/exclusão).
   for (const [unidadeId, { valor, acaoIds }] of entradas) {
     const repasse = await prisma.repasse.create({
       data: {
         organizacaoId: orgId,
+        loteId,
         unidadeId,
         periodoDe: de,
         periodoAte: ate,
@@ -85,7 +99,7 @@ export async function criarRepassesDoRelatorio(
       data: { repasseId: repasse.id },
     });
   }
-  return { ok: true, count: entradas.length };
+  return { ok: true, count: entradas.length, loteId };
 }
 
 /**
@@ -167,19 +181,21 @@ export type RepasseRelatorioItem = RepasseItem & {
 };
 
 /**
- * Repasses (filtrados por data prevista e status) JÁ com os dados bancários da
- * unidade — base do "Relatório de repasse". Só corporativo.
+ * Itens de UM relatório emitido (lote) — ou filtrado por data prevista/status —
+ * JÁ com os dados bancários da unidade. O valor é o SNAPSHOT da emissão (a
+ * exclusão de ações finalizadas acontece na hora de emitir). Só corporativo.
  */
 export async function listarRepassesRelatorio(
   userId: string,
   orgId: string,
-  filtro: { de?: string; ate?: string; status?: RepasseStatus } = {},
+  filtro: { de?: string; ate?: string; status?: RepasseStatus; lote?: string } = {},
 ): Promise<RepasseRelatorioItem[] | null> {
   if (!(await ehCorporativo(userId, orgId))) return null;
 
   const de = filtro.de ? parseDia(filtro.de) : null;
   const ate = filtro.ate ? parseDia(filtro.ate) : null;
   const where: Record<string, unknown> = { organizacaoId: orgId };
+  if (filtro.lote) where.loteId = filtro.lote;
   if (filtro.status) where.status = filtro.status;
   if (de || ate) {
     where.dataPrevista = { ...(de ? { gte: de } : {}), ...(ate ? { lte: ate } : {}) };
@@ -188,10 +204,6 @@ export async function listarRepassesRelatorio(
   const rows = await prisma.repasse.findMany({
     where,
     include: {
-      // Ações vinculadas — o relatório só soma as que AINDA NÃO foram finalizadas
-      // (nem canceladas): é o que de fato precisa ser repassado. Finalizada = já
-      // executada, não entra na ordem de pagamento.
-      acoes: { select: { status: true, valorSolicitado: true } },
       unidade: {
         select: {
           nome: true,
@@ -209,38 +221,75 @@ export async function listarRepassesRelatorio(
     orderBy: [{ dataPrevista: 'asc' }, { unidade: { nome: 'asc' } }],
   });
 
-  return rows
-    .map((r) => {
-      const aEnviar = r.acoes
-        .filter((a) => a.status !== 'FINALIZADO' && a.status !== 'CANCELADO')
-        .reduce((s, a) => s + (a.valorSolicitado ?? 0), 0);
-      const pagoRelevante = r.status === 'FEITO' || r.status === 'PARCIAL';
-      return {
-        id: r.id,
-        unidadeId: r.unidadeId,
-        unidadeNome: r.unidade.nome,
-        periodoDe: iso(r.periodoDe),
-        periodoAte: iso(r.periodoAte),
-        // Valor a repassar = só as ações em aberto (não finalizadas/canceladas).
-        valorSolicitado: Math.round(aEnviar * 100) / 100,
-        dataPrevista: iso(r.dataPrevista),
-        status: r.status,
-        valorPago: r.valorPago,
-        dataPagamento: r.dataPagamento ? iso(r.dataPagamento) : null,
-        divergencia: pagoRelevante ? Math.round(((r.valorPago ?? 0) - r.valorSolicitado) * 100) / 100 : null,
-        observacao: r.observacao,
-        metodo: r.unidade.repasseMetodo,
-        banco: r.unidade.repasseBanco,
-        agencia: r.unidade.repasseAgencia,
-        conta: r.unidade.repasseConta,
-        tipoConta: r.unidade.repasseTipoConta,
-        pix: r.unidade.repassePix,
-        cpfCnpj: r.unidade.repasseCpfCnpj,
-        titular: r.unidade.repasseTitular,
-      };
-    })
-    // Só entra no relatório quem tem valor em aberto pra repassar.
-    .filter((i) => i.valorSolicitado > 0);
+  return rows.map((r) => {
+    const pagoRelevante = r.status === 'FEITO' || r.status === 'PARCIAL';
+    return {
+      id: r.id,
+      unidadeId: r.unidadeId,
+      unidadeNome: r.unidade.nome,
+      periodoDe: iso(r.periodoDe),
+      periodoAte: iso(r.periodoAte),
+      valorSolicitado: r.valorSolicitado,
+      dataPrevista: iso(r.dataPrevista),
+      status: r.status,
+      valorPago: r.valorPago,
+      dataPagamento: r.dataPagamento ? iso(r.dataPagamento) : null,
+      divergencia: pagoRelevante ? Math.round(((r.valorPago ?? 0) - r.valorSolicitado) * 100) / 100 : null,
+      observacao: r.observacao,
+      metodo: r.unidade.repasseMetodo,
+      banco: r.unidade.repasseBanco,
+      agencia: r.unidade.repasseAgencia,
+      conta: r.unidade.repasseConta,
+      tipoConta: r.unidade.repasseTipoConta,
+      pix: r.unidade.repassePix,
+      cpfCnpj: r.unidade.repasseCpfCnpj,
+      titular: r.unidade.repasseTitular,
+    };
+  });
+}
+
+export type LoteRepasse = {
+  loteId: string;
+  emitidoEm: string; // ISO date do createdAt do lote
+  periodoDe: string;
+  periodoAte: string;
+  dataPrevista: string;
+  unidades: number;
+  totalSolicitado: number;
+  totalPago: number;
+  pendentes: number;
+  pagos: number; // FEITO ou PARCIAL
+};
+
+/** Histórico de relatórios emitidos: cada lote = uma emissão da relação. */
+export async function listarLotesRepasse(userId: string, orgId: string): Promise<LoteRepasse[] | null> {
+  if (!(await ehCorporativo(userId, orgId))) return null;
+  const rows = await prisma.repasse.findMany({
+    where: { organizacaoId: orgId, loteId: { not: null } },
+    orderBy: { createdAt: 'desc' },
+  });
+  const mapa = new Map<string, Repasse[]>();
+  for (const r of rows) {
+    const k = r.loteId as string;
+    const arr = mapa.get(k);
+    if (arr) arr.push(r);
+    else mapa.set(k, [r]);
+  }
+  return Array.from(mapa.entries()).map(([loteId, reps]) => {
+    const pagos = reps.filter((r) => r.status === 'FEITO' || r.status === 'PARCIAL');
+    return {
+      loteId,
+      emitidoEm: iso(reps[0].createdAt),
+      periodoDe: iso(reps[0].periodoDe),
+      periodoAte: iso(reps[0].periodoAte),
+      dataPrevista: iso(reps[0].dataPrevista),
+      unidades: reps.length,
+      totalSolicitado: Math.round(reps.reduce((s, r) => s + r.valorSolicitado, 0) * 100) / 100,
+      totalPago: Math.round(pagos.reduce((s, r) => s + (r.valorPago ?? 0), 0) * 100) / 100,
+      pendentes: reps.filter((r) => r.status === 'PENDENTE').length,
+      pagos: pagos.length,
+    };
+  });
 }
 
 export async function marcarRepasse(

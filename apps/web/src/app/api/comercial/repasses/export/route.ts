@@ -60,16 +60,23 @@ export async function GET(req: Request) {
     ? (statusRaw as RepasseStatus)
     : undefined;
   const formato = url.searchParams.get('formato') === 'pdf' ? 'pdf' : 'excel';
+  const lote = url.searchParams.get('lote') || '';
 
   const orgId = await resolverEmpresaId(user.id, cookies().get(COOKIE_EMPRESA)?.value);
   if (!orgId) return new Response('Sem empresa atual', { status: 400 });
 
-  const itens = await listarRepassesRelatorio(user.id, orgId, { de, ate, status });
+  const itens = await listarRepassesRelatorio(user.id, orgId, { de, ate, status, lote });
   if (itens === null) return new Response('Só o corporativo pode emitir o relatório de repasse', { status: 403 });
 
   const org = await prisma.organizacao.findUnique({ where: { id: orgId }, select: { nome: true } });
   const empresa = org?.nome ?? '—';
-  const periodo = periodoLabel(de, ate);
+  // Num relatório emitido (lote), o "período" é o da própria emissão.
+  const periodo =
+    lote && itens.length
+      ? itens[0].periodoDe === itens[0].periodoAte
+        ? fmtDia(itens[0].periodoDe)
+        : `${fmtDia(itens[0].periodoDe)} a ${fmtDia(itens[0].periodoAte)}`
+      : periodoLabel(de, ate);
   const statusTxt = status ? STATUS_LABEL[status] : 'Todos';
   const emitido = new Date().toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
@@ -192,7 +199,6 @@ export async function GET(req: Request) {
   </div>
   ${cards || '<p style="text-align:center;color:#888;padding:24px">Nenhum repasse em aberto no filtro escolhido.</p>'}
   <div class="rodape">Valor total a repassar: <b>R$ ${brMoney(totalSolicitado)}</b></div>
-  <script>window.onload = function(){ setTimeout(function(){ window.print(); }, 250); };</script>
 </body></html>`;
 
   return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });

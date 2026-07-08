@@ -579,6 +579,9 @@ enum RepasseStatus {
 model Repasse {
   id              String        @id @default(cuid())
   organizacaoId   String
+  // Lote da emissão: todos os repasses salvos numa mesma "Relação de repasse"
+  // compartilham este id → cada lote é um RELATÓRIO emitido (histórico).
+  loteId          String?
   unidadeId       String
   periodoDe       DateTime
   periodoAte      DateTime
@@ -599,6 +602,7 @@ model Repasse {
 
   @@index([organizacaoId])
   @@index([unidadeId])
+  @@index([loteId])
 }
 
 // ============================================================
