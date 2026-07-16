@@ -52,6 +52,7 @@ export type LancamentoItem = {
   descricao: string;
   automatico: boolean;
   acaoId: string | null;
+  criadoPor: string | null; // quem fez o ajuste manual (nome/e-mail); null nos automáticos
   saldoApos: number; // saldo corrente após este lançamento (cronológico)
 };
 
@@ -79,6 +80,13 @@ export async function getCaixaUnidade(
     orderBy: [{ data: 'asc' }, { createdAt: 'asc' }],
   });
 
+  // Autor dos lançamentos manuais (quem lançou/ajustou).
+  const autorIds = Array.from(new Set(todos.map((l) => l.criadoPorId).filter((x): x is string => !!x)));
+  const autores = autorIds.length
+    ? await prisma.user.findMany({ where: { id: { in: autorIds } }, select: { id: true, name: true, email: true } })
+    : [];
+  const autorNome = new Map(autores.map((u) => [u.id, u.name?.trim() || u.email]));
+
   const de = filtro.de ? parseDia(filtro.de) : null;
   const ate = filtro.ate ? parseDia(filtro.ate) : null;
 
@@ -103,6 +111,7 @@ export async function getCaixaUnidade(
       descricao: l.descricao,
       automatico: l.automatico,
       acaoId: l.acaoId,
+      criadoPor: !l.automatico && l.criadoPorId ? (autorNome.get(l.criadoPorId) ?? null) : null,
       saldoApos: Math.round(saldo * 100) / 100,
     });
   }

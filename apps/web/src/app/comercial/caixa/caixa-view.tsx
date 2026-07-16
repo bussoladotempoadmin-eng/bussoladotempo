@@ -203,6 +203,9 @@ export function CaixaView({
                             <Settings2 className="h-3 w-3" /> auto
                           </span>
                         )}
+                        {l.criadoPor && (
+                          <span className="text-[11px] text-muted-foreground">· por {l.criadoPor}</span>
+                        )}
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-emerald-600 dark:text-emerald-400">
