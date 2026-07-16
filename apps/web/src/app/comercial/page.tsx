@@ -10,6 +10,7 @@ import { UserMenu } from '@/components/user-menu';
 import { ComercialShell } from './comercial-shell';
 import { AtivarComercial } from './ativar-comercial';
 import { DateFilter } from './date-filter';
+import { UnidadesFilter } from './unidades-filter';
 import { carregarComercial } from './contexto';
 import { fmtMoney, fmtNum, mesCorrente } from './fmt';
 
@@ -18,7 +19,7 @@ export const metadata = { title: 'Comercial · Bússola do Tempo' };
 export default async function ComercialPage({
   searchParams,
 }: {
-  searchParams: { de?: string; ate?: string };
+  searchParams: { de?: string; ate?: string; unidades?: string };
 }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/login?callbackUrl=/comercial');
@@ -50,7 +51,11 @@ export default async function ComercialPage({
   const def = mesCorrente();
   const de = searchParams.de || def.de;
   const ate = searchParams.ate || def.ate;
-  const p = await getPainelComercial(user.id, orgId, { de, ate });
+  const unidadesSel = (searchParams.unidades ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const p = await getPainelComercial(user.id, orgId, { de, ate, unidadeIds: unidadesSel });
 
   const maxLeads = Math.max(1, ...p.porUnidade.map((u) => u.leads));
   const tiposComLead = p.porTipo.filter((t) => t.custoPorLead !== null);
@@ -65,7 +70,15 @@ export default async function ComercialPage({
             {escopo.ehDono ? `${escopo.unidades.length} unidade(s)` : 'Sua unidade'}
           </p>
         </div>
-        <DateFilter de={de} ate={ate} />
+        <div className="flex flex-wrap items-end gap-2">
+          {escopo.unidades.length > 1 && (
+            <UnidadesFilter
+              unidades={escopo.unidades.map((u) => ({ id: u.id, nome: u.nome }))}
+              selecionadas={unidadesSel}
+            />
+          )}
+          <DateFilter de={de} ate={ate} extras={unidadesSel.length ? { unidades: unidadesSel.join(',') } : undefined} />
+        </div>
       </div>
 
       {p.totalAcoes === 0 ? (

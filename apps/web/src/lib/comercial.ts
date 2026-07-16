@@ -1124,13 +1124,24 @@ export type AcaoListItem = {
   parcelas: { valor: number; data: string }[]; // agenda de pagamento (à vista = 1)
 };
 
-type Filtro = { unidadeId?: string; de?: string; ate?: string; status?: StatusAcao };
+type Filtro = {
+  unidadeId?: string;
+  unidadeIds?: string[]; // filtro multi-unidade (painel); vazio/ausente = todas
+  de?: string;
+  ate?: string;
+  status?: StatusAcao;
+};
 
 async function buscarAcoes(userId: string, orgId: string, filtro: Filtro) {
   const visiveis = await idsDaOrg(userId, orgId);
   if (visiveis.length === 0) return [];
-  const ids =
-    filtro.unidadeId && visiveis.includes(filtro.unidadeId) ? [filtro.unidadeId] : visiveis;
+  let ids = visiveis;
+  if (filtro.unidadeIds && filtro.unidadeIds.length) {
+    ids = visiveis.filter((id) => filtro.unidadeIds!.includes(id)); // multi-unidade
+  } else if (filtro.unidadeId && visiveis.includes(filtro.unidadeId)) {
+    ids = [filtro.unidadeId];
+  }
+  if (ids.length === 0) return [];
 
   const where: Record<string, unknown> = { unidadeId: { in: ids } };
   if (filtro.status) where.status = filtro.status;
