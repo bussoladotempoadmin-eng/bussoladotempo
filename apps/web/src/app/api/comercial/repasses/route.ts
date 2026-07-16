@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/workspace';
-import { criarRepassesDoRelatorio, marcarRepasse, removerRepasse } from '@/lib/comercial-repasse';
-import type { RepasseStatus } from '@bussola/db';
+import {
+  criarRepassesDoRelatorio,
+  registrarPagamentoRepasse,
+  removerPagamentoRepasse,
+  definirStatusRepasse,
+  removerRepasse,
+} from '@/lib/comercial-repasse';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,19 +27,35 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true, count: r.count });
 }
 
-// PATCH /api/comercial/repasses  body: { id, status, valorPago?, dataPagamento?, observacao? }
+// PATCH /api/comercial/repasses
+//   acao 'pagar'          body: { id, valor, data }        → registra uma parcela
+//   acao 'remover-parcela' body: { pagamentoId }           → remove uma parcela
+//   acao 'status'         body: { id, status }             → NAO_FEITO / PENDENTE
 export async function PATCH(req: Request) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
   const body = await req.json().catch(() => null);
+  const acao = body?.acao;
+
+  if (acao === 'remover-parcela') {
+    const pagamentoId = typeof body?.pagamentoId === 'string' ? body.pagamentoId : '';
+    const r = await removerPagamentoRepasse(user.id, pagamentoId);
+    return r.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: r.erro }, { status: 422 });
+  }
+
   const id = typeof body?.id === 'string' ? body.id : '';
   if (!id) return NextResponse.json({ error: 'Informe o repasse' }, { status: 422 });
 
-  const r = await marcarRepasse(user.id, id, {
-    status: body?.status as RepasseStatus,
-    valorPago: body?.valorPago != null ? Number(body.valorPago) : undefined,
-    dataPagamento: typeof body?.dataPagamento === 'string' ? body.dataPagamento : undefined,
-    observacao: typeof body?.observacao === 'string' ? body.observacao : undefined,
+  if (acao === 'status') {
+    const status = body?.status === 'NAO_FEITO' ? 'NAO_FEITO' : 'PENDENTE';
+    const r = await definirStatusRepasse(user.id, id, status);
+    return r.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ error: r.erro }, { status: 422 });
+  }
+
+  // padrão: registrar uma parcela (parcial ou complemento)
+  const r = await registrarPagamentoRepasse(user.id, id, {
+    valor: Number(body?.valor),
+    data: typeof body?.data === 'string' ? body.data : '',
   });
   if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
   return NextResponse.json({ ok: true });

@@ -244,42 +244,6 @@ export async function sincronizarLancamentoAcao(acaoId: string): Promise<void> {
   });
 }
 
-/**
- * Sincroniza a ENTRADA automática de um repasse no caixa da unidade.
- * Credita quando o repasse está FEITO/PARCIAL com valor pago > 0 e data de
- * pagamento; remove o crédito caso contrário. Idempotente.
- */
-export async function sincronizarLancamentoRepasse(repasseId: string): Promise<void> {
-  const r = await prisma.repasse.findUnique({
-    where: { id: repasseId },
-    select: { id: true, unidadeId: true, status: true, valorPago: true, dataPagamento: true, periodoDe: true, periodoAte: true },
-  });
-  if (!r) return;
-
-  const creditar =
-    (r.status === 'FEITO' || r.status === 'PARCIAL') &&
-    r.valorPago != null &&
-    r.valorPago > 0 &&
-    r.dataPagamento != null;
-
-  if (!creditar) {
-    await prisma.lancamentoCaixa.deleteMany({ where: { repasseId } });
-    return;
-  }
-
-  const valor = Math.round(r.valorPago! * 100) / 100;
-  const descricao = `Repasse recebido (${iso(r.periodoDe).slice(8, 10)}/${iso(r.periodoDe).slice(5, 7)}–${iso(r.periodoAte).slice(8, 10)}/${iso(r.periodoAte).slice(5, 7)})`;
-  await prisma.lancamentoCaixa.upsert({
-    where: { repasseId },
-    create: {
-      unidadeId: r.unidadeId,
-      tipo: 'ENTRADA',
-      valor,
-      data: r.dataPagamento!,
-      descricao,
-      automatico: true,
-      repasseId,
-    },
-    update: { unidadeId: r.unidadeId, valor, data: r.dataPagamento!, descricao },
-  });
-}
+// A ENTRADA de repasse no caixa agora é criada por PARCELA em
+// `registrarPagamentoRepasse` (comercial-repasse.ts): 1 lançamento por parcela,
+// na data do envio. Removida a sincronização única antiga.

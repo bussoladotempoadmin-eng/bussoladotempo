@@ -1,9 +1,10 @@
 /**
  * Relação de Repasse — ponte Relatório → Caixa (só corporativo).
- * Ao salvar o relatório de um período, cria um repasse por unidade com o
- * valor SOLICITADO somado. Cada repasse é marcado um a um: FEITO/PARCIAL
- * creditam o caixa da unidade (via sincronizarLancamentoRepasse); NAO_FEITO
- * não credita. Guarda solicitado × pago p/ enxergar divergência.
+ * Ao salvar o relatório de um período, cria um repasse por unidade com o valor
+ * SOLICITADO somado (um lote = um relatório emitido). O pagamento de cada repasse
+ * é feito em PARCELAS (registrarPagamentoRepasse): o parcial e os complementos,
+ * cada um na sua data, cada um vira uma ENTRADA no caixa da unidade. valorPago e
+ * status (PENDENTE/PARCIAL/FEITO) são derivados da soma das parcelas.
  */
 import {
   prisma,
@@ -14,7 +15,6 @@ import {
   type StatusAcao,
 } from '@bussola/db';
 import { resolverAcessoComercial } from './comercial-acessos';
-import { sincronizarLancamentoRepasse } from './comercial-caixa';
 
 function parseDia(s: string): Date | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
@@ -120,6 +120,8 @@ export async function recalcularRepassePendente(repasseId: string): Promise<void
   });
 }
 
+export type PagamentoItem = { id: string; valor: number; data: string };
+
 export type RepasseItem = {
   id: string;
   unidadeId: string;
@@ -129,21 +131,27 @@ export type RepasseItem = {
   valorSolicitado: number;
   dataPrevista: string;
   status: RepasseStatus;
-  valorPago: number | null;
-  dataPagamento: string | null;
+  valorPago: number | null; // soma das parcelas
+  dataPagamento: string | null; // data da última parcela
   divergencia: number | null; // pago − solicitado (só p/ FEITO/PARCIAL)
+  falta: number; // solicitado − pago (>= 0)
   observacao: string | null;
+  pagamentos: PagamentoItem[]; // parcelas (parcial + complementos), da mais antiga à recente
 };
 
 export async function listarRepasses(userId: string, orgId: string): Promise<RepasseItem[] | null> {
   if (!(await ehCorporativo(userId, orgId))) return null;
   const rows = await prisma.repasse.findMany({
     where: { organizacaoId: orgId },
-    include: { unidade: { select: { nome: true } } },
+    include: {
+      unidade: { select: { nome: true } },
+      pagamentos: { orderBy: { data: 'asc' }, select: { id: true, valor: true, data: true } },
+    },
     orderBy: [{ dataPrevista: 'desc' }, { createdAt: 'desc' }],
   });
   return rows.map((r) => {
     const pagoRelevante = r.status === 'FEITO' || r.status === 'PARCIAL';
+    const pago = r.valorPago ?? 0;
     return {
       id: r.id,
       unidadeId: r.unidadeId,
@@ -155,21 +163,17 @@ export async function listarRepasses(userId: string, orgId: string): Promise<Rep
       status: r.status,
       valorPago: r.valorPago,
       dataPagamento: r.dataPagamento ? iso(r.dataPagamento) : null,
-      divergencia: pagoRelevante ? Math.round(((r.valorPago ?? 0) - r.valorSolicitado) * 100) / 100 : null,
+      divergencia: pagoRelevante ? Math.round((pago - r.valorSolicitado) * 100) / 100 : null,
+      falta: Math.max(0, Math.round((r.valorSolicitado - pago) * 100) / 100),
       observacao: r.observacao,
+      pagamentos: r.pagamentos.map((p) => ({ id: p.id, valor: p.valor, data: iso(p.data) })),
     };
   });
 }
 
-/**
- * Marca o status de um repasse e sincroniza o crédito no caixa.
- * FEITO: pago = solicitado (ou valor informado) + data real.
- * PARCIAL: pago informado (< solicitado) + data real.
- * NAO_FEITO/PENDENTE: zera pago/data e remove o crédito.
- */
 // ---- Relatório de repasse (valor + dados da conta por unidade) ----
 
-export type RepasseRelatorioItem = RepasseItem & {
+export type RepasseRelatorioItem = Omit<RepasseItem, 'falta' | 'pagamentos'> & {
   metodo: MetodoRepasse | null;
   banco: string | null;
   agencia: string | null;
@@ -292,39 +296,109 @@ export async function listarLotesRepasse(userId: string, orgId: string): Promise
   });
 }
 
-export async function marcarRepasse(
+function ddmm(d: Date): string {
+  const s = iso(d);
+  return `${s.slice(8, 10)}/${s.slice(5, 7)}`;
+}
+
+/**
+ * Recalcula valorPago (soma das parcelas), dataPagamento (última parcela) e status
+ * a partir das PARCELAS. Sem parcela: mantém NAO_FEITO se já era, senão PENDENTE.
+ */
+async function recomputarRepasse(repasseId: string): Promise<void> {
+  const r = await prisma.repasse.findUnique({
+    where: { id: repasseId },
+    select: { valorSolicitado: true, status: true, pagamentos: { select: { valor: true, data: true } } },
+  });
+  if (!r) return;
+  const soma = Math.round(r.pagamentos.reduce((s, p) => s + p.valor, 0) * 100) / 100;
+  const ultima = r.pagamentos.reduce<Date | null>((max, p) => (!max || p.data > max ? p.data : max), null);
+  let status: RepasseStatus;
+  if (soma <= 0) status = r.status === 'NAO_FEITO' ? 'NAO_FEITO' : 'PENDENTE';
+  else if (soma >= r.valorSolicitado) status = 'FEITO';
+  else status = 'PARCIAL';
+  await prisma.repasse.update({
+    where: { id: repasseId },
+    data: { valorPago: soma > 0 ? soma : null, dataPagamento: ultima, status },
+  });
+}
+
+/**
+ * Registra UMA parcela do repasse (o parcial ou um complemento), na data real do
+ * envio, e credita o caixa da unidade nessa data. O status vira PARCIAL/FEITO
+ * conforme a soma das parcelas atinge o solicitado.
+ */
+export async function registrarPagamentoRepasse(
   userId: string,
   repasseId: string,
-  input: { status: RepasseStatus; valorPago?: number | null; dataPagamento?: string; observacao?: string },
+  input: { valor: number; data: string },
 ): Promise<{ ok: boolean; erro?: string }> {
   const r = await prisma.repasse.findUnique({
     where: { id: repasseId },
-    select: { organizacaoId: true, valorSolicitado: true },
+    select: { organizacaoId: true, unidadeId: true, periodoDe: true, periodoAte: true },
   });
   if (!r) return { ok: false, erro: 'Repasse não encontrado.' };
   if (!(await ehCorporativo(userId, r.organizacaoId))) return { ok: false, erro: 'Sem permissão.' };
+  const valor = Math.round(Number(input.valor) * 100) / 100;
+  if (!Number.isFinite(valor) || valor <= 0) return { ok: false, erro: 'Informe um valor maior que zero.' };
+  const data = parseDia(input.data);
+  if (!data) return { ok: false, erro: 'Informe a data do envio.' };
 
-  const data: Record<string, unknown> = { status: input.status };
-  if (input.observacao !== undefined) data.observacao = input.observacao.trim() || null;
+  const pag = await prisma.pagamentoRepasse.create({
+    data: { repasseId, valor, data, criadoPorId: userId },
+    select: { id: true },
+  });
+  // 1 entrada no caixa por parcela, na data do envio.
+  await prisma.lancamentoCaixa.create({
+    data: {
+      unidadeId: r.unidadeId,
+      tipo: 'ENTRADA',
+      valor,
+      data,
+      descricao: `Repasse recebido (${ddmm(r.periodoDe)}–${ddmm(r.periodoAte)})`,
+      automatico: true,
+      repasseId,
+      pagamentoRepasseId: pag.id,
+      criadoPorId: userId,
+    },
+  });
+  await recomputarRepasse(repasseId);
+  return { ok: true };
+}
 
-  if (input.status === 'FEITO' || input.status === 'PARCIAL') {
-    const dp = input.dataPagamento ? parseDia(input.dataPagamento) : null;
-    if (!dp) return { ok: false, erro: 'Informe a data do pagamento.' };
-    data.dataPagamento = dp;
-    if (input.status === 'FEITO') {
-      data.valorPago = input.valorPago != null ? Math.round(input.valorPago * 100) / 100 : r.valorSolicitado;
-    } else {
-      if (input.valorPago == null || input.valorPago <= 0) return { ok: false, erro: 'Informe o valor pago.' };
-      data.valorPago = Math.round(input.valorPago * 100) / 100;
-    }
-  } else {
-    // NAO_FEITO ou PENDENTE — sem pagamento.
-    data.valorPago = null;
-    data.dataPagamento = null;
-  }
+/** Remove uma parcela (e sua entrada no caixa, via cascade) e recalcula o repasse. */
+export async function removerPagamentoRepasse(
+  userId: string,
+  pagamentoId: string,
+): Promise<{ ok: boolean; erro?: string }> {
+  const p = await prisma.pagamentoRepasse.findUnique({
+    where: { id: pagamentoId },
+    select: { repasseId: true, repasse: { select: { organizacaoId: true } } },
+  });
+  if (!p) return { ok: false, erro: 'Parcela não encontrada.' };
+  if (!(await ehCorporativo(userId, p.repasse.organizacaoId))) return { ok: false, erro: 'Sem permissão.' };
+  await prisma.pagamentoRepasse.delete({ where: { id: pagamentoId } });
+  await recomputarRepasse(p.repasseId);
+  return { ok: true };
+}
 
-  await prisma.repasse.update({ where: { id: repasseId }, data });
-  await sincronizarLancamentoRepasse(repasseId);
+/**
+ * Define o status MANUAL do repasse (NAO_FEITO ou PENDENTE/reabrir): apaga as
+ * parcelas (e o crédito no caixa via cascade) e fixa o status.
+ */
+export async function definirStatusRepasse(
+  userId: string,
+  repasseId: string,
+  status: 'NAO_FEITO' | 'PENDENTE',
+): Promise<{ ok: boolean; erro?: string }> {
+  const r = await prisma.repasse.findUnique({ where: { id: repasseId }, select: { organizacaoId: true } });
+  if (!r) return { ok: false, erro: 'Repasse não encontrado.' };
+  if (!(await ehCorporativo(userId, r.organizacaoId))) return { ok: false, erro: 'Sem permissão.' };
+  await prisma.pagamentoRepasse.deleteMany({ where: { repasseId } });
+  await prisma.repasse.update({
+    where: { id: repasseId },
+    data: { status, valorPago: null, dataPagamento: null },
+  });
   return { ok: true };
 }
 

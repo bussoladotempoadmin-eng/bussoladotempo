@@ -554,16 +554,19 @@ model LancamentoCaixa {
   descricao   String
   automatico  Boolean        @default(false) // gerado a partir de uma ação/repasse
   acaoId      String?        @unique // ação de origem (saída automática)
-  repasseId   String?        @unique // repasse de origem (entrada automática)
+  repasseId   String? // repasse de origem (só referência; NÃO é mais único: um repasse tem N parcelas)
+  pagamentoRepasseId String? @unique // parcela de repasse de origem (entrada automática, 1 lançamento por parcela)
   criadoPorId String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  unidade Unidade        @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
-  acao    AcaoComercial? @relation(fields: [acaoId], references: [id], onDelete: Cascade)
-  repasse Repasse?       @relation(fields: [repasseId], references: [id], onDelete: Cascade)
+  unidade          Unidade           @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  acao             AcaoComercial?    @relation(fields: [acaoId], references: [id], onDelete: Cascade)
+  repasse          Repasse?          @relation(fields: [repasseId], references: [id], onDelete: Cascade)
+  pagamentoRepasse PagamentoRepasse? @relation(fields: [pagamentoRepasseId], references: [id], onDelete: Cascade)
 
   @@index([unidadeId])
+  @@index([repasseId])
 }
 
 enum RepasseStatus {
@@ -588,21 +591,40 @@ model Repasse {
   valorSolicitado Float // snapshot do solicitado da unidade no período
   dataPrevista    DateTime // quando o repasse deve ser feito
   status          RepasseStatus @default(PENDENTE)
-  valorPago       Float? // efetivamente pago (FEITO = solicitado; PARCIAL = editado)
-  dataPagamento   DateTime? // data real do pagamento
+  // valorPago/dataPagamento são DERIVADOS das parcelas (soma / última data). Ficam
+  // como cache pra leitura rápida; a fonte da verdade é PagamentoRepasse.
+  valorPago       Float? // efetivamente pago = soma das parcelas
+  dataPagamento   DateTime? // data da última parcela
   observacao      String?
   criadoPorId     String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  organizacao Organizacao      @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
-  unidade     Unidade          @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
-  lancamento  LancamentoCaixa?
+  organizacao Organizacao        @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  unidade     Unidade            @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  lancamentos LancamentoCaixa[]
+  pagamentos  PagamentoRepasse[]
   acoes       AcaoComercial[]
 
   @@index([organizacaoId])
   @@index([unidadeId])
   @@index([loteId])
+}
+
+// Cada envio de verba de um repasse (parcial + complementos). O repasse pode ter
+// N parcelas, cada uma na sua data → 1 entrada no caixa por parcela.
+model PagamentoRepasse {
+  id          String   @id @default(cuid())
+  repasseId   String
+  valor       Float
+  data        DateTime // data real do envio
+  criadoPorId String?
+  createdAt   DateTime @default(now())
+
+  repasse    Repasse          @relation(fields: [repasseId], references: [id], onDelete: Cascade)
+  lancamento LancamentoCaixa?
+
+  @@index([repasseId])
 }
 
 // ============================================================
