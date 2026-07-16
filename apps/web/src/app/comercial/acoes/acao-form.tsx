@@ -74,7 +74,7 @@ export function AcaoForm({
     parcelasInic.length > 1 ? 'PARCELADO' : 'AVISTA',
   );
   const [dataAvista, setDataAvista] = React.useState(
-    parcelasInic.length === 1 ? parcelasInic[0].data : inicial?.dataInicio ?? '',
+    parcelasInic.length === 1 ? parcelasInic[0].data : '',
   );
   const [parcelas, setParcelas] = React.useState<{ valor: string; data: string }[]>(
     parcelasInic.length > 1
@@ -89,7 +89,7 @@ export function AcaoForm({
   function irParcelado() {
     const valores = dividirValor(f.valorSolicitado, 2);
     setParcelas([
-      { valor: valores[0] ?? '', data: parcelas[0]?.data ?? f.dataInicio },
+      { valor: valores[0] ?? '', data: parcelas[0]?.data ?? '' },
       { valor: valores[1] ?? '', data: parcelas[1]?.data ?? '' },
     ]);
     setForma('PARCELADO');
@@ -113,9 +113,8 @@ export function AcaoForm({
     let parcelasPayload: { valor: number; data: string }[] = [];
     if (totalNum > 0) {
       if (forma === 'AVISTA') {
-        const data = dataAvista || f.dataInicio;
-        if (!data) return setErro('Informe a data de pagamento.');
-        parcelasPayload = [{ valor: totalNum, data }];
+        if (!dataAvista) return setErro('Informe a data de pagamento da ação.');
+        parcelasPayload = [{ valor: totalNum, data: dataAvista }];
       } else {
         if (parcelas.some((p) => !p.data || !(Number(p.valor) > 0))) {
           return setErro('Preencha valor e data de todas as parcelas.');
@@ -235,7 +234,7 @@ export function AcaoForm({
       </div>
 
       <div className="mt-4 rounded-xl border border-border p-4">
-        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Pagamento do repasse</p>
+        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Pagamento da ação</p>
         {totalNum <= 0 ? (
           <p className="text-xs text-muted-foreground">
             Informe o <b>valor solicitado</b> acima para definir como o repasse será pago.

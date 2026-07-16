@@ -848,8 +848,8 @@ export async function criarAcao(
   const valor = input.valorSolicitado ?? 0;
   let parcelasParsed: { valor: number; data: Date }[] = [];
   if (valor > 0) {
-    // Sem parcelas informadas = à vista (1 parcela na data de início).
-    const parcelasIn = input.parcelas?.length ? input.parcelas : [{ valor, data: input.dataInicio }];
+    // Com valor solicitado, a data de pagamento é OBRIGATÓRIA (não puxa o início).
+    const parcelasIn = input.parcelas ?? [];
     const v = await validarParcelas(orgId, valor, parcelasIn);
     if (!v.ok) return { ok: false, erro: v.erro };
     parcelasParsed = v.datas ?? [];
@@ -975,10 +975,8 @@ export async function atualizarAcao(
   if (!travada && input.parcelas !== undefined) {
     const valor = input.valorSolicitado !== undefined ? input.valorSolicitado ?? 0 : a.valorSolicitado ?? 0;
     if (valor > 0) {
-      const parcelasIn = input.parcelas.length
-        ? input.parcelas
-        : [{ valor, data: input.dataInicio ?? iso(a.dataInicio) }];
-      const v = await validarParcelas(a.unidade.organizacaoId, valor, parcelasIn);
+      // Com valor, a data de pagamento é obrigatória (validarParcelas exige data).
+      const v = await validarParcelas(a.unidade.organizacaoId, valor, input.parcelas);
       if (!v.ok) return { ok: false, erro: v.erro };
       parcelasParsed = v.datas ?? [];
     } else {
