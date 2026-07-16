@@ -20,7 +20,18 @@ export type AcaoFormData = {
   dataFim: string;
   valorSolicitado: string;
   detalhe: string;
+  parcelas?: { valor: string; data: string }[]; // agenda de pagamento (edição prefill)
 };
+
+/** Divide um total em N parcelas iguais (centavos), sobra na última. */
+function dividirValor(totalStr: string, n: number): string[] {
+  const total = Math.round((Number(totalStr) || 0) * 100);
+  if (total <= 0 || n <= 0) return Array.from({ length: Math.max(n, 0) }, () => '');
+  const base = Math.floor(total / n);
+  const arr = Array.from({ length: n }, () => base);
+  arr[n - 1] += total - base * n;
+  return arr.map((c) => (c / 100).toFixed(2));
+}
 
 export function AcaoForm({
   unidades,
@@ -57,20 +68,79 @@ export function AcaoForm({
   const [busy, setBusy] = React.useState(false);
   const [erro, setErro] = React.useState<string | null>(null);
 
+  // Agenda de pagamento: à vista (1 parcela) ou parcelado (N).
+  const parcelasInic = inicial?.parcelas ?? [];
+  const [forma, setForma] = React.useState<'AVISTA' | 'PARCELADO'>(
+    parcelasInic.length > 1 ? 'PARCELADO' : 'AVISTA',
+  );
+  const [dataAvista, setDataAvista] = React.useState(
+    parcelasInic.length === 1 ? parcelasInic[0].data : inicial?.dataInicio ?? '',
+  );
+  const [parcelas, setParcelas] = React.useState<{ valor: string; data: string }[]>(
+    parcelasInic.length > 1
+      ? parcelasInic.map((p) => ({ valor: p.valor, data: p.data }))
+      : [{ valor: '', data: '' }, { valor: '', data: '' }],
+  );
+
   function set<K extends keyof AcaoFormData>(k: K, v: AcaoFormData[K]) {
     setF((p) => ({ ...p, [k]: v }));
   }
+
+  function irParcelado() {
+    const valores = dividirValor(f.valorSolicitado, 2);
+    setParcelas([
+      { valor: valores[0] ?? '', data: parcelas[0]?.data ?? f.dataInicio },
+      { valor: valores[1] ?? '', data: parcelas[1]?.data ?? '' },
+    ]);
+    setForma('PARCELADO');
+  }
+  function mudarQtd(n: number) {
+    const valores = dividirValor(f.valorSolicitado, n);
+    setParcelas((prev) => Array.from({ length: n }, (_, i) => ({ valor: valores[i] ?? '', data: prev[i]?.data ?? '' })));
+  }
+  function setParcela(i: number, campo: 'valor' | 'data', v: string) {
+    setParcelas((prev) => prev.map((p, j) => (j === i ? { ...p, [campo]: v } : p)));
+  }
+  const somaParcelas = parcelas.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+  const totalNum = f.valorSolicitado === '' ? 0 : Number(f.valorSolicitado);
 
   async function salvar() {
     setErro(null);
     if (!f.unidadeId) return setErro('Selecione a unidade.');
     if (!f.local.trim()) return setErro('Informe o local.');
     if (!f.dataInicio) return setErro('Informe a data de início.');
+
+    let parcelasPayload: { valor: number; data: string }[] = [];
+    if (totalNum > 0) {
+      if (forma === 'AVISTA') {
+        const data = dataAvista || f.dataInicio;
+        if (!data) return setErro('Informe a data de pagamento.');
+        parcelasPayload = [{ valor: totalNum, data }];
+      } else {
+        if (parcelas.some((p) => !p.data || !(Number(p.valor) > 0))) {
+          return setErro('Preencha valor e data de todas as parcelas.');
+        }
+        if (Math.abs(somaParcelas - totalNum) > 0.01) {
+          return setErro(
+            `A soma das parcelas (R$ ${somaParcelas.toFixed(2)}) precisa bater com o valor solicitado (R$ ${totalNum.toFixed(2)}).`,
+          );
+        }
+        parcelasPayload = parcelas.map((p) => ({ valor: Number(p.valor), data: p.data }));
+      }
+    }
+
     setBusy(true);
     const payload = {
-      ...f,
+      unidadeId: f.unidadeId,
+      tipo: f.tipo,
+      objetivo: f.objetivo,
+      local: f.local,
+      responsaveis: f.responsaveis,
+      dataInicio: f.dataInicio,
       dataFim: f.dataFim || f.dataInicio,
-      valorSolicitado: f.valorSolicitado === '' ? null : Number(f.valorSolicitado),
+      detalhe: f.detalhe,
+      valorSolicitado: f.valorSolicitado === '' ? null : totalNum,
+      parcelas: parcelasPayload,
     };
     const url = acaoId ? `/api/comercial/acoes/${acaoId}` : '/api/comercial/acoes';
     const method = acaoId ? 'PATCH' : 'POST';
@@ -162,6 +232,76 @@ export function AcaoForm({
             />
           </Field>
         </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-border p-4">
+        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Pagamento do repasse</p>
+        {totalNum <= 0 ? (
+          <p className="text-xs text-muted-foreground">
+            Informe o <b>valor solicitado</b> acima para definir como o repasse será pago.
+          </p>
+        ) : (
+          <>
+            <div className="inline-flex rounded-lg border border-border p-0.5 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setForma('AVISTA')}
+                className={forma === 'AVISTA' ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground' : 'rounded-md px-3 py-1 text-muted-foreground'}
+              >
+                À vista
+              </button>
+              <button
+                type="button"
+                onClick={irParcelado}
+                className={forma === 'PARCELADO' ? 'rounded-md bg-primary px-3 py-1 text-primary-foreground' : 'rounded-md px-3 py-1 text-muted-foreground'}
+              >
+                Parcelado
+              </button>
+            </div>
+
+            {forma === 'AVISTA' ? (
+              <div className="mt-3 max-w-xs">
+                <Field label="Data de pagamento">
+                  <input type="date" value={dataAvista} onChange={(e) => setDataAvista(e.target.value)} className={INP} />
+                </Field>
+              </div>
+            ) : (
+              <div className="mt-3 space-y-2">
+                <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Nº de parcelas
+                  <select
+                    value={parcelas.length}
+                    onChange={(e) => mudarQtd(Number(e.target.value))}
+                    className="rounded-lg border border-border bg-background px-2 py-1 text-sm font-semibold"
+                  >
+                    {Array.from({ length: 11 }, (_, i) => i + 2).map((n) => (
+                      <option key={n} value={n}>
+                        {n}x
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {parcelas.map((p, i) => (
+                  <div key={i} className="grid grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={p.valor}
+                      onChange={(e) => setParcela(i, 'valor', e.target.value)}
+                      placeholder={`Parcela ${i + 1} (R$)`}
+                      className={INP}
+                    />
+                    <input type="date" value={p.data} onChange={(e) => setParcela(i, 'data', e.target.value)} className={INP} />
+                  </div>
+                ))}
+                <p className={`text-xs font-semibold ${Math.abs(somaParcelas - totalNum) > 0.01 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  Soma R$ {somaParcelas.toFixed(2)} / Solicitado R$ {totalNum.toFixed(2)}
+                  {Math.abs(somaParcelas - totalNum) > 0.01 && ' — precisa bater'}
+                </p>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {erro && <p className="mt-3 text-sm text-destructive">{erro}</p>}

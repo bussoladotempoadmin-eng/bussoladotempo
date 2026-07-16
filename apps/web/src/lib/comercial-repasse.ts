@@ -48,39 +48,41 @@ export async function criarRepassesDoRelatorio(
   if (!de || !ate) return { ok: false, erro: 'Período inválido.' };
   if (!prevista) return { ok: false, erro: 'Informe a data prevista do repasse.' };
 
-  // Ações que cruzam o período, com solicitado > 0 e AINDA LIVRES (repasseId
-  // null) — cada ação entra em 1 repasse só. Agrupa por unidade.
-  const acoes = await prisma.acaoComercial.findMany({
+  // PARCELAS de pagamento com data no período, AINDA LIVRES (repasseId null), de
+  // ações em aberto (não finalizadas/canceladas). Agrupa por unidade da ação.
+  const parcelas = await prisma.parcelaSolicitacao.findMany({
     where: {
-      unidade: { organizacaoId: orgId },
       repasseId: null,
-      valorSolicitado: { gt: 0 },
-      // Só ações AINDA EM ABERTO entram no repasse: finalizada/cancelada não é
-      // financiada (já aconteceu / não vai acontecer).
-      status: { notIn: ['FINALIZADO', 'CANCELADO'] as StatusAcao[] },
-      dataInicio: { lte: ate },
-      dataFim: { gte: de },
+      data: { gte: de, lte: ate },
+      acao: {
+        unidade: { organizacaoId: orgId },
+        status: { notIn: ['FINALIZADO', 'CANCELADO'] as StatusAcao[] },
+      },
     },
-    select: { id: true, unidadeId: true, valorSolicitado: true },
+    select: { id: true, valor: true, acao: { select: { unidadeId: true } } },
   });
 
-  const porUni = new Map<string, { valor: number; acaoIds: string[] }>();
-  for (const a of acoes) {
-    const cur = porUni.get(a.unidadeId) ?? { valor: 0, acaoIds: [] };
-    cur.valor += a.valorSolicitado ?? 0;
-    cur.acaoIds.push(a.id);
-    porUni.set(a.unidadeId, cur);
+  const porUni = new Map<string, { valor: number; parcelaIds: string[] }>();
+  for (const p of parcelas) {
+    const uid = p.acao.unidadeId;
+    const cur = porUni.get(uid) ?? { valor: 0, parcelaIds: [] };
+    cur.valor += p.valor;
+    cur.parcelaIds.push(p.id);
+    porUni.set(uid, cur);
   }
   const entradas = Array.from(porUni.entries()).filter(([, v]) => v.valor > 0);
   if (entradas.length === 0) {
-    return { ok: false, erro: 'Nenhuma ação livre com verba solicitada no período (as do período já podem ter sido repassadas).' };
+    return {
+      ok: false,
+      erro: 'Nenhuma parcela de pagamento livre com essa data (as do período já podem ter sido repassadas).',
+    };
   }
 
   // Um loteId por emissão: todos os repasses desta relação = 1 relatório emitido.
   const loteId = crypto.randomUUID();
 
-  // Cria 1 repasse por unidade e VINCULA as ações dele (trava edição/exclusão).
-  for (const [unidadeId, { valor, acaoIds }] of entradas) {
+  // Cria 1 repasse por unidade e VINCULA as parcelas dele (trava edição/exclusão).
+  for (const [unidadeId, { valor, parcelaIds }] of entradas) {
     const repasse = await prisma.repasse.create({
       data: {
         organizacaoId: orgId,
@@ -94,8 +96,8 @@ export async function criarRepassesDoRelatorio(
       },
       select: { id: true },
     });
-    await prisma.acaoComercial.updateMany({
-      where: { id: { in: acaoIds } },
+    await prisma.parcelaSolicitacao.updateMany({
+      where: { id: { in: parcelaIds } },
       data: { repasseId: repasse.id },
     });
   }
@@ -103,20 +105,20 @@ export async function criarRepassesDoRelatorio(
 }
 
 /**
- * Recalcula o valor de um repasse PENDENTE a partir das ações ainda vinculadas
- * a ele (usado quando o corporativo/admin edita/exclui uma ação vinculada).
+ * Recalcula o valor de um repasse PENDENTE a partir das PARCELAS ainda vinculadas
+ * a ele (quando o corporativo/admin edita/exclui uma ação vinculada).
  * Repasse já fechado (não-pendente) é um snapshot — não recalcula.
  */
 export async function recalcularRepassePendente(repasseId: string): Promise<void> {
   const r = await prisma.repasse.findUnique({ where: { id: repasseId }, select: { status: true } });
   if (!r || r.status !== 'PENDENTE') return;
-  const agg = await prisma.acaoComercial.aggregate({
+  const agg = await prisma.parcelaSolicitacao.aggregate({
     where: { repasseId },
-    _sum: { valorSolicitado: true },
+    _sum: { valor: true },
   });
   await prisma.repasse.update({
     where: { id: repasseId },
-    data: { valorSolicitado: Math.round((agg._sum.valorSolicitado ?? 0) * 100) / 100 },
+    data: { valorSolicitado: Math.round((agg._sum.valor ?? 0) * 100) / 100 },
   });
 }
 

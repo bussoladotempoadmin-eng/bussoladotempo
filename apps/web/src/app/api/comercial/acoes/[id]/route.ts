@@ -22,6 +22,12 @@ function numOrNull(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+// Parcelas de pagamento vindas do form: [{ valor, data }]. undefined = não mexe.
+function parseParcelas(v: unknown): { valor: number; data: string }[] | undefined {
+  if (!Array.isArray(v)) return undefined;
+  return v.map((p) => ({ valor: Number((p as { valor?: unknown })?.valor), data: String((p as { data?: unknown })?.data ?? '') }));
+}
+
 const STATUS_VALIDOS: StatusAcao[] = ['EM_PLANEJAMENTO', 'FINALIZADO', 'ADIADO', 'CANCELADO'];
 
 // PATCH /api/comercial/acoes/[id]  body: { acao: 'editar'|'resultado'|'reagendar'|'realocar', ... }
@@ -76,7 +82,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 
   // padrão: editar planejamento
-  const ok = await atualizarAcao(user.id, params.id, {
+  const r = await atualizarAcao(user.id, params.id, {
     tipo: typeof b.tipo === 'string' ? b.tipo : undefined,
     objetivo: typeof b.objetivo === 'string' ? b.objetivo : undefined,
     local: typeof b.local === 'string' ? b.local : undefined,
@@ -85,10 +91,11 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     dataInicio: typeof b.dataInicio === 'string' ? b.dataInicio : undefined,
     dataFim: typeof b.dataFim === 'string' ? b.dataFim : undefined,
     valorSolicitado: b.valorSolicitado === undefined ? undefined : numOrNull(b.valorSolicitado),
+    parcelas: parseParcelas(b.parcelas),
   });
-  return ok
+  return r.ok
     ? NextResponse.json({ ok: true })
-    : NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
+    : NextResponse.json({ error: r.erro }, { status: 422 });
 }
 
 // DELETE /api/comercial/acoes/[id]

@@ -116,6 +116,12 @@ export function AcaoModal({
               <Kv label="Leads" valor={fmtNum(acao.resultadoQtd)} cor="text-emerald-600 dark:text-emerald-400" />
             </div>
 
+            {acao.parcelas.length > 0 && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                💳 {acao.parcelas.length === 1 ? 'Pagamento à vista' : `Pagamento em ${acao.parcelas.length}x`}
+              </p>
+            )}
+
             {acao.detalhe && (
               <div className="mt-3 rounded-xl border border-border bg-background p-3 text-sm">
                 <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Planejamento</p>
@@ -170,6 +176,7 @@ export function AcaoModal({
               dataFim: acao.dataFim,
               valorSolicitado: acao.valorSolicitado?.toString() ?? '',
               detalhe: acao.detalhe ?? '',
+              parcelas: acao.parcelas.map((p) => ({ valor: p.valor.toString(), data: p.data })),
             }}
             onCancel={() => setModo('menu')}
             onSaved={feitoESai}

@@ -527,13 +527,33 @@ model AcaoComercial {
   // null se o repasse é removido (SetNull). Trava edição/exclusão conforme RBAC.
   repasseId String?
 
-  unidade         Unidade          @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
-  lancamentoCaixa LancamentoCaixa?
-  repasse         Repasse?         @relation(fields: [repasseId], references: [id], onDelete: SetNull)
+  unidade             Unidade              @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  lancamentoCaixa     LancamentoCaixa?
+  repasse             Repasse?             @relation(fields: [repasseId], references: [id], onDelete: SetNull)
+  parcelasSolicitacao ParcelaSolicitacao[]
 
   @@index([unidadeId])
   @@index([status])
   @@index([repasseId])
+}
+
+// Agenda de recebimento da ação: à vista = 1 parcela; parcelado = N. Cada parcela
+// tem valor + data prevista de pagamento. O repasse agrupa PARCELAS pela data.
+// repasseId setado = a parcela já entrou num repasse (trava a edição da ação).
+model ParcelaSolicitacao {
+  id        String   @id @default(cuid())
+  acaoId    String
+  valor     Float
+  data      DateTime // data prevista de pagamento
+  repasseId String?
+  createdAt DateTime @default(now())
+
+  acao    AcaoComercial @relation(fields: [acaoId], references: [id], onDelete: Cascade)
+  repasse Repasse?      @relation(fields: [repasseId], references: [id], onDelete: SetNull)
+
+  @@index([acaoId])
+  @@index([repasseId])
+  @@index([data])
 }
 
 enum TipoLancamento {
@@ -600,11 +620,12 @@ model Repasse {
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
-  organizacao Organizacao        @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
-  unidade     Unidade            @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
-  lancamentos LancamentoCaixa[]
-  pagamentos  PagamentoRepasse[]
-  acoes       AcaoComercial[]
+  organizacao         Organizacao          @relation(fields: [organizacaoId], references: [id], onDelete: Cascade)
+  unidade             Unidade              @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  lancamentos         LancamentoCaixa[]
+  pagamentos          PagamentoRepasse[]
+  acoes               AcaoComercial[]
+  parcelasSolicitacao ParcelaSolicitacao[]
 
   @@index([organizacaoId])
   @@index([unidadeId])

@@ -272,10 +272,12 @@ export async function moverAcaoEmpresa(
   if (!(await podeGerenciarEmpresas(userId, orgIdAtual))) return { ok: false, erro: 'Sem permissão.' };
   const acao = await prisma.acaoComercial.findUnique({
     where: { id: acaoId },
-    select: { repasseId: true, unidadeId: true },
+    select: { unidadeId: true, parcelasSolicitacao: { select: { repasseId: true } } },
   });
   if (!acao) return { ok: false, erro: 'Ação não encontrada.' };
-  if (acao.repasseId) return { ok: false, erro: 'Ação está num repasse — remova do repasse antes de mover.' };
+  if (acao.parcelasSolicitacao.some((p) => p.repasseId != null)) {
+    return { ok: false, erro: 'Ação está num repasse — remova do repasse antes de mover.' };
+  }
   const dest = await prisma.unidade.findUnique({ where: { id: destinoUnidadeId }, select: { id: true } });
   if (!dest) return { ok: false, erro: 'Unidade destino inválida.' };
   if (acao.unidadeId === destinoUnidadeId) return { ok: false, erro: 'A ação já está nessa unidade.' };
@@ -754,6 +756,8 @@ export async function removerTipo(userId: string, tipoId: string): Promise<boole
 
 // ---- Ações ----
 
+export type ParcelaInput = { valor: number; data: string };
+
 export type AcaoInput = {
   unidadeId: string;
   tipo: string;
@@ -764,12 +768,62 @@ export type AcaoInput = {
   dataFim: string;
   detalhe?: string;
   valorSolicitado?: number | null;
+  // Agenda de pagamento: à vista = 1 parcela; parcelado = N (valor + data).
+  parcelas?: ParcelaInput[];
 };
 
 function parseDia(s: string): Date | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   if (!m) return null;
   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0);
+}
+
+function ddmmyyyy(d: Date): string {
+  const s = iso(d);
+  return `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(0, 4)}`;
+}
+
+/** Maior data já "fechada" (coberta por um repasse emitido) na empresa. */
+async function ultimaDataFechada(orgId: string): Promise<Date | null> {
+  const r = await prisma.repasse.aggregate({ where: { organizacaoId: orgId }, _max: { periodoAte: true } });
+  return r._max.periodoAte ?? null;
+}
+
+/**
+ * Valida as parcelas de pagamento de uma ação: cada valor > 0, soma = solicitado,
+ * e nenhuma data cai num período JÁ FECHADO por um relatório de repasse.
+ */
+async function validarParcelas(
+  orgId: string,
+  valorSolicitado: number,
+  parcelas: ParcelaInput[],
+): Promise<{ ok: boolean; erro?: string; datas?: { valor: number; data: Date }[] }> {
+  if (!parcelas.length) return { ok: false, erro: 'Informe ao menos uma parcela de pagamento.' };
+  const fechada = await ultimaDataFechada(orgId);
+  const parsed: { valor: number; data: Date }[] = [];
+  let soma = 0;
+  for (const p of parcelas) {
+    const v = Math.round(Number(p.valor) * 100) / 100;
+    if (!Number.isFinite(v) || v <= 0) return { ok: false, erro: 'Cada parcela precisa de um valor maior que zero.' };
+    const d = parseDia(p.data);
+    if (!d) return { ok: false, erro: 'Informe a data de cada parcela de pagamento.' };
+    if (fechada && d <= fechada) {
+      return {
+        ok: false,
+        erro: `O período até ${ddmmyyyy(fechada)} já foi fechado num relatório de repasse. Escolha uma data de pagamento POSTERIOR a essa.`,
+      };
+    }
+    soma += v;
+    parsed.push({ valor: v, data: d });
+  }
+  soma = Math.round(soma * 100) / 100;
+  if (Math.abs(soma - valorSolicitado) > 0.01) {
+    return {
+      ok: false,
+      erro: `A soma das parcelas (R$ ${soma.toFixed(2)}) precisa bater com o valor solicitado (R$ ${valorSolicitado.toFixed(2)}).`,
+    };
+  }
+  return { ok: true, datas: parsed };
 }
 
 export async function criarAcao(
@@ -785,6 +839,22 @@ export async function criarAcao(
   if (!input.tipo.trim() || !input.local.trim()) {
     return { ok: false, erro: 'Tipo e local são obrigatórios.' };
   }
+
+  const uni = await prisma.unidade.findUnique({
+    where: { id: input.unidadeId },
+    select: { organizacaoId: true },
+  });
+  const orgId = uni?.organizacaoId ?? '';
+  const valor = input.valorSolicitado ?? 0;
+  let parcelasParsed: { valor: number; data: Date }[] = [];
+  if (valor > 0) {
+    // Sem parcelas informadas = à vista (1 parcela na data de início).
+    const parcelasIn = input.parcelas?.length ? input.parcelas : [{ valor, data: input.dataInicio }];
+    const v = await validarParcelas(orgId, valor, parcelasIn);
+    if (!v.ok) return { ok: false, erro: v.erro };
+    parcelasParsed = v.datas ?? [];
+  }
+
   const a = await prisma.acaoComercial.create({
     data: {
       unidadeId: input.unidadeId,
@@ -800,6 +870,11 @@ export async function criarAcao(
     },
     select: { id: true },
   });
+  if (parcelasParsed.length) {
+    await prisma.parcelaSolicitacao.createMany({
+      data: parcelasParsed.map((p) => ({ acaoId: a.id, valor: p.valor, data: p.data })),
+    });
+  }
   return { ok: true, id: a.id };
 }
 
@@ -808,7 +883,10 @@ async function acaoAcessivel(userId: string, acaoId: string, precisaEditar = fal
     where: { id: acaoId },
     include: {
       unidade: { select: { id: true, nome: true, organizacaoId: true } },
-      repasse: { select: { status: true } },
+      parcelasSolicitacao: {
+        orderBy: { data: 'asc' },
+        select: { id: true, valor: true, data: true, repasseId: true, repasse: { select: { status: true } } },
+      },
     },
   });
   if (!a) return null;
@@ -817,6 +895,24 @@ async function acaoAcessivel(userId: string, acaoId: string, precisaEditar = fal
     : await podeAcessarUnidade(userId, a.unidadeId);
   if (!ok) return null;
   return a;
+}
+
+/** Repasses PENDENTES vinculados às parcelas da ação (pra recalcular quando muda). */
+function repassesPendentesDaAcao(a: {
+  parcelasSolicitacao: { repasseId: string | null; repasse: { status: string } | null }[];
+}): string[] {
+  const ids = new Set<string>();
+  for (const p of a.parcelasSolicitacao) {
+    if (p.repasseId && p.repasse && p.repasse.status === 'PENDENTE') ids.add(p.repasseId);
+  }
+  return Array.from(ids);
+}
+
+/** Algum repasse vinculado às parcelas já está FECHADO (não-pendente)? */
+function temRepasseFechado(a: {
+  parcelasSolicitacao: { repasse: { status: string } | null }[];
+}): boolean {
+  return a.parcelasSolicitacao.some((p) => p.repasse != null && p.repasse.status !== 'PENDENTE');
 }
 
 /** Corporativo OU admin da empresa — pode editar/excluir ação travada por repasse. */
@@ -834,9 +930,10 @@ type ChecagemTrava = { liberado: boolean; erro?: string };
 
 async function checarTravaEdicao(
   userId: string,
-  a: { repasseId: string | null; unidade: { organizacaoId: string } },
+  a: { parcelasSolicitacao: { repasseId: string | null }[]; unidade: { organizacaoId: string } },
 ): Promise<ChecagemTrava> {
-  if (!a.repasseId) return { liberado: true }; // ação livre
+  const travada = a.parcelasSolicitacao.some((p) => p.repasseId != null);
+  if (!travada) return { liberado: true }; // ação livre
   if (await ehGestorOrg(userId, a.unidade.organizacaoId)) return { liberado: true }; // override
   return { liberado: false, erro: 'Ação já incluída num repasse — só corporativo/admin pode editar.' };
 }
@@ -849,10 +946,13 @@ export async function atualizarAcao(
   userId: string,
   acaoId: string,
   input: Partial<AcaoInput>,
-): Promise<boolean> {
+): Promise<{ ok: boolean; erro?: string }> {
   const a = await acaoAcessivel(userId, acaoId, true); // mutação exige editar
-  if (!a) return false;
-  if (!(await checarTravaEdicao(userId, a)).liberado) return false; // travada por repasse
+  if (!a) return { ok: false, erro: 'Ação não encontrada.' };
+  const trava = await checarTravaEdicao(userId, a);
+  if (!trava.liberado) return { ok: false, erro: trava.erro };
+  const travada = a.parcelasSolicitacao.some((p) => p.repasseId != null);
+
   const data: Record<string, unknown> = {};
   if (input.tipo !== undefined) data.tipo = input.tipo.trim();
   if (input.objetivo !== undefined) data.objetivo = input.objetivo.trim();
@@ -868,11 +968,37 @@ export async function atualizarAcao(
     const d = parseDia(input.dataFim);
     if (d) data.dataFim = d;
   }
+
+  // Parcelas de pagamento: só dá pra remexer quando a ação NÃO está travada
+  // (nenhuma parcela já entrou num repasse). Travada = mantém a agenda como está.
+  let parcelasParsed: { valor: number; data: Date }[] | null = null;
+  if (!travada && input.parcelas !== undefined) {
+    const valor = input.valorSolicitado !== undefined ? input.valorSolicitado ?? 0 : a.valorSolicitado ?? 0;
+    if (valor > 0) {
+      const parcelasIn = input.parcelas.length
+        ? input.parcelas
+        : [{ valor, data: input.dataInicio ?? iso(a.dataInicio) }];
+      const v = await validarParcelas(a.unidade.organizacaoId, valor, parcelasIn);
+      if (!v.ok) return { ok: false, erro: v.erro };
+      parcelasParsed = v.datas ?? [];
+    } else {
+      parcelasParsed = []; // sem valor solicitado → sem parcelas
+    }
+  }
+
   await prisma.acaoComercial.update({ where: { id: acaoId }, data });
+  if (parcelasParsed !== null) {
+    await prisma.parcelaSolicitacao.deleteMany({ where: { acaoId } });
+    if (parcelasParsed.length) {
+      await prisma.parcelaSolicitacao.createMany({
+        data: parcelasParsed.map((p) => ({ acaoId, valor: p.valor, data: p.data })),
+      });
+    }
+  }
   await sincronizarLancamentoAcao(acaoId); // valor/data podem ter mudado
-  // Admin editou ação vinculada a repasse pendente → recalcula o valor do repasse.
-  if (a.repasseId && a.repasse?.status === 'PENDENTE') await recalcularRepassePendente(a.repasseId);
-  return true;
+  // Gestor editou ação com parcela em repasse PENDENTE → recalcula esse(s) repasse(s).
+  for (const rid of repassesPendentesDaAcao(a)) await recalcularRepassePendente(rid);
+  return { ok: true };
 }
 
 export type ResultadoInput = {
@@ -937,38 +1063,42 @@ export async function realocar(
 
   const data: Record<string, unknown> = {};
   const mudaUnidade = Boolean(destino.unidadeId && destino.unidadeId !== a.unidadeId);
+  const travada = a.parcelasSolicitacao.some((p) => p.repasseId != null);
   if (mudaUnidade) {
-    // Mudar a unidade de uma ação vinculada a repasse: só se o repasse ainda
-    // estiver pendente (fechado = congelado). Ao mover, desvincula do repasse
-    // antigo e recalcula esse repasse (a ação saiu dele).
-    if (a.repasseId && a.repasse?.status !== 'PENDENTE') {
+    // Mudar a unidade de uma ação com parcela em repasse: só se o repasse ainda
+    // estiver pendente (fechado = congelado). Ao mover, as parcelas saem do
+    // repasse antigo e ele é recalculado.
+    if (travada && temRepasseFechado(a)) {
       return { ok: false, erro: 'Repasse já fechado — não dá pra mudar a unidade desta ação.' };
     }
     if (!(await podeEditarUnidade(userId, destino.unidadeId!))) {
       return { ok: false, erro: 'Você não tem permissão para editar a unidade de destino.' };
     }
     data.unidadeId = destino.unidadeId;
-    if (a.repasseId) data.repasseId = null; // sai do repasse antigo
   }
   if (destino.responsaveis !== undefined) data.responsaveis = destino.responsaveis.trim();
   if (Object.keys(data).length === 0) return { ok: true };
+
+  const repassesAfetados = mudaUnidade ? repassesPendentesDaAcao(a) : [];
   await prisma.acaoComercial.update({ where: { id: acaoId }, data });
-  if (a.repasseId && mudaUnidade && a.repasse?.status === 'PENDENTE') {
-    await recalcularRepassePendente(a.repasseId);
+  if (mudaUnidade && travada) {
+    await prisma.parcelaSolicitacao.updateMany({ where: { acaoId }, data: { repasseId: null } });
   }
+  for (const rid of repassesAfetados) await recalcularRepassePendente(rid);
   return { ok: true };
 }
 
 export async function removerAcao(userId: string, acaoId: string): Promise<boolean> {
   const a = await acaoAcessivel(userId, acaoId, true); // mutação exige editar
   if (!a) return false;
-  if (a.repasseId) {
-    if (a.repasse?.status !== 'PENDENTE') return false; // repasse fechado → ninguém exclui
+  const travada = a.parcelasSolicitacao.some((p) => p.repasseId != null);
+  if (travada) {
+    if (temRepasseFechado(a)) return false; // repasse fechado → ninguém exclui
     if (!(await ehGestorOrg(userId, a.unidade.organizacaoId))) return false; // pendente: só gestor
   }
-  const repasseId = a.repasseId;
-  await prisma.acaoComercial.delete({ where: { id: acaoId } });
-  if (repasseId) await recalcularRepassePendente(repasseId); // ação saiu → recalcula
+  const repasses = repassesPendentesDaAcao(a);
+  await prisma.acaoComercial.delete({ where: { id: acaoId } }); // cascade remove as parcelas
+  for (const rid of repasses) await recalcularRepassePendente(rid); // parcelas saíram → recalcula
   return true;
 }
 
@@ -991,8 +1121,9 @@ export type AcaoListItem = {
   valorGasto: number | null;
   comentarios: string | null;
   detalhe: string | null;
-  travada: boolean; // já incluída num repasse (edição/exclusão restrita)
-  repasseFechado: boolean; // o repasse já saiu de PENDENTE (congelado)
+  travada: boolean; // alguma parcela já entrou num repasse (edição/exclusão restrita)
+  repasseFechado: boolean; // algum repasse das parcelas já saiu de PENDENTE (congelado)
+  parcelas: { valor: number; data: string }[]; // agenda de pagamento (à vista = 1)
 };
 
 type Filtro = { unidadeId?: string; de?: string; ate?: string; status?: StatusAcao };
@@ -1013,7 +1144,13 @@ async function buscarAcoes(userId: string, orgId: string, filtro: Filtro) {
   return prisma.acaoComercial.findMany({
     where,
     orderBy: { dataInicio: 'desc' },
-    include: { unidade: { select: { nome: true } }, repasse: { select: { status: true } } },
+    include: {
+      unidade: { select: { nome: true } },
+      parcelasSolicitacao: {
+        orderBy: { data: 'asc' },
+        select: { valor: true, data: true, repasseId: true, repasse: { select: { status: true } } },
+      },
+    },
   });
 }
 
@@ -1044,8 +1181,9 @@ export async function listarAcoes(
     valorGasto: a.valorGasto,
     comentarios: a.comentarios,
     detalhe: a.detalhe,
-    travada: a.repasseId != null,
-    repasseFechado: a.repasse != null && a.repasse.status !== 'PENDENTE',
+    travada: a.parcelasSolicitacao.some((p) => p.repasseId != null),
+    repasseFechado: a.parcelasSolicitacao.some((p) => p.repasse != null && p.repasse.status !== 'PENDENTE'),
+    parcelas: a.parcelasSolicitacao.map((p) => ({ valor: p.valor, data: iso(p.data) })),
   }));
 }
 

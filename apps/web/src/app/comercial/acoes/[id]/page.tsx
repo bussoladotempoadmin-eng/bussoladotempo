@@ -33,8 +33,8 @@ export default async function AcaoDetailPage({ params }: { params: { id: string 
 
   // Trava por repasse: ação vinculada a um repasse tem edição/exclusão restrita.
   const ehGestor = escopo.podeConfigRepasse; // corporativo ou admin
-  const travada = a.repasseId != null;
-  const repasseFechado = a.repasse != null && a.repasse.status !== 'PENDENTE';
+  const travada = a.parcelasSolicitacao.some((p) => p.repasseId != null);
+  const repasseFechado = a.parcelasSolicitacao.some((p) => p.repasse != null && p.repasse.status !== 'PENDENTE');
   const podeEditar = !travada || ehGestor;
   const podeExcluir = !travada || (ehGestor && !repasseFechado);
   const selo = travada ? (repasseFechado ? 'Em repasse · fechado' : 'Em repasse · pendente') : null;
@@ -111,6 +111,7 @@ export default async function AcaoDetailPage({ params }: { params: { id: string 
                 dataFim: iso(a.dataFim),
                 valorSolicitado: a.valorSolicitado?.toString() ?? '',
                 detalhe: a.detalhe ?? '',
+                parcelas: a.parcelasSolicitacao.map((p) => ({ valor: p.valor.toString(), data: iso(p.data) })),
               }}
             />
           ) : (

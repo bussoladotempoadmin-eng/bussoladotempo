@@ -36,6 +36,12 @@ export async function POST(req: Request) {
     dataFim: String(b.dataFim ?? ''),
     detalhe: typeof b.detalhe === 'string' ? b.detalhe : undefined,
     valorSolicitado: numOrNull(b.valorSolicitado),
+    parcelas: Array.isArray(b.parcelas)
+      ? b.parcelas.map((p: { valor?: unknown; data?: unknown }) => ({
+          valor: Number(p?.valor),
+          data: String(p?.data ?? ''),
+        }))
+      : undefined,
   };
   const r = await criarAcao(user.id, input);
   if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
