@@ -5,6 +5,7 @@
  * Permissão: dono da empresa (diretor) vê tudo; coordenador vê só a unidade dele.
  * Isolado do core (agenda pessoal). Sem reflexão pessoal aqui — é setor.
  */
+import { cache } from 'react';
 import { prisma, type StatusAcao, type MetodoRepasse, type TipoConta } from '@bussola/db';
 import { resolverAcessoComercial } from './comercial-acessos';
 import { sincronizarLancamentoAcao } from './comercial-caixa';
@@ -73,25 +74,30 @@ export type RepasseUnidade = {
 // ---- Empresas (organizações com comercial ativo) ----
 
 /** Todas as empresas que o usuário acessa (dono OU coordenador), do mais antigo ao recente. */
-export async function getEmpresasAcessiveis(userId: string): Promise<EmpresaInfo[]> {
-  const donas = await prisma.organizacao.findMany({
-    where: { ownerId: userId, comercialAtivo: true },
-    orderBy: { createdAt: 'asc' },
-    select: { id: true, nome: true },
-  });
-  const coord = await prisma.unidade.findMany({
-    where: { coordenadorId: userId, organizacao: { comercialAtivo: true } },
-    orderBy: { createdAt: 'asc' },
-    select: { organizacao: { select: { id: true, nome: true } } },
-  });
-  // Acessos pelo novo modelo (defensivo: tabela pode não existir antes da migration).
-  const acessos = await prisma.acessoComercial
-    .findMany({
-      where: { userId, organizacao: { comercialAtivo: true } },
+export const getEmpresasAcessiveis = cache(async function getEmpresasAcessiveis(
+  userId: string,
+): Promise<EmpresaInfo[]> {
+  // 3 consultas independentes → em paralelo (Promise.all) em vez de sequencial.
+  const [donas, coord, acessos] = await Promise.all([
+    prisma.organizacao.findMany({
+      where: { ownerId: userId, comercialAtivo: true },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, nome: true },
+    }),
+    prisma.unidade.findMany({
+      where: { coordenadorId: userId, organizacao: { comercialAtivo: true } },
       orderBy: { createdAt: 'asc' },
       select: { organizacao: { select: { id: true, nome: true } } },
-    })
-    .catch(() => [] as { organizacao: { id: string; nome: string } }[]);
+    }),
+    // Acessos pelo novo modelo (defensivo: tabela pode não existir antes da migration).
+    prisma.acessoComercial
+      .findMany({
+        where: { userId, organizacao: { comercialAtivo: true } },
+        orderBy: { createdAt: 'asc' },
+        select: { organizacao: { select: { id: true, nome: true } } },
+      })
+      .catch(() => [] as { organizacao: { id: string; nome: string } }[]),
+  ]);
 
   const mapa = new Map<string, EmpresaInfo>();
   for (const o of donas) mapa.set(o.id, { id: o.id, nome: o.nome, ehDono: true });
@@ -106,7 +112,7 @@ export async function getEmpresasAcessiveis(userId: string): Promise<EmpresaInfo
     }
   }
   return Array.from(mapa.values());
-}
+});
 
 /** Resolve qual empresa usar: a preferida (cookie) se acessível, senão a primeira. */
 export async function resolverEmpresaId(userId: string, preferido?: string): Promise<string | null> {

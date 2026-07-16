@@ -18,6 +18,7 @@ export function UnidadesFilter({
   const router = useRouter();
   const sp = useSearchParams();
   const [open, setOpen] = React.useState(false);
+  const [pending, startTransition] = React.useTransition();
 
   const sel = new Set(selecionadas);
   const todas = sel.size === 0 || sel.size === unidades.length;
@@ -26,7 +27,7 @@ export function UnidadesFilter({
     const params = new URLSearchParams(sp.toString());
     if (nova.size === 0 || nova.size === unidades.length) params.delete('unidades');
     else params.set('unidades', Array.from(nova).join(','));
-    router.push(`/comercial?${params.toString()}`);
+    startTransition(() => router.push(`/comercial?${params.toString()}`));
   }
 
   function toggle(id: string) {
@@ -47,11 +48,11 @@ export function UnidadesFilter({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5 text-sm font-semibold"
+        className={`inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5 text-sm font-semibold transition-opacity ${pending ? 'opacity-60' : ''}`}
       >
         <Building2 className="h-4 w-4 text-primary" />
         <span className="max-w-[160px] truncate">{rotulo}</span>
-        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        <ChevronDown className={`h-4 w-4 text-muted-foreground ${pending ? 'animate-pulse' : ''}`} />
       </button>
 
       {open && (

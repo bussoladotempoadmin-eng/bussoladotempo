@@ -2,6 +2,7 @@
  * Contexto do módulo Comercial por requisição (server).
  * Resolve a empresa atual (cookie) e o escopo do usuário nela.
  */
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import {
   getEmpresasAcessiveis,
@@ -19,8 +20,11 @@ export type ContextoComercial = {
   escopo: EscopoComercial;
 };
 
-/** null = usuário ainda não tem nenhuma empresa (mostrar tela de ativação). */
-export async function carregarComercial(userId: string): Promise<ContextoComercial | null> {
+/** null = usuário ainda não tem nenhuma empresa (mostrar tela de ativação).
+ *  cache() = resolve uma vez por requisição, mesmo chamado por page + shell. */
+export const carregarComercial = cache(async function carregarComercial(
+  userId: string,
+): Promise<ContextoComercial | null> {
   const empresas = await getEmpresasAcessiveis(userId);
   if (empresas.length === 0) return null;
 
@@ -30,4 +34,4 @@ export async function carregarComercial(userId: string): Promise<ContextoComerci
   if (!escopo) return null;
 
   return { empresas, orgId, escopo };
-}
+});

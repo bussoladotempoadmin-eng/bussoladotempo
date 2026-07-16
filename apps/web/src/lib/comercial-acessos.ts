@@ -12,6 +12,7 @@
  *
  * Esta camada é só LEITURA e ainda NÃO está ligada nas telas (Fase 1b liga).
  */
+import { cache } from 'react';
 import { prisma } from '@bussola/db';
 
 export type AcessoComercialResolvido = {
@@ -38,7 +39,9 @@ const NEGADO: AcessoComercialResolvido = {
   podeEditar: () => false,
 };
 
-export async function resolverAcessoComercial(
+// cache() = memoiza por REQUISIÇÃO (dedup): as várias chamadas por render batem no
+// banco uma vez só. Grande ganho, já que é chamada em quase toda tela do Comercial.
+export const resolverAcessoComercial = cache(async function resolverAcessoComercial(
   userId: string,
   orgId: string,
 ): Promise<AcessoComercialResolvido> {
@@ -102,4 +105,4 @@ export async function resolverAcessoComercial(
     podeVer: (uid) => corporativo || visiveis.has(uid),
     podeEditar: (uid) => (corporativo ? nivel === 'EDITAR' : editaveis.has(uid)),
   };
-}
+});
