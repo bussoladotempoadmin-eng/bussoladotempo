@@ -143,6 +143,16 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
           </div>
         </div>
 
+        <div className="mt-8">
+          <SemanaView
+            semanaIso={iso}
+            initialBlocos={initialBlocos}
+            frentes={frenteOptions}
+            mondayISO={mondayISO}
+          />
+        </div>
+
+        {/* IA depois do calendário: a agenda é sempre a prioridade da tela. */}
         {initialBlocos.length === 0 && frenteOptions.length > 0 && (
           <div className="mt-8">
             <AgendaIAView
@@ -153,15 +163,6 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
             />
           </div>
         )}
-
-        <div className="mt-8">
-          <SemanaView
-            semanaIso={iso}
-            initialBlocos={initialBlocos}
-            frentes={frenteOptions}
-            mondayISO={mondayISO}
-          />
-        </div>
       </section>
     </main>
   );
