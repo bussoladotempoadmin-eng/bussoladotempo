@@ -32,12 +32,40 @@ function hhmm(d: Date): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
+const COR_GOOGLE = '#94a3b8';
+
+/** Cabeçalho do dia na grade: "SEG" pequeno + número; hoje vira círculo azul. */
+function CabecalhoDia({ date }: { date: Date }) {
+  const hoje = new Date();
+  const ehHoje =
+    date.getFullYear() === hoje.getFullYear() &&
+    date.getMonth() === hoje.getMonth() &&
+    date.getDate() === hoje.getDate();
+  return (
+    <div className="flex flex-col items-center gap-0.5 py-1">
+      <span className="text-[11px] font-bold uppercase tracking-wider">
+        {format(date, 'EEE', { locale: ptBR }).replace('.', '')}
+      </span>
+      <span
+        className={
+          ehHoje
+            ? 'inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-1.5 text-sm font-bold text-primary-foreground'
+            : 'inline-flex h-7 items-center text-sm font-bold text-foreground'
+        }
+      >
+        {String(date.getDate()).padStart(2, '0')}
+      </span>
+    </div>
+  );
+}
+
 export function BlocosCalendario({
   blocos,
   setBlocos,
   frentes,
   mondayISO,
   view,
+  monthDate,
   onSelectBloco,
   onCreateSlot,
   googleEvents,
@@ -48,6 +76,7 @@ export function BlocosCalendario({
   frentes: FrenteOption[];
   mondayISO: string;
   view: 'week' | 'day' | 'month';
+  monthDate: Date;
   onSelectBloco: (id: string) => void;
   onCreateSlot: (slot: { diaSemana: DiaSemana; horaInicio: string; horaFim: string }) => void;
   googleEvents?: GoogleOverlay[];
@@ -164,9 +193,12 @@ export function BlocosCalendario({
       )}
 
       {view === 'month' ? (
-        <MesOverview frentes={frentes} mondayISO={mondayISO} showGoogle={showGoogle} />
+        <MesOverview frentes={frentes} monthDate={monthDate} showGoogle={showGoogle} />
       ) : (
-      <div className="rbc-bussola" style={{ height: '70vh', minHeight: 520 }}>
+      <div
+        className={`rbc-bussola rbc-grade rounded-2xl bg-muted/50 p-1.5 sm:p-2.5 ${events.some((e) => e.allDay) ? '' : 'sem-dia-inteiro'}`}
+        style={{ height: 'calc(100vh - 190px)', minHeight: 480 }}
+      >
         <DnDCalendar
           localizer={localizer}
           culture="pt-BR"
@@ -177,6 +209,11 @@ export function BlocosCalendario({
           toolbar={false}
           onNavigate={() => {}}
           onView={() => {}}
+          components={{ week: { header: CabecalhoDia }, day: { header: CabecalhoDia } }}
+          dayPropGetter={(date) => {
+            const d = date.getDay();
+            return d === 0 || d === 6 ? { className: 'rbc-fds' } : {};
+          }}
         step={30}
         timeslots={2}
         min={new Date(1970, 0, 1, 5, 0)}
@@ -200,19 +237,12 @@ export function BlocosCalendario({
           event.bloco && persistir(event.bloco, start as Date, end as Date)
         }
         eventPropGetter={(event) => {
-          if (event.google) {
-            // Evento do Google = só leitura, visual discreto (listrado/cinza).
-            return {
-              style: {
-                backgroundColor: 'hsl(var(--muted))',
-                border: '1px dashed hsl(var(--muted-foreground) / 0.6)',
-                color: 'hsl(var(--muted-foreground))',
-                opacity: 0.9,
-              },
-            };
-          }
-          const cor = frenteById.get(event.bloco!.frenteId)?.cor ?? '#3b82f6';
-          return { style: { backgroundColor: cor, borderColor: cor } };
+          // Evento do Google = só leitura, visual discreto (cinza tracejado).
+          const cor = event.google ? COR_GOOGLE : (frenteById.get(event.bloco!.frenteId)?.cor ?? '#3b82f6');
+          return {
+            className: event.google ? 'ev-google' : undefined,
+            style: { '--ev': cor } as React.CSSProperties,
+          };
         }}
           messages={{ week: 'Semana', day: 'Dia', today: 'Hoje', previous: 'Anterior', next: 'Próxima' }}
         />

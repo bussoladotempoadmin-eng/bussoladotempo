@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import type { AcaoListItem } from '@/lib/comercial';
 import { AcaoModal } from './acao-modal';
+import { UnidadesFilter } from '../unidades-filter';
 
 const locales = { 'pt-BR': ptBR };
 const localizer = dateFnsLocalizer({
@@ -57,7 +58,8 @@ export function AcoesCalendario({
   const [acoes, setAcoes] = React.useState<AcaoListItem[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [reload, setReload] = React.useState(0);
-  const [sel, setSel] = React.useState<Set<string>>(() => new Set(unidades.map((u) => u.id)));
+  // Unidades filtradas (vazio = todas).
+  const [selecionadas, setSelecionadas] = React.useState<string[]>([]);
 
   // Grade do mês (segunda antes do dia 1 → domingo depois do fim).
   const grade = React.useMemo(() => {
@@ -89,8 +91,9 @@ export function AcoesCalendario({
   }, [grade, reload]);
 
   const events: AcaoEvent[] = React.useMemo(() => {
+    const sel = new Set(selecionadas);
     return acoes
-      .filter((a) => sel.has(a.unidadeId))
+      .filter((a) => sel.size === 0 || sel.has(a.unidadeId))
       .map((a) => {
         const start = parseYmd(a.dataInicio);
         const end = parseYmd(a.dataFim);
@@ -104,16 +107,13 @@ export function AcoesCalendario({
           allDay: true,
         };
       });
-  }, [acoes, sel]);
+  }, [acoes, selecionadas]);
 
-  function toggleUnidade(id: string) {
-    setSel((prev) => {
-      const n = new Set(prev);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
-  }
+  // Legenda: só as unidades que aparecem no calendário (já filtradas).
+  const legenda = React.useMemo(() => {
+    const ids = new Set(events.map((e) => e.unidadeId));
+    return unidades.filter((u) => ids.has(u.id));
+  }, [events, unidades]);
 
   const rotuloMes = format(monthDate, 'MMMM yyyy', { locale: ptBR });
 
@@ -128,7 +128,7 @@ export function AcoesCalendario({
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <span className="min-w-[10rem] text-center text-sm font-bold capitalize">{rotuloMes}</span>
+        <span className="min-w-[9rem] text-center text-base font-bold capitalize">{rotuloMes}</span>
         <button
           type="button"
           onClick={() => setMonthDate((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
@@ -148,30 +148,30 @@ export function AcoesCalendario({
           Hoje
         </button>
         {loading && <span className="text-xs text-muted-foreground">carregando…</span>}
+        {unidades.length > 1 && (
+          <div className="ml-auto">
+            <UnidadesFilter
+              unidades={unidades}
+              selecionadas={selecionadas}
+              onChange={setSelecionadas}
+              cores={corPorUnidade}
+            />
+          </div>
+        )}
       </div>
 
-      {unidades.length > 1 && (
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {unidades.map((u) => {
-            const on = sel.has(u.id);
-            return (
-              <button
-                key={u.id}
-                type="button"
-                onClick={() => toggleUnidade(u.id)}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
-                  on ? 'border-border bg-card' : 'border-border text-muted-foreground opacity-50'
-                }`}
-              >
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: corPorUnidade.get(u.id) }} />
-                {u.nome}
-              </button>
-            );
-          })}
+      {legenda.length > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1">
+          {legenda.map((u) => (
+            <span key={u.id} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="h-2.5 w-2.5 rounded-[3px]" style={{ backgroundColor: corPorUnidade.get(u.id) }} />
+              {u.nome}
+            </span>
+          ))}
         </div>
       )}
 
-      <div className="rbc-bussola" style={{ height: '70vh', minHeight: 520 }}>
+      <div className="rbc-bussola rbc-mes rounded-2xl bg-muted/50 p-1.5 sm:p-2.5" style={{ height: '72vh', minHeight: 540 }}>
         <Calendar<AcaoEvent>
           localizer={localizer}
           culture="pt-BR"
@@ -186,14 +186,23 @@ export function AcoesCalendario({
             const a = acoes.find((x) => x.id === event.id);
             if (a) setAberta(a);
           }}
-          eventPropGetter={(event) => {
-            const cor = corPorUnidade.get(event.unidadeId) ?? '#3b82f6';
-            return { style: { backgroundColor: cor, borderColor: cor } };
+          dayPropGetter={(date) => {
+            const d = date.getDay();
+            return d === 0 || d === 6 ? { className: 'rbc-fds' } : {};
           }}
-          messages={{ month: 'Mês', today: 'Hoje', previous: 'Anterior', next: 'Próximo' }}
+          eventPropGetter={(event) => ({
+            style: { '--ev': corPorUnidade.get(event.unidadeId) ?? '#3b82f6' } as React.CSSProperties,
+          })}
+          messages={{
+            month: 'Mês',
+            today: 'Hoje',
+            previous: 'Anterior',
+            next: 'Próximo',
+            showMore: (n: number) => `+${n} mais`,
+          }}
         />
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">
+      <p className="mt-2 px-1 text-xs text-muted-foreground">
         Toque numa ação pra abrir o detalhe. As cores representam as unidades.
       </p>
 

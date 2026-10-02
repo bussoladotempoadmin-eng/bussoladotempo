@@ -15,19 +15,27 @@ import {
 } from '@/lib/semana';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { UserMenu } from '@/components/user-menu';
-import { Compass, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Compass, ArrowLeft } from 'lucide-react';
 import type { BlocoDTO, FrenteOption } from './blocos-manager';
-import { SemanaView } from './semana-view';
+import { SemanaView, type ModoSemana } from './semana-view';
 import { AgendaIAView } from '@/app/agenda-padrao/agenda-ia-view';
 import { statusCota } from '@/lib/cota-ia';
 import { exigirAcesso } from '@/lib/acesso';
 import { TourButton } from '@/components/tour/tour-button';
 
+const MODOS: ModoSemana[] = ['lista', 'semana', 'dia', 'mes'];
+
 export const metadata = {
   title: 'Semana · Bússola do Tempo',
 };
 
-export default async function SemanaPage({ params }: { params: { iso: string } }) {
+export default async function SemanaPage({
+  params,
+  searchParams,
+}: {
+  params: { iso: string };
+  searchParams: { v?: string };
+}) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     redirect(`/login?callbackUrl=/semana/${params.iso}`);
@@ -92,6 +100,10 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
 
   const semanaAnterior = shiftIsoWeek(iso, -1);
   const proximaSemana = shiftIsoWeek(iso, 1);
+  // Modo da tela (Lista/Semana/Dia/Mês) vem da URL, pra navegação manter o seletor.
+  const modo: ModoSemana = MODOS.includes(searchParams.v as ModoSemana)
+    ? (searchParams.v as ModoSemana)
+    : 'lista';
   const md = isoWeekMonday(iso);
   const mondayISO = `${md.getUTCFullYear()}-${String(md.getUTCMonth() + 1).padStart(2, '0')}-${String(md.getUTCDate()).padStart(2, '0')}`;
 
@@ -109,42 +121,23 @@ export default async function SemanaPage({ params }: { params: { iso: string } }
         </div>
       </header>
 
-      <section className="container max-w-5xl py-10">
+      <section className="container max-w-6xl py-5 lg:py-6">
         <Link
           href="/"
-          className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          className="mb-2 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
         </Link>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight">
-              Semana de {isoWeekLabel(iso)}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">{isoWeekRangeLabel(iso)}</p>
-          </div>
-          <div className="flex items-center gap-1">
-            <Link
-              href={`/semana/${semanaAnterior}`}
-              className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Anterior
-            </Link>
-            <Link
-              href={`/semana/${proximaSemana}`}
-              className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-muted"
-            >
-              Próxima
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-
-        <div className="mt-8">
+        <div>
           <SemanaView
+            key={iso}
+            modoInicial={modo}
+            semanaLabel={`Semana de ${isoWeekLabel(iso)}`}
+            semanaRange={isoWeekRangeLabel(iso)}
+            anteriorIso={semanaAnterior}
+            proximaIso={proximaSemana}
             semanaIso={iso}
             initialBlocos={initialBlocos}
             frentes={frenteOptions}

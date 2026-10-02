@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Calendar, dateFnsLocalizer, type Event as RbcEvent } from 'react-big-calendar';
 import { format, parse, startOfWeek, endOfWeek, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { isoWeek, isoWeekMondayYMD } from '@/lib/iso-week';
 import type { FrenteOption } from './blocos-manager';
 import type { GoogleOverlay } from './blocos-calendario';
@@ -57,27 +56,16 @@ function ymd(d: Date): string {
 
 export function MesOverview({
   frentes,
-  mondayISO,
+  monthDate,
   showGoogle = false,
 }: {
   frentes: FrenteOption[];
-  mondayISO: string;
+  /** Mês visível (1º dia) — controlado pelo cabeçalho da página. */
+  monthDate: Date;
   showGoogle?: boolean;
 }) {
   const router = useRouter();
   const frenteById = React.useMemo(() => new Map(frentes.map((f) => [f.id, f])), [frentes]);
-
-  // Mês visível = mês de hoje, se hoje cai nesta semana (semana que vira o mês);
-  // senão, o mês da segunda-feira da semana aberta.
-  const [monthDate, setMonthDate] = React.useState<Date>(() => {
-    const [y, mo, d] = mondayISO.split('-').map(Number);
-    const seg = new Date(y, mo - 1, d);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const dias = (hoje.getTime() - seg.getTime()) / 86400000;
-    const ref = dias >= 0 && dias < 7 ? hoje : seg;
-    return new Date(ref.getFullYear(), ref.getMonth(), 1);
-  });
 
   const [blocos, setBlocos] = React.useState<RangeBloco[]>([]);
   const [googleEvents, setGoogleEvents] = React.useState<GoogleOverlay[]>([]);
@@ -172,11 +160,13 @@ export function MesOverview({
     return [...dosBlocos, ...doGoogle];
   }, [blocos, googleEvents, frenteById]);
 
-  function irParaData(d: Date) {
-    router.push(`/semana/${isoWeek(d)}`);
+  // Abrir uma semana a partir do mês já cai na visão Semana do calendário.
+  function abrirSemana(iso: string) {
+    router.push(`/semana/${iso}?v=semana`);
   }
-
-  const rotuloMes = format(monthDate, 'MMMM yyyy', { locale: ptBR });
+  function irParaData(d: Date) {
+    abrirSemana(isoWeek(d));
+  }
 
   // Legenda: só as frentes que aparecem na grade deste mês.
   const legenda = React.useMemo(() => {
@@ -185,44 +175,11 @@ export function MesOverview({
   }, [blocos, frentes]);
   const temGoogle = googleEvents.length > 0;
 
-  const hoje = new Date();
-  const noMesAtual =
-    monthDate.getFullYear() === hoje.getFullYear() && monthDate.getMonth() === hoje.getMonth();
-
   return (
     <div>
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setMonthDate((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
-          className="rounded-lg border border-border p-1.5 text-muted-foreground hover:bg-muted"
-          aria-label="Mês anterior"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <span className="min-w-[9rem] text-center text-base font-bold capitalize">{rotuloMes}</span>
-        <button
-          type="button"
-          onClick={() => setMonthDate((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
-          className="rounded-lg border border-border p-1.5 text-muted-foreground hover:bg-muted"
-          aria-label="Próximo mês"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-        {!noMesAtual && (
-          <button
-            type="button"
-            onClick={() => setMonthDate(new Date(hoje.getFullYear(), hoje.getMonth(), 1))}
-            className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            Hoje
-          </button>
-        )}
-        {loading && <span className="text-xs text-muted-foreground">carregando…</span>}
-      </div>
-
-      {(legenda.length > 0 || temGoogle) && (
+      {(legenda.length > 0 || temGoogle || loading) && (
         <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 px-1">
+          {loading && <span className="text-xs text-muted-foreground">carregando…</span>}
           {legenda.map((f) => (
             <span key={f.id} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
               <span className="h-2.5 w-2.5 rounded-[3px]" style={{ backgroundColor: f.cor }} />
@@ -238,7 +195,7 @@ export function MesOverview({
         </div>
       )}
 
-      <div className="rbc-bussola rbc-mes rounded-2xl bg-muted/50 p-1.5 sm:p-2.5" style={{ height: '72vh', minHeight: 540 }}>
+      <div className="rbc-bussola rbc-mes rounded-2xl bg-muted/50 p-1.5 sm:p-2.5" style={{ height: 'calc(100vh - 215px)', minHeight: 480 }}>
         <Calendar<MesEvent>
           localizer={localizer}
           culture="pt-BR"
@@ -251,7 +208,7 @@ export function MesOverview({
           selectable
           popup
           components={{ event: EventoMes }}
-          onSelectEvent={(event) => router.push(`/semana/${event.navIso}`)}
+          onSelectEvent={(event) => abrirSemana(event.navIso)}
           onSelectSlot={({ start }) => irParaData(start as Date)}
           onDrillDown={(date) => irParaData(date)}
           dayPropGetter={(date) => {
@@ -272,9 +229,6 @@ export function MesOverview({
         />
       </div>
 
-      <p className="mt-2 px-1 text-xs text-muted-foreground">
-        Toque num dia ou compromisso pra abrir aquela semana e editar.
-      </p>
     </div>
   );
 }
