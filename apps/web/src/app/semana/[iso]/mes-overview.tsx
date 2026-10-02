@@ -195,7 +195,7 @@ export function MesOverview({
         </div>
       )}
 
-      <div className="rbc-bussola rbc-mes rounded-2xl bg-muted/50 p-1.5 sm:p-2.5" style={{ height: 'calc(100vh - 215px)', minHeight: 480 }}>
+      <div className="rbc-bussola rbc-mes rounded-2xl bg-muted/50 p-1.5 sm:p-2.5" style={{ height: 'calc(100vh - 265px)', minHeight: 480 }}>
         <Calendar<MesEvent>
           localizer={localizer}
           culture="pt-BR"

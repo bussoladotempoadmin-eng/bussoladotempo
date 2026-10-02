@@ -197,7 +197,7 @@ export function BlocosCalendario({
       ) : (
       <div
         className={`rbc-bussola rbc-grade rounded-2xl bg-muted/50 p-1.5 sm:p-2.5 ${events.some((e) => e.allDay) ? '' : 'sem-dia-inteiro'}`}
-        style={{ height: 'calc(100vh - 190px)', minHeight: 480 }}
+        style={{ height: 'calc(100vh - 240px)', minHeight: 480 }}
       >
         <DnDCalendar
           localizer={localizer}
