@@ -51,6 +51,11 @@ export function AcoesConta(props: {
   const [ownerName, setOwnerName] = React.useState(props.ownerName);
   const [ownerEmail, setOwnerEmail] = React.useState(props.ownerEmail);
 
+  // transferência de titularidade
+  const [novoEmail, setNovoEmail] = React.useState('');
+  const [novoNome, setNovoNome] = React.useState('');
+  const [confirmarTransf, setConfirmarTransf] = React.useState(false);
+
   // dados cadastrais da empresa
   const [empNome, setEmpNome] = React.useState(props.empresaNome);
   const [empDoc, setEmpDoc] = React.useState(props.empresaDocumento);
@@ -91,6 +96,31 @@ export function AcoesConta(props: {
       }
       router.refresh();
       return true;
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function transferir() {
+    setBusy('transf');
+    try {
+      const res = await fetch(`/api/admin/contas/${props.assinaturaId}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ tipo: 'transferir_titular', email: novoEmail, nome: novoNome }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast(data.error || 'Falhou.', 'erro');
+        return;
+      }
+      setConfirmarTransf(false);
+      toast(
+        data.novoCriado
+          ? 'Titularidade transferida. O novo gestor recebeu o e-mail para criar a senha.'
+          : 'Titularidade transferida.',
+      );
+      router.refresh();
     } finally {
       setBusy(null);
     }
@@ -326,6 +356,78 @@ export function AcoesConta(props: {
           </button>
         </div>
       </Card>
+
+      <Card titulo="Transferir titularidade">
+        <div className="space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-xs text-muted-foreground">E-mail do novo gestor master</span>
+            <input
+              type="email"
+              className={INP}
+              value={novoEmail}
+              onChange={(e) => setNovoEmail(e.target.value)}
+              placeholder="novo.gestor@empresa.com"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs text-muted-foreground">Nome (se for um usuário novo)</span>
+            <input className={INP} value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder="Nome completo" />
+          </label>
+          <p className="text-xs text-muted-foreground">
+            Passa a conta e as empresas para outra pessoa. Se o e-mail não existir, o usuário é criado e recebe o link
+            para criar a senha.
+          </p>
+          <button
+            onClick={() => setConfirmarTransf(true)}
+            disabled={busy !== null || !novoEmail.trim()}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-destructive px-4 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-60"
+          >
+            Transferir…
+          </button>
+        </div>
+      </Card>
+
+      {confirmarTransf && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => busy === null && setConfirmarTransf(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-border bg-card p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 text-base font-semibold">Transferir titularidade?</div>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p>
+                <b className="text-foreground">{novoEmail.trim().toLowerCase()}</b> passa a ser o gestor master da conta
+                e de todas as empresas de <b className="text-foreground">{props.ownerEmail}</b>.
+              </p>
+              <p>
+                <b className="text-foreground">{props.ownerName || props.ownerEmail}</b> não é excluído: vira um usuário
+                individual (Bússola Essencial, trial de 14 dias), mantém o login e a agenda pessoal, e perde o acesso ao
+                time e ao Comercial da empresa.
+              </p>
+              <p>O histórico do Comercial (ações, caixa, repasses) continua com a empresa.</p>
+            </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmarTransf(false)}
+                disabled={busy !== null}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-semibold hover:bg-muted disabled:opacity-60"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={transferir}
+                disabled={busy !== null}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+              >
+                {busy === 'transf' && <Loader2 className="h-4 w-4 animate-spin" />} Confirmar transferência
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@
  *  - Marcar cobrança PAGA ativa a conta e estende a validade do plano.
  *  - Trocar plano/estado é ação manual do admin (no lançamento não há gateway).
  */
+import { randomBytes } from 'crypto';
 import { prisma } from '@bussola/db';
 import type {
   StatusAssinatura,
@@ -17,6 +18,7 @@ import type {
 } from '@bussola/db';
 import { valorCobranca } from './assinatura';
 import { criarComissaoSeIndicado } from './comissoes';
+import { sendAcessoCriadoEmail } from './email';
 
 // ---------- helpers de mês ----------
 
@@ -348,6 +350,142 @@ export async function editarDadosEmpresa(
   const r = await prisma.assinatura.updateMany({ where: { id: assinaturaId }, data });
   if (r.count === 0) return { ok: false, erro: 'Assinatura não encontrada' };
   return { ok: true };
+}
+
+/**
+ * Transfere a titularidade (gestor master) de uma conta para outra pessoa.
+ *
+ * Move a Assinatura e TODAS as organizações do dono antigo para o novo dono.
+ * O dono antigo NÃO é excluído: sai do time/comercial dessas empresas e ganha
+ * uma conta individual (Essencial, trial de 14 dias) — mantém login e agenda
+ * pessoal. Os dados do Comercial (ações, caixa, repasses) ficam com a empresa.
+ *
+ * Novo dono por e-mail: se o usuário existe, usa; senão cria e manda o e-mail
+ * de criar senha (mesmo fluxo do convite de time).
+ */
+export async function transferirTitularidade(
+  assinaturaId: string,
+  input: { email: string; nome?: string },
+  adminEmail: string,
+): Promise<
+  | { ok: true; novoCriado: boolean; empresas: number; individualCriada: boolean }
+  | { ok: false; erro: string }
+> {
+  const email = input.email.toLowerCase().trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, erro: 'E-mail inválido' };
+  const nome = input.nome?.trim() || null;
+
+  const a = await prisma.assinatura.findUnique({
+    where: { id: assinaturaId },
+    select: { ownerUserId: true, notasInternas: true, owner: { select: { email: true } } },
+  });
+  if (!a) return { ok: false, erro: 'Assinatura não encontrada' };
+  const antigoId = a.ownerUserId;
+
+  const orgs = await prisma.organizacao.findMany({ where: { ownerId: antigoId }, select: { id: true } });
+  const orgIds = orgs.map((o) => o.id);
+
+  const novo = await prisma.user.findUnique({ where: { email }, select: { id: true, name: true } });
+  if (novo?.id === antigoId) return { ok: false, erro: 'Essa pessoa já é a titular da conta' };
+
+  if (novo) {
+    // Já é dono de outra empresa → não dá pra fundir duas contas aqui.
+    const outraOrg = await prisma.organizacao.findFirst({ where: { ownerId: novo.id }, select: { id: true } });
+    if (outraOrg) return { ok: false, erro: 'Esse usuário já é dono de outra empresa na Bússola' };
+    // Membro de um time de OUTRA empresa → a cobertura dele ficaria ambígua.
+    const outroTime = await prisma.membroEquipe.findFirst({
+      where: { userId: novo.id, organizacaoId: { notIn: orgIds } },
+      select: { id: true },
+    });
+    if (outroTime) return { ok: false, erro: 'Esse usuário pertence ao time de outra empresa' };
+    // Assinatura própria: a automática (trial de quem entrou direto) é descartada;
+    // qualquer outra (cadastro/admin/paga) bloqueia — resolva manualmente antes.
+    const propria = await prisma.assinatura.findUnique({
+      where: { ownerUserId: novo.id },
+      select: { origem: true },
+    });
+    if (propria && propria.origem !== 'AUTO') {
+      return { ok: false, erro: 'Esse usuário já tem uma assinatura própria. Cancele/ajuste ela antes.' };
+    }
+  }
+
+  // O dono antigo continua coberto por outro time (fora destas empresas)?
+  const antigoEmOutroTime = await prisma.membroEquipe.findFirst({
+    where: { userId: antigoId, organizacaoId: { notIn: orgIds } },
+    select: { id: true },
+  });
+  const essencial = await prisma.plano.findUnique({ where: { slug: 'essencial' }, select: { id: true } });
+  if (!essencial && !antigoEmOutroTime) return { ok: false, erro: 'Plano Essencial não encontrado' };
+
+  const quando = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
+  const { novoCriado, token } = await prisma.$transaction(async (tx) => {
+    let novoId: string;
+    let token: string | null = null;
+    if (!novo) {
+      novoId = (await tx.user.create({ data: { email, name: nome }, select: { id: true } })).id;
+      token = randomBytes(32).toString('hex');
+      await tx.passwordResetToken.create({
+        data: { userId: novoId, token, expires: new Date(Date.now() + 7 * 86400000) },
+      });
+    } else {
+      novoId = novo.id;
+      if (nome && !novo.name) await tx.user.update({ where: { id: novoId }, data: { name: nome } });
+    }
+
+    // Libera a unicidade de ownerUserId (trial automático do novo dono).
+    await tx.assinatura.deleteMany({ where: { ownerUserId: novoId, origem: 'AUTO' } });
+
+    // Novo dono: vira dono (acesso total implícito) → sai dos vínculos de membro.
+    await tx.membroEquipe.deleteMany({ where: { userId: novoId, organizacaoId: { in: orgIds } } });
+    await tx.acessoComercial.deleteMany({ where: { userId: novoId, organizacaoId: { in: orgIds } } });
+
+    // Dono antigo: sai de tudo nestas empresas.
+    await tx.membroEquipe.deleteMany({ where: { userId: antigoId, organizacaoId: { in: orgIds } } });
+    await tx.acessoComercial.deleteMany({ where: { userId: antigoId, organizacaoId: { in: orgIds } } });
+    await tx.unidade.updateMany({
+      where: { coordenadorId: antigoId, organizacaoId: { in: orgIds } },
+      data: { coordenadorId: null },
+    });
+
+    await tx.organizacao.updateMany({ where: { id: { in: orgIds } }, data: { ownerId: novoId } });
+
+    const log = `[${quando}] Titularidade transferida de ${a.owner.email} para ${email} por ${adminEmail}.`;
+    await tx.assinatura.update({
+      where: { id: assinaturaId },
+      data: {
+        ownerUserId: novoId,
+        notasInternas: a.notasInternas ? `${a.notasInternas}\n${log}` : log,
+      },
+    });
+
+    // Conta individual do dono antigo (agenda pessoal segue intacta no Workspace).
+    if (!antigoEmOutroTime && essencial) {
+      await tx.assinatura.create({
+        data: {
+          ownerUserId: antigoId,
+          planoId: essencial.id,
+          status: 'TRIAL',
+          origem: 'ADMIN',
+          planoConfirmado: false, // vê o aviso pra escolher plano
+          trialTerminaEm: new Date(Date.now() + 14 * 86400000),
+          notasInternas: `[${quando}] Conta individual criada ao deixar de ser titular (por ${adminEmail}).`,
+        },
+      });
+    }
+    return { novoCriado: !novo, token };
+  });
+
+  if (token) {
+    const base = process.env.NEXTAUTH_URL ?? 'https://app.bussoladotempo.com.br';
+    try {
+      await sendAcessoCriadoEmail({ to: email, nome: nome ?? undefined, link: `${base}/redefinir-senha?token=${token}` });
+    } catch (e) {
+      console.error('[admin] falha ao enviar acesso do novo titular:', e);
+    }
+  }
+
+  return { ok: true, novoCriado, empresas: orgIds.length, individualCriada: !antigoEmOutroTime };
 }
 
 /** Estende (ou encurta) o trial em N dias a partir de agora. */

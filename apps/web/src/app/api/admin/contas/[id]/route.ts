@@ -4,6 +4,7 @@ import {
   editarAssinatura,
   editarDadosOwner,
   editarDadosEmpresa,
+  transferirTitularidade,
   estenderTrial,
   criarCobrancaManual,
 } from '@/lib/admin-billing';
@@ -74,6 +75,19 @@ export async function POST(req: Request, { params }: { params: { id: string } })
     });
     if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
     return NextResponse.json({ ok: true });
+  }
+
+  if (tipo === 'transferir_titular') {
+    const r = await transferirTitularidade(
+      params.id,
+      {
+        email: typeof body?.email === 'string' ? body.email : '',
+        nome: typeof body?.nome === 'string' ? body.nome : undefined,
+      },
+      admin.email ?? admin.id,
+    );
+    if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 422 });
+    return NextResponse.json(r);
   }
 
   if (tipo === 'vincular_parceiro') {

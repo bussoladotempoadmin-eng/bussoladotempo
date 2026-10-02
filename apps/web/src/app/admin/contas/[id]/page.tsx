@@ -63,6 +63,7 @@ export default async function ContaDetalhePage({ params }: { params: { id: strin
 
       {/* Ações */}
       <AcoesConta
+        key={a.owner.id}
         assinaturaId={a.id}
         status={a.status}
         planoSlug={a.plano.slug}
